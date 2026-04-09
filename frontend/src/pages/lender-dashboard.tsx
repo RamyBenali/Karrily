@@ -1,11 +1,13 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3 } from "lucide-react";
+import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { useAuthStore } from "../store/auth.store";
+import { usersService, bookingsService, itemsService } from "../services/api.service";
 
 const earningsData = [
   { month: "Jan", earnings: 1200 },
@@ -16,67 +18,49 @@ const earningsData = [
   { month: "Jun", earnings: 3200 },
 ];
 
-const myListings = [
-  {
-    id: 1,
-    title: "Modern Downtown Loft",
-    image: "https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzE0MzkzODh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    category: "Real Estate",
-    price: 450,
-    period: "night",
-    status: "Active",
-    views: 1243,
-    bookings: 12,
-    rating: 4.9
-  },
-  {
-    id: 3,
-    title: "Professional Camera Kit",
-    image: "https://images.unsplash.com/photo-1769699167687-540cce99f744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjYW1lcmElMjBlcXVpcG1lbnR8ZW58MXx8fHwxNzcxNDg2NjExfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    category: "Electronics",
-    price: 85,
-    period: "day",
-    status: "Active",
-    views: 867,
-    bookings: 24,
-    rating: 4.8
-  },
-  {
-    id: 4,
-    title: "Designer Furniture Set",
-    image: "https://images.unsplash.com/photo-1760716478137-d861d5b354e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZXNpZ25lciUyMGZ1cm5pdHVyZSUyMGNoYWlyJTIwbW9kZXJufGVufDF8fHx8MTc3MTUwNTIyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
-    category: "Furniture",
-    price: 120,
-    period: "week",
-    status: "Active",
-    views: 542,
-    bookings: 8,
-    rating: 4.7
-  }
-];
-
-const upcomingBookings = [
-  {
-    id: 1,
-    renterName: "Alice Johnson",
-    item: "Modern Downtown Loft",
-    startDate: "Feb 25, 2026",
-    endDate: "Feb 28, 2026",
-    earnings: 1350
-  },
-  {
-    id: 2,
-    renterName: "Bob Smith",
-    item: "Professional Camera Kit",
-    startDate: "Feb 27, 2026",
-    endDate: "Mar 1, 2026",
-    earnings: 255
-  }
-];
-
 export function LenderDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [activeView, setActiveView] = useState<"overview" | "listings" | "bookings" | "earnings">("overview");
+
+  const [myListings, setMyListings] = useState<any[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [stats, setStats] = useState({ totalEarnings: 0, activeListings: 0, totalBookings: 0 });
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Fetch Items
+    usersService.getUserItems(user.id).then(res => {
+      setMyListings(res.data);
+      setStats(prev => ({ ...prev, activeListings: res.data.length }));
+    });
+
+    // Fetch Bookings where user is owner
+    bookingsService.getMyBookings({ role: 'owner' }).then(res => {
+      setUpcomingBookings(res.data);
+      setStats(prev => ({ ...prev, totalBookings: res.data.length }));
+    });
+  }, [user]);
+
+  const handleDeleteItem = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette annonce ?")) return;
+    try {
+      await itemsService.delete(id);
+      setMyListings(prev => prev.filter(i => i.id !== id));
+    } catch(err) {
+      alert("Erreur lors de la suppression.");
+    }
+  };
+
+  const handleUpdateBookingStatus = async (id: string, status: string) => {
+    try {
+      await bookingsService.updateStatus(id, status);
+      setUpcomingBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    } catch(err) {
+      alert("Erreur de modification du statut.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -91,12 +75,12 @@ export function LenderDashboard() {
             className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
           >
             <div>
-              <h1 className="text-5xl font-bold text-[#0F2A2E] mb-3">Lender Dashboard</h1>
-              <p className="text-xl text-gray-600">Manage your listings and track your earnings</p>
+              <h1 className="text-5xl font-bold text-[#0F2A2E] mb-3">Tableau de bord Propriétaire</h1>
+              <p className="text-xl text-gray-600">Gérez vos annonces et suivez vos revenus</p>
             </div>
-            <Button className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
+            <Button onClick={() => navigate("/create")} className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
               <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
-              Add New Listing
+              Publier une annonce
             </Button>
           </motion.div>
 
@@ -105,13 +89,13 @@ export function LenderDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-3xl p-2 shadow-lg border border-gray-100 mb-8 inline-flex gap-2"
+            className="bg-white rounded-3xl p-2 shadow-lg border border-gray-100 mb-8 inline-flex gap-2 flex-wrap"
           >
             {[
-              { id: "overview", label: "Overview", icon: BarChart3 },
-              { id: "listings", label: "My Listings", icon: Package },
-              { id: "bookings", label: "Bookings", icon: Calendar },
-              { id: "earnings", label: "Earnings", icon: DollarSign }
+              { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
+              { id: "listings", label: "Mes annonces", icon: Package },
+              { id: "bookings", label: "Réservations", icon: Calendar },
+              { id: "earnings", label: "Revenus", icon: DollarSign }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -135,33 +119,33 @@ export function LenderDashboard() {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { 
-                    label: "Total Earnings", 
-                    value: "$12,450", 
-                    change: "+18%", 
+                    label: "Revenus Totaux", 
+                    value: "0 DZD", 
+                    change: "-", 
                     icon: DollarSign, 
                     color: "#FF4F5A",
                     bgGradient: "from-[#FF4F5A] to-[#FF6B74]"
                   },
                   { 
-                    label: "Active Listings", 
-                    value: "3", 
-                    change: "+1", 
+                    label: "Annonces Actives", 
+                    value: stats.activeListings, 
+                    change: "Aujourd'hui", 
                     icon: Package, 
                     color: "#0F2A2E",
                     bgGradient: "from-[#0F2A2E] to-[#1A4851]"
                   },
                   { 
-                    label: "Total Bookings", 
-                    value: "44", 
-                    change: "+12%", 
+                    label: "Réservations", 
+                    value: stats.totalBookings, 
+                    change: "Toutes", 
                     icon: Calendar, 
                     color: "#0F2A2E",
                     bgGradient: "from-[#0F2A2E] to-[#1A4851]"
                   },
                   { 
-                    label: "Avg Rating", 
-                    value: "4.8★", 
-                    change: "+0.2", 
+                    label: "Note Moyenne", 
+                    value: "N/A", 
+                    change: "-", 
                     icon: TrendingUp, 
                     color: "#FF4F5A",
                     bgGradient: "from-[#FF4F5A] to-[#FF6B74]"
@@ -197,19 +181,11 @@ export function LenderDashboard() {
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-1">Earnings Overview</h2>
-                    <p className="text-gray-600">Your monthly earnings trend</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-[#0F2A2E] text-white rounded-full text-sm font-medium">
-                      6 Months
-                    </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200">
-                      1 Year
-                    </button>
+                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-1">Aperçu des revenus</h2>
+                    <p className="text-gray-600">Vos tendances de gains mensuels</p>
                   </div>
                 </div>
-                <div className="h-80">
+                <div className="h-80 opacity-50">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={earningsData}>
                       <defs>
@@ -225,46 +201,12 @@ export function LenderDashboard() {
                         contentStyle={{ 
                           backgroundColor: 'white', 
                           border: '1px solid #e5e7eb',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                          borderRadius: '12px'
                         }} 
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="earnings" 
-                        stroke="#FF4F5A" 
-                        strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorEarnings)" 
-                      />
+                      <Area type="monotone" dataKey="earnings" stroke="#FF4F5A" strokeWidth={3} fillOpacity={1} fill="url(#colorEarnings)" />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-              {/* Quick Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="grid md:grid-cols-2 gap-6"
-              >
-                <div className="bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-3xl p-8 text-white">
-                  <h3 className="text-2xl font-bold mb-3">Upcoming Bookings</h3>
-                  <p className="text-white/80 mb-4">You have 2 bookings in the next week</p>
-                  <Button
-                    onClick={() => setActiveView("bookings")}
-                    className="bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/30"
-                  >
-                    View All Bookings
-                  </Button>
-                </div>
-                <div className="bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74] rounded-3xl p-8 text-white">
-                  <h3 className="text-2xl font-bold mb-3">Performance Tips</h3>
-                  <p className="text-white/80 mb-4">Boost your visibility with better photos</p>
-                  <Button className="bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/30">
-                    Learn More
-                  </Button>
                 </div>
               </motion.div>
             </div>
@@ -277,7 +219,7 @@ export function LenderDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">My Listings</h2>
+              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Mes Annonces</h2>
               <div className="space-y-4">
                 {myListings.map((listing) => (
                   <div
@@ -286,7 +228,7 @@ export function LenderDashboard() {
                   >
                     <div className="w-full md:w-56 h-40 rounded-2xl overflow-hidden flex-shrink-0">
                       <ImageWithFallback
-                        src={listing.image}
+                        src={listing.thumbnail_url || "https://placehold.co/400x300"}
                         alt={listing.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
@@ -295,55 +237,57 @@ export function LenderDashboard() {
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <span className="inline-block px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-full mb-2">
-                            {listing.category}
+                            {listing.category?.name || "Général"}
                           </span>
                           <h3 className="text-xl font-bold text-[#0F2A2E]">{listing.title}</h3>
                           <div className="flex items-baseline gap-2 mt-2">
-                            <span className="text-2xl font-bold text-[#0F2A2E]">${listing.price}</span>
-                            <span className="text-gray-500">/ {listing.period}</span>
+                            {listing.price_per_day && (
+                                <>
+                                  <span className="text-2xl font-bold text-[#0F2A2E]">{listing.price_per_day} DZD</span>
+                                  <span className="text-gray-500">/ jour</span>
+                                </>
+                            )}
+                            {!listing.price_per_day && listing.sale_price && (
+                                 <span className="text-2xl font-bold text-[#0F2A2E]">{listing.sale_price} DZD</span>
+                            )}
                           </div>
                         </div>
-                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                          {listing.status}
+                        <span className={`px-4 py-2 rounded-full text-sm font-medium ${listing.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                          {listing.status === 'active' ? "Actif" : "Brouillon"}
                         </span>
                       </div>
                       
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                          <div className="text-sm text-gray-500">Views</div>
-                          <div className="text-lg font-bold text-gray-900">{listing.views}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Bookings</div>
-                          <div className="text-lg font-bold text-gray-900">{listing.bookings}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-500">Rating</div>
-                          <div className="text-lg font-bold text-gray-900">{listing.rating}★</div>
+                          <div className="text-sm text-gray-500">Vues</div>
+                          <div className="text-lg font-bold text-gray-900">{listing.view_count || 0}</div>
                         </div>
                       </div>
 
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 mt-4">
                         <Button 
                           size="sm" 
                           onClick={() => navigate(`/item/${listing.id}`)}
                           className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
                         >
                           <Eye className="w-4 h-4 mr-2" />
-                          View
+                          Voir
                         </Button>
-                        <Button size="sm" variant="outline" className="rounded-full">
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/edit-item/${listing.id}`)} className="rounded-full">
                           <Edit2 className="w-4 h-4 mr-2" />
-                          Edit
+                          Modifier
                         </Button>
-                        <Button size="sm" variant="outline" className="rounded-full text-red-600 border-red-200 hover:bg-red-50">
+                        <Button size="sm" variant="outline" onClick={() => handleDeleteItem(listing.id)} className="rounded-full text-red-600 border-red-200 hover:bg-red-50">
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
+                          Supprimer
                         </Button>
                       </div>
                     </div>
                   </div>
                 ))}
+                {myListings.length === 0 && (
+                   <p className="text-gray-500 p-4 font-medium">Vous n'avez publié aucune annonce.</p>
+                )}
               </div>
             </motion.div>
           )}
@@ -355,7 +299,7 @@ export function LenderDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Upcoming Bookings</h2>
+              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Demandes & Réservations</h2>
               <div className="space-y-4">
                 {upcomingBookings.map((booking) => (
                   <div
@@ -365,29 +309,49 @@ export function LenderDashboard() {
                     <div className="flex-1 mb-4 md:mb-0">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 bg-[#0F2A2E] rounded-full flex items-center justify-center text-white font-bold">
-                          {booking.renterName.split(' ').map(n => n[0]).join('')}
+                          {booking.renter?.full_name ? booking.renter.full_name[0] : "U"}
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-900">{booking.renterName}</h4>
-                          <p className="text-sm text-gray-500">{booking.item}</p>
+                          <h4 className="font-bold text-gray-900">{booking.renter?.full_name || "Utilisateur"}</h4>
+                          <p className="text-sm text-gray-500">{booking.item?.title || "Annonce"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600 ml-15">
                         <Calendar className="w-4 h-4" />
-                        <span>{booking.startDate} - {booking.endDate}</span>
+                        <span>{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-sm text-gray-500">Earnings</div>
-                        <div className="text-2xl font-bold text-[#0F2A2E]">${booking.earnings}</div>
+                        <div className="text-sm text-gray-500">Gains Prévus</div>
+                        <div className="text-xl font-bold text-[#0F2A2E]">{booking.total_price} DZD</div>
+                        <div className={`text-xs font-semibold mt-1 uppercase tracking-wide ${booking.status === 'confirmed' ? 'text-green-600' : booking.status === 'cancelled' ? 'text-red-500' : 'text-indigo-600'}`}>
+                           {booking.status === 'pending' ? 'EN ATTENTE' : booking.status === 'confirmed' ? 'ACCEPTÉE' : 'REFUSÉE'}
+                        </div>
                       </div>
-                      <Button size="sm" className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full">
-                        View Details
-                      </Button>
+                      <div className="flex flex-col gap-2 ml-4">
+                        {booking.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} className="bg-green-600 hover:bg-green-700 text-white rounded-full h-8">
+                                <CheckCircle className="w-4 h-4 mr-1" /> Accepter
+                            </Button>
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 rounded-full h-8">
+                                <XCircle className="w-4 h-4 mr-1" /> Refuser
+                            </Button>
+                          </div>
+                        )}
+                        {booking.status !== 'pending' && (
+                           <Button size="sm" onClick={() => navigate(`/item/${booking.item_id}`)} className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full">
+                              Voir l'annonce
+                           </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
+                {upcomingBookings.length === 0 && (
+                   <p className="text-gray-500 p-4">Aucune demande de réservation pour le moment.</p>
+                )}
               </div>
             </motion.div>
           )}
@@ -400,42 +364,17 @@ export function LenderDashboard() {
               className="space-y-6"
             >
               <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Earnings Breakdown</h2>
-                <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Détails des revenus (Bientôt disponible)</h2>
+                <div className="grid md:grid-cols-3 gap-6 mb-8 opacity-50">
                   {[
-                    { label: "This Month", value: "$3,200", change: "+24%" },
-                    { label: "Last Month", value: "$2,800", change: "+18%" },
-                    { label: "All Time", value: "$12,450", change: "" }
+                    { label: "Ce Mois", value: "0 DZD", change: "" },
+                    { label: "Mois Dernier", value: "0 DZD", change: "" },
+                    { label: "Total", value: "0 DZD", change: "" }
                   ].map((stat) => (
                     <div key={stat.label} className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl">
                       <div className="text-sm text-gray-500 mb-1">{stat.label}</div>
                       <div className="flex items-baseline gap-2">
                         <div className="text-3xl font-bold text-[#0F2A2E]">{stat.value}</div>
-                        {stat.change && (
-                          <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <h3 className="text-xl font-bold text-[#0F2A2E] mb-4">Recent Transactions</h3>
-                <div className="space-y-3">
-                  {[
-                    { date: "Feb 19, 2026", item: "Modern Downtown Loft", amount: 450, status: "Completed" },
-                    { date: "Feb 18, 2026", item: "Professional Camera Kit", amount: 85, status: "Completed" },
-                    { date: "Feb 15, 2026", item: "Designer Furniture Set", amount: 120, status: "Completed" }
-                  ].map((transaction, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                      <div>
-                        <div className="font-semibold text-gray-900">{transaction.item}</div>
-                        <div className="text-sm text-gray-500">{transaction.date}</div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                          {transaction.status}
-                        </span>
-                        <div className="text-xl font-bold text-[#0F2A2E]">+${transaction.amount}</div>
                       </div>
                     </div>
                   ))}

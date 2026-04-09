@@ -9,6 +9,8 @@ import { AdminPanel } from "./pages/admin-panel";
 import { LoginPage } from "./pages/login-page";
 import { SignupPage } from "./pages/signup-page";
 import { CreateItemPage } from "./pages/create-item-page";
+import { EditItemPage } from "./pages/edit-item-page";
+import { CGUPage, PrivacyPolicyPage, LegalNoticePage } from "./pages/legal-pages";
 import { ProtectedRoute, GuestRoute } from "./components/shared/protected-route";
 
 export const router = createBrowserRouter([
@@ -28,6 +30,18 @@ export const router = createBrowserRouter([
   {
     path: "/item/:itemId",
     Component: ItemDetailPage,
+  },
+  {
+    path: "/cgu",
+    Component: CGUPage,
+  },
+  {
+    path: "/privacy",
+    Component: PrivacyPolicyPage,
+  },
+  {
+    path: "/legal",
+    Component: LegalNoticePage,
   },
 
   // ─── Guest Only Routes (redirect if logged in) ────
@@ -56,6 +70,10 @@ export const router = createBrowserRouter([
       {
         path: "/create",
         Component: CreateItemPage,
+      },
+      {
+        path: "/edit-item/:id",
+        Component: EditItemPage,
       },
       {
         path: "/lender",

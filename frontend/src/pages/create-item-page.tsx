@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
+import { itemsService } from "../services/api.service";
 
 // 58 Wilayas
 const WILAYAS = [
@@ -194,39 +195,30 @@ export function CreateItemPage() {
 
             const wilaya = WILAYAS.find(w => w.code === Number(form.wilaya_code));
 
-            // 2. Insert item
-            const { data, error: insertError } = await supabase
-                .from("items")
-                .insert({
-                    title: form.title.trim(),
-                    description: form.description.trim(),
-                    listing_type: form.listing_type,
-                    category_id: form.category_id,
-                    owner_id: user.id,
-                    condition: form.condition,
-                    tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-                    images: imageUrls,
-                    thumbnail_url: imageUrls[0] || null,
-                    price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
-                    price_per_week: form.price_per_week ? Number(form.price_per_week) : null,
-                    price_per_month: form.price_per_month ? Number(form.price_per_month) : null,
-                    sale_price: form.sale_price ? Number(form.sale_price) : null,
-                    is_negotiable: form.is_negotiable,
-                    deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : null,
-                    wilaya_code: Number(form.wilaya_code),
-                    location: wilaya ? `${wilaya.name}, ${wilaya.code}` : "",
-                    troc_description: form.troc_description || null,
-                    troc_estimated_value: form.troc_estimated_value ? Number(form.troc_estimated_value) : null,
-                    status: "active",
-                    is_available: true,
-                })
-                .select("id")
-                .single();
-
-            if (insertError) throw new Error(insertError.message);
+            // 2. Insert item via Backend API
+            const response = await itemsService.create({
+                title: form.title.trim(),
+                description: form.description.trim(),
+                listing_type: form.listing_type,
+                category_id: form.category_id,
+                condition: form.condition,
+                tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+                images: imageUrls,
+                thumbnail_url: imageUrls[0] || null,
+                price_per_day: form.price_per_day ? Number(form.price_per_day) : null,
+                price_per_week: form.price_per_week ? Number(form.price_per_week) : null,
+                price_per_month: form.price_per_month ? Number(form.price_per_month) : null,
+                sale_price: form.sale_price ? Number(form.sale_price) : null,
+                is_negotiable: form.is_negotiable,
+                deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : null,
+                wilaya_code: Number(form.wilaya_code),
+                location: wilaya ? `${wilaya.name}, ${wilaya.code}` : "",
+                troc_description: form.troc_description || null,
+                troc_estimated_value: form.troc_estimated_value ? Number(form.troc_estimated_value) : null,
+            });
 
             // Success — go to item page
-            navigate(`/item/${data.id}`);
+            navigate(`/item/${response.data.id}`);
         } catch (err: any) {
             setError(err.message || "Erreur lors de la publication.");
             setIsSubmitting(false);

@@ -12,6 +12,7 @@ import { Footer } from "../components/layout/footer";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth.store";
+import { bookingsService, itemsService } from "../services/api.service";
 
 const CONDITION_LABELS: Record<string, string> = {
   new: "Neuf",
@@ -114,44 +115,25 @@ export function ItemDetailPage() {
       if (!itemId) return;
       setIsLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from("items")
-        .select("*")
-        .eq("id", itemId)
-        .single();
+      try {
+        const response = await itemsService.getById(itemId);
+        const itemData = response.data;
+        setItem(itemData as ItemDetail);
+        setOwner(itemData.owner as OwnerProfile);
+        setCategory(itemData.category as CategoryInfo);
 
-      if (fetchError || !data) {
+        // Increment view count (best effort, using supabase directly is fine for this analytics update)
+        supabase
+          .from("items")
+          .update({ view_count: (itemData.view_count || 0) + 1 })
+          .eq("id", itemId)
+          .then(() => { });
+
+        setIsLoading(false);
+      } catch (err) {
         setError("Annonce introuvable.");
         setIsLoading(false);
-        return;
       }
-
-      setItem(data as ItemDetail);
-
-      // Fetch owner profile
-      const { data: ownerData } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, is_verified, rating, total_reviews, created_at, wilaya_code")
-        .eq("id", data.owner_id)
-        .single();
-      if (ownerData) setOwner(ownerData as OwnerProfile);
-
-      // Fetch category
-      const { data: catData } = await supabase
-        .from("categories")
-        .select("name, slug")
-        .eq("id", data.category_id)
-        .single();
-      if (catData) setCategory(catData as CategoryInfo);
-
-      // Increment view count (best effort)
-      supabase
-        .from("items")
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq("id", itemId)
-        .then(() => { });
-
-      setIsLoading(false);
     };
 
     fetchItem();
@@ -204,30 +186,21 @@ export function ItemDetailPage() {
     setIsBooking(true);
     setBookingError("");
 
-    const { error: insertError } = await supabase
-      .from("bookings")
-      .insert({
+    try {
+      await bookingsService.create({
         item_id: item.id,
-        renter_id: user.id,
-        owner_id: item.owner_id,
         start_date: startDate,
         end_date: endDate,
-        price_per_day: Number(item.price_per_day),
-        total_price: bookingCalc.total,
-        deposit_amount: bookingCalc.deposit,
-        message: bookingMessage || null,
-        status: "pending",
-        payment_status: "pending",
+        message: bookingMessage || undefined,
       });
-
-    setIsBooking(false);
-
-    if (insertError) {
-      setBookingError(insertError.message.includes("no_self_booking")
-        ? "Vous ne pouvez pas réserver votre propre annonce."
-        : "Erreur lors de la réservation : " + insertError.message);
-    } else {
+      setIsBooking(false);
       setBookingSuccess(true);
+    } catch (err: any) {
+      setIsBooking(false);
+      const errorMessage = err.response?.data?.message || err.message;
+      setBookingError(errorMessage.includes("own item")
+        ? "Vous ne pouvez pas réserver votre propre annonce."
+        : "Erreur lors de la réservation : " + errorMessage);
     }
   };
 

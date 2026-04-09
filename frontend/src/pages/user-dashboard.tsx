@@ -8,6 +8,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
+import { bookingsService } from "../services/api.service";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Wilayas d'Algérie
@@ -139,27 +140,25 @@ export function UserDashboard() {
       if (!user) return;
       setIsLoadingBookings(true);
 
-      const column = bookingTab === "renter" ? "renter_id" : "owner_id";
-      const { data } = await supabase
-        .from("bookings")
-        .select("*, items(title, thumbnail_url, location)")
-        .eq(column, user.id)
-        .order("created_at", { ascending: false });
-
-      setBookings((data as Booking[]) || []);
-      setIsLoadingBookings(false);
+      try {
+        const { data } = await bookingsService.getMyBookings({ role: bookingTab });
+        setBookings(data || []);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+      } finally {
+        setIsLoadingBookings(false);
+      }
     };
     fetchBookings();
   }, [user, bookingTab]);
 
   // Handle booking action (confirm/reject/cancel)
   const handleBookingAction = async (bookingId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: newStatus })
-      .eq("id", bookingId);
-    if (!error) {
+    try {
+      await bookingsService.updateStatus(bookingId, newStatus);
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
+    } catch (err) {
+      alert("Erreur lors de la mise à jour de la demande.");
     }
   };
 
