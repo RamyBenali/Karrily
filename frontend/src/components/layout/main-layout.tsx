@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
 import { Navigation } from "./navigation";
-import { BottomNav } from "./bottom-nav";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocation } from "react-router";
 
