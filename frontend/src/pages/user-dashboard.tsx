@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon } from "lucide-react";
+import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon, DollarSign } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate, useLocation } from "react-router";
@@ -192,23 +192,25 @@ export function UserDashboard() {
     fetchSales();
     fetchTroc();
 
-    // Realtime for Sales
-    const salesChannel = supabase
-      .channel(`user_sales:${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
-      .subscribe();
-
-    // Realtime for Troc
-    const trocChannel = supabase
-      .channel(`user_troc:${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
-      .subscribe();
-
-    return () => {
-      if (channel) supabase.removeChannel(channel);
-      supabase.removeChannel(salesChannel);
-      supabase.removeChannel(trocChannel);
-    };
+     if (user) {
+       // Realtime for Sales
+       const salesChannel = supabase
+         .channel(`user_sales:${user.id}`)
+         .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
+         .subscribe();
+  
+       // Realtime for Troc
+       const trocChannel = supabase
+         .channel(`user_troc:${user.id}`)
+         .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
+         .subscribe();
+  
+       return () => {
+         if (channel) supabase.removeChannel(channel);
+         supabase.removeChannel(salesChannel);
+         supabase.removeChannel(trocChannel);
+       };
+     }
   }, [user, bookingTab]);
 
   // Handle booking action (confirm/reject/cancel)
@@ -425,18 +427,36 @@ export function UserDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6 lg:mb-8"
           >
-            <h1 className="text-5xl font-bold text-[#0F2A2E] mb-3">Mon tableau de bord</h1>
-            <p className="text-xl text-gray-600">Gérez vos locations et votre compte</p>
+            <h1 className="text-3xl lg:text-5xl font-bold text-[#0F2A2E] mb-2 leading-tight">Mon compte</h1>
+            <p className="text-lg lg:text-xl text-gray-600 hidden lg:block">Gérez vos locations et votre compte</p>
           </motion.div>
+
+          {/* Mobile Tabs - Horizontal Scroll */}
+          <div className="lg:hidden -mx-6 px-6 mb-6 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 pb-2">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => setActiveTab(item.label)}
+                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  activeTab === item.label
+                    ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
+                    : "bg-white text-gray-600 border border-gray-100"
+                }`}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </button>
+            ))}
+          </div>
 
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Sidebar */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="lg:col-span-3"
+              className="hidden lg:block lg:col-span-3"
             >
               <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 sticky top-28">
                 {/* User Info */}
@@ -662,10 +682,8 @@ export function UserDashboard() {
                                     className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
                                     onClick={() => handleBookingAction(booking.id, "cancelled")}
                                   >
-                                    Annuler
+                                    Annuler la demande
                                   </Button>
-                                )}
- </Button>
                                 )}
                                 <Button
                                   size="sm"
@@ -724,13 +742,18 @@ export function UserDashboard() {
                             <p className="text-2xl font-bold text-[#0F2A2E] mb-2">{sale.price} DZD</p>
                             <p className="text-sm text-gray-500">Vendeur : {sale.seller?.full_name}</p>
                             {sale.status === 'accepted' && (
-                              <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                                  <MessageSquare className="w-5 h-5" />
+                              <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                    <MessageSquare className="w-5 h-5" />
+                                  </div>
+                                  <p className="text-sm text-blue-700 font-semibold">
+                                    Instructions de livraison du vendeur :
+                                  </p>
                                 </div>
-                                <p className="text-sm text-blue-700">
-                                  Contactez le vendeur pour organiser la livraison.
-                                </p>
+                                <div className="bg-white/50 p-3 rounded-xl border border-blue-100 text-sm text-blue-800">
+                                  {sale.delivery_info || "Contactez le vendeur pour organiser la livraison."}
+                                </div>
                               </div>
                             )}
                           </div>

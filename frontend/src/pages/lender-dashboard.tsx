@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -20,6 +20,18 @@ const earningsData = [
   { month: "May", earnings: 2800 },
   { month: "Jun", earnings: 3200 },
 ];
+
+const WILAYAS: Record<number, string> = {
+  1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Béjaïa",
+  7: "Biskra", 8: "Béchar", 9: "Blida", 10: "Bouira", 11: "Tamanrasset", 12: "Tébessa",
+  13: "Tlemcen", 14: "Tiaret", 15: "Tizi Ouzou", 16: "Alger", 17: "Djelfa", 18: "Jijel",
+  19: "Sétif", 20: "Saïda", 21: "Skikda", 22: "Sidi Bel Abbès", 23: "Annaba", 24: "Guelma",
+  25: "Constantine", 26: "Médéa", 27: "Mostaganem", 28: "M'Sila", 29: "Mascara", 30: "Ouargla",
+  31: "Oran", 32: "El Bayadh", 33: "Illizi", 34: "Bordj Bou Arréridj", 35: "Boumerdès",
+  36: "El Tarf", 37: "Tindouf", 38: "Tissemsilt", 39: "El Oued", 40: "Khenchela",
+  41: "Souk Ahras", 42: "Tipaza", 43: "Mila", 44: "Aïn Defla", 45: "Naâma",
+  46: "Aïn Témouchent", 47: "Ghardaïa", 48: "Relizane",
+};
 
 export function LenderDashboard() {
   const navigate = useNavigate();
@@ -128,8 +140,23 @@ export function LenderDashboard() {
 
   const handleUpdateSaleStatus = async (id: string, status: string) => {
     try {
-      await salesService.updateStatus(id, status);
-      setMySales(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+      let delivery_info = undefined;
+      if (status === 'accepted') {
+        const info = prompt("Veuillez entrer les détails pour la livraison (Lieu de RDV, mode d'envoi, etc.) :");
+        if (info === null) return; // Cancel if prompt cancelled
+        delivery_info = info;
+      }
+      await salesService.updateStatus(id, status, delivery_info);
+      setMySales(prev => prev.map(s => s.id === id ? { ...s, status, delivery_info: delivery_info || s.delivery_info } : s));
+    } catch(err) {
+      alert("Erreur de modification du statut.");
+    }
+  };
+
+  const handleUpdateBookingStatus = async (id: string, status: string) => {
+    try {
+      await bookingsService.updateStatus(id, status);
+      setUpcomingBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
     } catch(err) {
       alert("Erreur de modification du statut.");
     }
@@ -145,24 +172,49 @@ export function LenderDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
+            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 lg:mb-8 gap-4"
           >
             <div>
-              <h1 className="text-5xl font-bold text-[#0F2A2E] mb-3">Tableau de bord Propriétaire</h1>
-              <p className="text-xl text-gray-600">Gérez vos annonces et suivez vos revenus</p>
+              <h1 className="text-3xl lg:text-5xl font-bold text-[#0F2A2E] mb-2 leading-tight">Propriétaire</h1>
+              <p className="text-lg lg:text-xl text-gray-600 hidden lg:block">Gérez vos annonces et suivez vos revenus</p>
             </div>
-            <Button onClick={() => navigate("/create")} className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
+            <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
               <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
               Publier une annonce
             </Button>
           </motion.div>
 
-          {/* Tab Navigation */}
+          {/* Mobile Tab Navigation - Horizontal Scroll */}
+          <div className="lg:hidden -mx-6 px-6 mb-6 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 pb-2">
+            {[
+              { id: "overview", label: "Aperçu", icon: BarChart3 },
+              { id: "listings", label: "Annonces", icon: Package },
+              { id: "bookings", label: "Locations", icon: Calendar },
+              { id: "sales", label: "Ventes", icon: ShoppingCart },
+              { id: "troc", label: "Troc", icon: RefreshCw },
+              { id: "earnings", label: "Revenus", icon: DollarSign }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveView(tab.id as any)}
+                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  activeView === tab.id
+                    ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
+                    : "bg-white text-gray-600 border border-gray-100"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop Tab Navigation */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-3xl p-2 shadow-lg border border-gray-100 mb-8 inline-flex gap-2 flex-wrap"
+            className="hidden lg:inline-flex bg-white rounded-3xl p-2 shadow-lg border border-gray-100 mb-8 gap-2 flex-wrap"
           >
             {[
               { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
@@ -498,21 +550,26 @@ export function LenderDashboard() {
                             sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
                         </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex flex-col gap-2 ml-4 min-w-[150px]">
                         {sale.status === 'pending' && (
-                          <>
+                          <div className="flex flex-col gap-2">
                             <Button size="sm" onClick={() => handleUpdateSaleStatus(sale.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full h-8 px-4">
-                              Accepter
+                              Accepter et organiser
                             </Button>
                             <Button size="sm" onClick={() => handleUpdateSaleStatus(sale.id, 'rejected')} variant="outline" className="text-red-600 border-red-200 rounded-full h-8 px-4">
                               Refuser
                             </Button>
-                          </>
+                          </div>
                         )}
                         {sale.status === 'accepted' && (
-                          <Button size="sm" onClick={() => handleUpdateSaleStatus(sale.id, 'completed')} className="bg-[#0F2A2E] text-white rounded-full h-8 px-4">
-                             Valider la remise finale
-                          </Button>
+                          <div className="flex flex-col gap-2">
+                             <div className="p-3 bg-blue-50 border border-blue-100 rounded-2xl text-[10px] text-blue-700 mb-1 max-w-[200px]">
+                                <strong>Livraison :</strong> {sale.delivery_info || "Non spécifié"}
+                             </div>
+                             <Button size="sm" onClick={() => handleUpdateSaleStatus(sale.id, 'completed')} className="bg-[#0F2A2E] text-white rounded-full h-8 px-4">
+                                Valider la remise finale
+                             </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -560,9 +617,21 @@ export function LenderDashboard() {
                              <p className="font-bold text-gray-800">{proposal.offered_item.title}</p>
                           </div>
                         ) : (
-                          <div>
+                          <div className="space-y-1">
                              <p className="font-bold text-gray-800">{proposal.offered_item_data?.title || "Objet personnel"}</p>
-                             <p className="text-sm text-gray-500">{proposal.offered_item_data?.description}</p>
+                             <p className="text-xs text-gray-500 line-clamp-2">{proposal.offered_item_data?.description}</p>
+                             <div className="flex flex-wrap gap-2 mt-2">
+                                {proposal.offered_item_data?.estimated_value && (
+                                   <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded-md flex items-center gap-1">
+                                      <DollarSign className="w-3 h-3" /> {Number(proposal.offered_item_data.estimated_value).toLocaleString()} DA
+                                   </span>
+                                )}
+                                {proposal.offered_item_data?.wilaya_code && (
+                                   <span className="px-2 py-0.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-md flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" /> {WILAYAS[Number(proposal.offered_item_data.wilaya_code)] || proposal.offered_item_data.wilaya_code}
+                                   </span>
+                                )}
+                             </div>
                           </div>
                         )}
                         {proposal.message && <p className="mt-3 text-sm text-gray-600">"{proposal.message}"</p>}

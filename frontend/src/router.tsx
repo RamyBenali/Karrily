@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { LandingPage } from "./pages/landing-page";
 import { ExplorePage } from "./pages/explore-page";
 import { CategoryPage } from "./pages/category-page";
@@ -12,77 +12,83 @@ import { CreateItemPage } from "./pages/create-item-page";
 import { EditItemPage } from "./pages/edit-item-page";
 import { CGUPage, PrivacyPolicyPage, LegalNoticePage } from "./pages/legal-pages";
 import { ProtectedRoute, GuestRoute } from "./components/shared/protected-route";
+import { MainLayout } from "./components/layout/main-layout";
 
 export const router = createBrowserRouter([
-  // ─── Public Routes ─────────────────────────────────
   {
-    path: "/",
-    Component: LandingPage,
-  },
-  {
-    path: "/explore",
-    Component: ExplorePage,
-  },
-  {
-    path: "/category/:categoryName",
-    Component: CategoryPage,
-  },
-  {
-    path: "/item/:itemId",
-    Component: ItemDetailPage,
-  },
-  {
-    path: "/cgu",
-    Component: CGUPage,
-  },
-  {
-    path: "/privacy",
-    Component: PrivacyPolicyPage,
-  },
-  {
-    path: "/legal",
-    Component: LegalNoticePage,
-  },
-
-  // ─── Guest Only Routes (redirect if logged in) ────
-  {
-    Component: GuestRoute,
+    Component: MainLayout,
     children: [
+      // ─── Public Routes ─────────────────────────────────
       {
-        path: "/login",
-        Component: LoginPage,
+        path: "/",
+        Component: LandingPage,
       },
       {
-        path: "/signup",
-        Component: SignupPage,
+        path: "/explore",
+        Component: ExplorePage,
       },
-    ],
-  },
+      {
+        path: "/category/:categoryName",
+        Component: CategoryPage,
+      },
+      {
+        path: "/item/:itemId",
+        Component: ItemDetailPage,
+      },
+      {
+        path: "/cgu",
+        Component: CGUPage,
+      },
+      {
+        path: "/privacy",
+        Component: PrivacyPolicyPage,
+      },
+      {
+        path: "/legal",
+        Component: LegalNoticePage,
+      },
 
-  // ─── Protected Routes (require auth) ──────────────
-  {
-    Component: ProtectedRoute,
-    children: [
+      // ─── Guest Only Routes (redirect if logged in) ────
       {
-        path: "/dashboard",
-        Component: UserDashboard,
+        Component: GuestRoute,
+        children: [
+          {
+            path: "/login",
+            Component: LoginPage,
+          },
+          {
+            path: "/signup",
+            Component: SignupPage,
+          },
+        ],
       },
+
+      // ─── Protected Routes (require auth) ──────────────
       {
-        path: "/create",
-        Component: CreateItemPage,
+        Component: ProtectedRoute,
+        children: [
+          {
+            path: "/dashboard",
+            Component: UserDashboard,
+          },
+          {
+            path: "/create",
+            Component: CreateItemPage,
+          },
+          {
+            path: "/edit-item/:id",
+            Component: EditItemPage,
+          },
+          {
+            path: "/lender",
+            Component: LenderDashboard,
+          },
+          {
+            path: "/admin",
+            Component: AdminPanel,
+          },
+        ],
       },
-      {
-        path: "/edit-item/:id",
-        Component: EditItemPage,
-      },
-      {
-        path: "/lender",
-        Component: LenderDashboard,
-      },
-      {
-        path: "/admin",
-        Component: AdminPanel,
-      },
-    ],
-  },
+    ]
+  }
 ]);

@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, CheckCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../context/theme-context";
 import { ThemeToggle } from "./theme-toggle";
+import { useNotifications } from "../../hooks/useNotifications";
 
 export function Navigation({ variant = "default" }: { variant?: "default" | "transparent" }) {
   const navigate = useNavigate();
@@ -14,7 +15,11 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
   const { isDark } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifMenuRef = useRef<HTMLDivElement>(null);
+  
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   const isTransparent = variant === "transparent";
 
@@ -23,6 +28,9 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
+      }
+      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -65,7 +73,7 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
             </motion.div>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Hidden on Mobile */}
           <div className="hidden lg:flex items-center gap-8">
             <button
               onClick={() => navigate('/explore')}
@@ -124,6 +132,80 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                 >
                   <Heart className={`w-5 h-5 ${isTransparent ? "text-white" : "text-foreground"}`} />
                 </motion.button>
+
+                {/* Notifications Bell */}
+                <div className="relative" ref={notifMenuRef}>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors relative ${isTransparent
+                      ? "hover:bg-white/10"
+                      : "hover:bg-muted"
+                      }`}
+                  >
+                    <Bell className={`w-5 h-5 ${isTransparent ? "text-white" : "text-foreground"}`} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-[#FF4F5A] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-2 w-80 bg-card rounded-2xl shadow-xl border border-border overflow-hidden z-50 shadow-2xl"
+                      >
+                        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20">
+                          <h3 className="font-bold text-sm text-foreground">Notifications</h3>
+                          {unreadCount > 0 && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
+                              className="text-xs text-[#FF4F5A] font-semibold hover:underline"
+                            >
+                              Tout lire
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="p-10 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
+                              <Bell className="w-8 h-8 opacity-20" />
+                              Aucune notification
+                            </div>
+                          ) : (
+                            notifications.map(notif => (
+                              <div 
+                                key={notif.id} 
+                                onClick={() => { if(!notif.is_read) markAsRead(notif.id); navigate(notif.link || '/dashboard'); setShowNotifications(false); }}
+                                className={`p-4 border-b border-border hover:bg-muted/50 transition-colors relative group cursor-pointer ${!notif.is_read ? 'bg-[#FF4F5A]/5' : ''}`}
+                              >
+                                <div className="pr-6">
+                                  <p className="font-bold text-xs mb-1 text-foreground">{notif.title}</p>
+                                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{notif.content}</p>
+                                  <p className="text-[10px] text-muted-foreground mt-2">{new Date(notif.created_at).toLocaleDateString()}</p>
+                                </div>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
+                                  className="absolute top-3 right-3 p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                                {!notif.is_read && (
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#FF4F5A]" />
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 {/* User Avatar / Menu */}
                 <div className="relative" ref={userMenuRef}>

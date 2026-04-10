@@ -1,9 +1,32 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
-import { RefreshCw, Loader2, CheckCircle2, Box, PlusCircle } from "lucide-react";
+import { RefreshCw, Loader2, CheckCircle2, Box, PlusCircle, MapPin, DollarSign } from "lucide-react";
 import { trocService, usersService } from "../../services/api.service";
 import { useAuthStore } from "../../store/auth.store";
+
+const WILAYAS = [
+    { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
+    { code: 4, name: "Oum El Bouaghi" }, { code: 5, name: "Batna" }, { code: 6, name: "Béjaïa" },
+    { code: 7, name: "Biskra" }, { code: 8, name: "Béchar" }, { code: 9, name: "Blida" },
+    { code: 10, name: "Bouira" }, { code: 11, name: "Tamanrasset" }, { code: 12, name: "Tébessa" },
+    { code: 13, name: "Tlemcen" }, { code: 14, name: "Tiaret" }, { code: 15, name: "Tizi Ouzou" },
+    { code: 16, name: "Alger" }, { code: 17, name: "Djelfa" }, { code: 18, name: "Jijel" },
+    { code: 19, name: "Sétif" }, { code: 20, name: "Saïda" }, { code: 21, name: "Skikda" },
+    { code: 22, name: "Sidi Bel Abbès" }, { code: 23, name: "Annaba" }, { code: 24, name: "Guelma" },
+    { code: 25, name: "Constantine" }, { code: 26, name: "Médéa" }, { code: 27, name: "Mostaganem" },
+    { code: 28, name: "M'Sila" }, { code: 29, name: "Mascara" }, { code: 30, name: "Ouargla" },
+    { code: 31, name: "Oran" }, { code: 32, name: "El Bayadh" }, { code: 33, name: "Illizi" },
+    { code: 34, name: "Bordj Bou Arréridj" }, { code: 35, name: "Boumerdès" },
+    { code: 36, name: "El Tarf" }, { code: 37, name: "Tindouf" }, { code: 38, name: "Tissemsilt" },
+    { code: 39, name: "El Oued" }, { code: 40, name: "Khenchela" }, { code: 41, name: "Souk Ahras" },
+    { code: 42, name: "Tipaza" }, { code: 43, name: "Mila" }, { code: 44, name: "Aïn Defla" },
+    { code: 45, name: "Naâma" }, { code: 46, name: "Aïn Témouchent" }, { code: 47, name: "Ghardaïa" },
+    { code: 48, name: "Relizane" }, { code: 49, name: "El M'Ghair" }, { code: 50, name: "El Meniaa" },
+    { code: 51, name: "Ouled Djellal" }, { code: 52, name: "Bordj Badji Mokhtar" },
+    { code: 53, name: "Béni Abbès" }, { code: 54, name: "Timimoun" }, { code: 55, name: "Touggourt" },
+    { code: 56, name: "Djanet" }, { code: 57, name: "In Salah" }, { code: 58, name: "In Guezzam" },
+];
 
 interface TrocProposalModalProps {
   isOpen: boolean;
@@ -20,7 +43,13 @@ export function TrocProposalModal({ isOpen, onClose, item, onSuccess }: TrocProp
   
   // Form State
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [newItemData, setNewItemData] = useState({ title: "", description: "", condition: "good" });
+  const [newItemData, setNewItemData] = useState({ 
+    title: "", 
+    description: "", 
+    condition: "good",
+    estimated_value: "",
+    wilaya_code: ""
+  });
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -60,7 +89,13 @@ export function TrocProposalModal({ isOpen, onClose, item, onSuccess }: TrocProp
         onClose();
         setSuccess(false);
         setSelectedItemId(null);
-        setNewItemData({ title: "", description: "", condition: "good" });
+        setNewItemData({ 
+            title: "", 
+            description: "", 
+            condition: "good",
+            estimated_value: "",
+            wilaya_code: ""
+        });
         setMessage("");
       }, 2000);
     } catch (err: any) {
@@ -161,6 +196,32 @@ export function TrocProposalModal({ isOpen, onClose, item, onSuccess }: TrocProp
                         <option value="good">Bon état</option>
                         <option value="fair">Correct</option>
                     </select>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="relative">
+                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input 
+                                type="number"
+                                placeholder="Valeur (DA)"
+                                value={newItemData.estimated_value}
+                                onChange={e => setNewItemData({...newItemData, estimated_value: e.target.value})}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm"
+                            />
+                        </div>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <select 
+                                value={newItemData.wilaya_code}
+                                onChange={e => setNewItemData({...newItemData, wilaya_code: e.target.value})}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm appearance-none"
+                            >
+                                <option value="">Wilaya</option>
+                                {WILAYAS.map(w => (
+                                    <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -301,9 +301,9 @@ export function ExplorePage() {
 
       <div className="pt-24 pb-16">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <h1 className="text-5xl font-bold text-foreground mb-3">Explorer</h1>
-            <p className="text-xl text-muted-foreground">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8">
+            <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2">Explorer</h1>
+            <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">
               Découvrez des milliers d&apos;annonces près de chez vous
             </p>
           </motion.div>
@@ -378,9 +378,9 @@ export function ExplorePage() {
               ) : (
                 <div
                   className={`grid ${layout === "grid"
-                    ? "md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
-                    : "md:grid-cols-2 lg:grid-cols-2"
-                    } gap-6`}
+                    ? "grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
+                    : "grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
+                    } gap-3 md:gap-6`}
                 >
                   {items.map((item, index) => (
                     <motion.div
