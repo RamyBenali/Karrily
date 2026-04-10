@@ -69,3 +69,36 @@ export const usersService = {
     getUserReviews: (id: string) =>
         api.get(`/users/${id}/reviews`).then((res) => res.data),
 };
+
+// ─── Sales Service ───────────────────────────────────
+
+export const salesService = {
+    getMySales: (params?: Record<string, string>) =>
+        api.get("/sales", { params }).then((res) => res.data),
+
+    create: (data: { item_id: string; message?: string }) =>
+        api.post("/sales", data).then((res) => res.data),
+
+    updateStatus: (id: string, status: string, delivery_info?: string) =>
+        api.patch(`/sales/${id}/status`, { status, delivery_info }).then((res) => res.data),
+};
+
+// ─── Troc Service ────────────────────────────────────
+
+export const trocService = {
+    getMyProposals: (params?: Record<string, string>) =>
+        api.get("/troc", { params }).then((res) => res.data),
+
+    create: (data: {
+        requested_item_id: string;
+        offered_item_id?: string;
+        offered_item_data?: any;
+        message?: string;
+        cash_complement?: number;
+        complement_payer?: 'proposer' | 'owner';
+    }) =>
+        api.post("/troc", data).then((res) => res.data),
+
+    updateStatus: (id: string, status: string) =>
+        api.patch(`/troc/${id}/status`, { status }).then((res) => res.data),
+};

@@ -11,6 +11,7 @@ import { Input } from "../components/ui/input";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { itemsService } from "../services/api.service";
+import { CATEGORY_FILTERS, FilterField } from "../components/explore/explore-constants";
 
 // 58 Wilayas
 const WILAYAS = [
@@ -72,6 +73,7 @@ interface FormData {
     location: string;
     troc_description: string;
     troc_estimated_value: string;
+    metadata: Record<string, any>;
 }
 
 interface Category {
@@ -109,6 +111,7 @@ export function CreateItemPage() {
         location: "",
         troc_description: "",
         troc_estimated_value: "",
+        metadata: {},
     });
 
     // Fetch categories
@@ -164,6 +167,16 @@ export function CreateItemPage() {
                 if (form.listing_type === "sell" || form.listing_type === "rent_sell") {
                     if (!form.sale_price) return false;
                 }
+                
+                // Validate metadata
+                const selectedCat = categories.find(c => c.id === form.category_id);
+                if (selectedCat) {
+                    const filters = CATEGORY_FILTERS[selectedCat.slug] || [];
+                    for (const f of filters) {
+                        if (!form.metadata[f.key]) return false;
+                    }
+                }
+
                 return form.wilaya_code !== "";
             }
             default: return true;
@@ -215,6 +228,7 @@ export function CreateItemPage() {
                 location: wilaya ? `${wilaya.name}, ${wilaya.code}` : "",
                 troc_description: form.troc_description || null,
                 troc_estimated_value: form.troc_estimated_value ? Number(form.troc_estimated_value) : null,
+                metadata: form.metadata,
             });
 
             // Success — go to item page
@@ -397,6 +411,63 @@ export function CreateItemPage() {
                                         className="h-12 rounded-2xl bg-gray-50 border-gray-200"
                                     />
                                 </div>
+
+                                {/* Dynamic Metadata Fields */}
+                                {(() => {
+                                    const selectedCat = categories.find(c => c.id === form.category_id);
+                                    if (!selectedCat) return null;
+                                    const filters = CATEGORY_FILTERS[selectedCat.slug] || [];
+                                    if (filters.length === 0) return null;
+
+                                    return (
+                                        <div className="pt-4 border-t border-gray-100 space-y-6">
+                                            <h3 className="font-bold text-[#0F2A2E]">Caractéristiques spécifiques ({selectedCat.name})</h3>
+                                            <div className="grid sm:grid-cols-2 gap-6">
+                                                {filters.map(f => (
+                                                    <div key={f.key}>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            {f.label} *
+                                                        </label>
+                                                        {f.type === "select" && (
+                                                            <select
+                                                                value={form.metadata[f.key] || ""}
+                                                                onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
+                                                                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
+                                                            >
+                                                                <option value="">Sélectionner...</option>
+                                                                {f.options?.map(opt => (
+                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                        {f.type === "number" && (
+                                                            <Input
+                                                                type="number"
+                                                                value={form.metadata[f.key] || ""}
+                                                                onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
+                                                                placeholder={f.unit ? `Ex: 100 ${f.unit}` : "Ex: 2023"}
+                                                                className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                                                min={f.min}
+                                                                max={f.max}
+                                                            />
+                                                        )}
+                                                        {f.type === "checkbox" && (
+                                                            <label className="flex items-center gap-3 cursor-pointer h-12">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={form.metadata[f.key] === true}
+                                                                    onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.checked } })}
+                                                                    className="w-5 h-5 rounded accent-[#FF4F5A]"
+                                                                />
+                                                                <span className="text-sm text-gray-700">{f.label}</span>
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </motion.div>
                         )}
 

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Karrily</string>
+    <string name="title_activity_main">Karrily</string>
+    <string name="package_name">com.karrily.app</string>
+    <string name="custom_url_scheme">com.karrily.app</string>
+</resources>

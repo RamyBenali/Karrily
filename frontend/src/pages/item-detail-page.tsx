@@ -12,7 +12,9 @@ import { Footer } from "../components/layout/footer";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth.store";
-import { bookingsService, itemsService } from "../services/api.service";
+import { bookingsService, itemsService, salesService, trocService } from "../services/api.service";
+import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
+import { TrocProposalModal } from "../components/item/TrocProposalModal";
 
 const CONDITION_LABELS: Record<string, string> = {
   new: "Neuf",
@@ -91,6 +93,10 @@ export function ItemDetailPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  
+  // Modals state
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [isTrocModalOpen, setIsTrocModalOpen] = useState(false);
 
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [owner, setOwner] = useState<OwnerProfile | null>(null);
@@ -108,6 +114,7 @@ export function ItemDetailPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [creatingConversation, setCreatingConversation] = useState(false);
+  const [existingBookings, setExistingBookings] = useState<any[]>([]);
 
   // Fetch item data
   useEffect(() => {
@@ -122,7 +129,7 @@ export function ItemDetailPage() {
         setOwner(itemData.owner as OwnerProfile);
         setCategory(itemData.category as CategoryInfo);
 
-        // Increment view count (best effort, using supabase directly is fine for this analytics update)
+        // Increment view count
         supabase
           .from("items")
           .update({ view_count: (itemData.view_count || 0) + 1 })
@@ -137,6 +144,18 @@ export function ItemDetailPage() {
     };
 
     fetchItem();
+
+    // Fetch existing bookings to block dates
+    const fetchBookings = async () => {
+      if (!itemId) return;
+      const { data } = await supabase
+        .from("bookings")
+        .select("start_date, end_date")
+        .eq("item_id", itemId)
+        .in("status", ["confirmed", "active"]);
+      if (data) setExistingBookings(data);
+    };
+    fetchBookings();
   }, [itemId]);
 
   // Navigation
@@ -155,7 +174,15 @@ export function ItemDetailPage() {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (days <= 0) return null;
+    
+    // Check for overlap
+    const hasOverlap = existingBookings.some(b => {
+        const bStart = new Date(b.start_date);
+        const bEnd = new Date(b.end_date);
+        return (start <= bEnd && end >= bStart);
+    });
+
+    if (days <= 0 || hasOverlap) return null;
 
     let total = 0;
     if (days >= 30 && item.price_per_month) {
@@ -565,27 +592,37 @@ export function ItemDetailPage() {
                         </div>
                       </div>
 
-                      {/* Price breakdown */}
-                      {bookingCalc && (
-                        <div className="bg-gray-50 rounded-2xl p-4 space-y-2 mt-4">
-                          <div className="flex justify-between text-gray-700">
-                            <span>{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
-                            <span>{bookingCalc.total.toLocaleString()} DA</span>
-                          </div>
-                          {bookingCalc.deposit > 0 && (
-                            <div className="flex justify-between text-gray-700">
-                              <span>Caution (remboursable)</span>
-                              <span>{bookingCalc.deposit.toLocaleString()} DA</span>
-                            </div>
-                          )}
-                          <div className="pt-2 border-t border-gray-200 flex justify-between font-bold text-[#0F2A2E]">
-                            <span>Total</span>
-                            <span>{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
-                          </div>
-                        </div>
-                      )}
+              {/* Price breakdown */}
+              {bookingCalc && (
+                <div className="bg-gray-50 rounded-2xl p-4 space-y-2 mt-4">
+                  <div className="flex justify-between text-gray-700">
+                    <span>{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
+                    <span>{bookingCalc.total.toLocaleString()} DA</span>
+                  </div>
+                  {bookingCalc.deposit > 0 && (
+                    <div className="flex justify-between text-gray-700">
+                      <span>Caution (remboursable)</span>
+                      <span>{bookingCalc.deposit.toLocaleString()} DA</span>
                     </div>
                   )}
+                  <div className="pt-2 border-t border-gray-200 flex justify-between font-bold text-[#0F2A2E]">
+                    <span>Total</span>
+                    <span>{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Date conflict warning */}
+              {startDate && endDate && !bookingCalc && new Date(endDate) > new Date(startDate) && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 mt-4">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">
+                    Ces dates ne sont pas disponibles. L'objet est déjà réservé sur cette période.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
                   {/* Action buttons */}
                   {bookingSuccess && (
@@ -638,6 +675,7 @@ export function ItemDetailPage() {
 
                   {(item.listing_type === "sell" || item.listing_type === "rent_sell") && (
                     <Button
+                      onClick={() => user ? setIsPurchaseModalOpen(true) : navigate("/login")}
                       className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-semibold rounded-2xl shadow-xl shadow-emerald-600/30 mb-3"
                     >
                       <ShoppingCart className="w-5 h-5 mr-2" />
@@ -645,8 +683,9 @@ export function ItemDetailPage() {
                     </Button>
                   )}
 
-                  {item.listing_type === "troc" && (
+                  {(item.listing_type === "troc" || item.listing_type === "rent_sell") && (
                     <Button
+                      onClick={() => user ? setIsTrocModalOpen(true) : navigate("/login")}
                       className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold rounded-2xl shadow-xl shadow-purple-600/30 mb-3"
                     >
                       <RefreshCw className="w-5 h-5 mr-2" />
@@ -745,6 +784,24 @@ export function ItemDetailPage() {
         </div>
       </div>
       <Footer />
+
+      {item && (
+        <>
+          <PurchaseRequestModal 
+            isOpen={isPurchaseModalOpen}
+            onClose={() => setIsPurchaseModalOpen(false)}
+            item={item}
+            onSuccess={() => {}}
+          />
+
+          <TrocProposalModal 
+            isOpen={isTrocModalOpen}
+            onClose={() => setIsTrocModalOpen(false)}
+            item={item}
+            onSuccess={() => {}}
+          />
+        </>
+      )}
     </div>
   );
 }

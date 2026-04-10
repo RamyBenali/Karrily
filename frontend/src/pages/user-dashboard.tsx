@@ -8,8 +8,9 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
-import { bookingsService } from "../services/api.service";
+import { bookingsService, salesService, trocService, itemsService, usersService } from "../services/api.service";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { ShoppingCart, RefreshCw } from "lucide-react";
 
 // Wilayas d'Algérie
 const WILAYAS = [
@@ -47,6 +48,8 @@ interface Profile {
 
 const sidebarItems = [
   { icon: Package, label: "Locations actives" },
+  { icon: ShoppingCart, label: "Mes achats" },
+  { icon: RefreshCw, label: "Mes échanges" },
   { icon: Calendar, label: "Historique" },
   { icon: Heart, label: "Favoris" },
   { icon: MessageSquare, label: "Messages" },
@@ -131,11 +134,15 @@ export function UserDashboard() {
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [mySales, setMySales] = useState<any[]>([]);
+  const [myTroc, setMyTroc] = useState<any[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const [bookingTab, setBookingTab] = useState<"renter" | "owner">("renter");
 
-  // Fetch bookings
+  // Fetch bookings and subscribe to Realtime
   useEffect(() => {
+    let channel: RealtimeChannel;
+
     const fetchBookings = async () => {
       if (!user) return;
       setIsLoadingBookings(true);
@@ -143,6 +150,25 @@ export function UserDashboard() {
       try {
         const { data } = await bookingsService.getMyBookings({ role: bookingTab });
         setBookings(data || []);
+
+        // Subscribe to changes
+        channel = supabase
+          .channel(`bookings:${user.id}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "bookings", filter: `${bookingTab === 'renter' ? 'renter_id' : 'owner_id'}=eq.${user.id}` },
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                // For new bookings, we might need to fetch the item details, easiest is to just re-fetch the list
+                fetchBookings();
+              } else if (payload.eventType === 'UPDATE') {
+                setBookings(prev => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b));
+              } else if (payload.eventType === 'DELETE') {
+                setBookings(prev => prev.filter(b => b.id !== payload.old.id));
+              }
+            }
+          )
+          .subscribe();
       } catch (err) {
         console.error("Error fetching bookings:", err);
       } finally {
@@ -150,6 +176,39 @@ export function UserDashboard() {
       }
     };
     fetchBookings();
+
+    // Fetch My Sales
+    const fetchSales = async () => {
+      const res = await salesService.getMySales({ role: 'buyer' });
+      setMySales(res.data);
+    };
+
+    // Fetch My Troc
+    const fetchTroc = async () => {
+      const res = await trocService.getMyProposals({ role: 'proposer' });
+      setMyTroc(res.data);
+    };
+
+    fetchSales();
+    fetchTroc();
+
+    // Realtime for Sales
+    const salesChannel = supabase
+      .channel(`user_sales:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
+      .subscribe();
+
+    // Realtime for Troc
+    const trocChannel = supabase
+      .channel(`user_troc:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
+      .subscribe();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+      supabase.removeChannel(salesChannel);
+      supabase.removeChannel(trocChannel);
+    };
   }, [user, bookingTab]);
 
   // Handle booking action (confirm/reject/cancel)
@@ -554,23 +613,45 @@ export function UserDashboard() {
                               )}
                               <div className="flex gap-3">
                                 {/* Owner actions */}
-                                {bookingTab === "owner" && booking.status === "pending" && (
+                                {bookingTab === "owner" && (
                                   <>
-                                    <Button
-                                      size="sm"
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
-                                      onClick={() => handleBookingAction(booking.id, "confirmed")}
-                                    >
-                                      <Check className="w-4 h-4 mr-1" /> Accepter
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
-                                      onClick={() => handleBookingAction(booking.id, "rejected")}
-                                    >
-                                      Refuser
-                                    </Button>
+                                    {booking.status === "pending" && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+                                          onClick={() => handleBookingAction(booking.id, "confirmed")}
+                                        >
+                                          <Check className="w-4 h-4 mr-1" /> Accepter
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
+                                          onClick={() => handleBookingAction(booking.id, "rejected")}
+                                        >
+                                          Refuser
+                                        </Button>
+                                      </>
+                                    )}
+                                    {booking.status === "confirmed" && new Date() >= new Date(booking.start_date) && (
+                                      <Button
+                                        size="sm"
+                                        className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
+                                        onClick={() => handleBookingAction(booking.id, "active")}
+                                      >
+                                        <Package className="w-4 h-4 mr-1" /> Confirmer la remise
+                                      </Button>
+                                    )}
+                                    {booking.status === "active" && (
+                                      <Button
+                                        size="sm"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+                                        onClick={() => handleBookingAction(booking.id, "completed")}
+                                      >
+                                        <Check className="w-4 h-4 mr-1" /> Confirmer le retour
+                                      </Button>
+                                    )}
                                   </>
                                 )}
                                 {/* Renter actions */}
@@ -583,6 +664,8 @@ export function UserDashboard() {
                                   >
                                     Annuler
                                   </Button>
+                                )}
+ </Button>
                                 )}
                                 <Button
                                   size="sm"
@@ -598,6 +681,124 @@ export function UserDashboard() {
                         ))}
                       </div>
                     )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ─── Mes Achats ─── */}
+              {activeTab === "Mes achats" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6 flex items-center gap-2">
+                       <ShoppingCart className="w-6 h-6" /> Mes demandes d'achat
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      {mySales.map((sale) => (
+                        <div key={sale.id} className="flex flex-col md:flex-row gap-6 p-6 bg-gray-50 rounded-3xl group">
+                          <div className="w-full md:w-32 h-24 rounded-2xl overflow-hidden flex-shrink-0">
+                            <ImageWithFallback 
+                              src={sale.item?.thumbnail_url} 
+                              alt={sale.item?.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="text-lg font-bold text-[#0F2A2E] cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${sale.item_id}`)}>{sale.item?.title}</h3>
+                              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
+                                sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                sale.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
+                                sale.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {sale.status === 'pending' ? 'En attente' : 
+                                 sale.status === 'accepted' ? 'Acceptée' : 
+                                 sale.status === 'completed' ? 'Terminée' :
+                                 sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                              </span>
+                            </div>
+                            <p className="text-2xl font-bold text-[#0F2A2E] mb-2">{sale.price} DZD</p>
+                            <p className="text-sm text-gray-500">Vendeur : {sale.seller?.full_name}</p>
+                            {sale.status === 'accepted' && (
+                              <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                  <MessageSquare className="w-5 h-5" />
+                                </div>
+                                <p className="text-sm text-blue-700">
+                                  Contactez le vendeur pour organiser la livraison.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {mySales.length === 0 && (
+                        <div className="text-center py-12">
+                          <ShoppingCart className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                          <p className="text-gray-500">Aucune demande d'achat en cours.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ─── Mes Échanges ─── */}
+              {activeTab === "Mes échanges" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
+                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6 flex items-center gap-2">
+                       <RefreshCw className="w-6 h-6" /> Mes propositions de troc
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      {myTroc.map((proposal) => (
+                        <div key={proposal.id} className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                               <p className="text-xs font-bold text-gray-400 uppercase mb-1">Objet souhaité</p>
+                               <h3 className="text-lg font-bold text-[#0F2A2E] cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
+                            </div>
+                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
+                                proposal.status === 'pending' ? 'bg-purple-100 text-purple-700' :
+                                proposal.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
+                                proposal.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {proposal.status === 'pending' ? 'Envoyée' : 
+                                 proposal.status === 'accepted' ? 'Acceptée' : 
+                                 proposal.status === 'completed' ? 'Finalisé' :
+                                 proposal.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100">
+                             <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                                <RefreshCw className="w-5 h-5 rotate-45" />
+                             </div>
+                             <div>
+                                <p className="text-xs font-bold text-purple-600 uppercase">Votre proposition :</p>
+                                <p className="font-bold text-gray-800">
+                                  {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || "Objet personnel")}
+                                </p>
+                             </div>
+                          </div>
+                        </div>
+                      ))}
+                      {myTroc.length === 0 && (
+                        <div className="text-center py-12">
+                          <RefreshCw className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                          <p className="text-gray-500">Aucune proposition d'échange envoyée.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
