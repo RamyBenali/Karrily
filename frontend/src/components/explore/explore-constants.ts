@@ -298,10 +298,10 @@ export const SORT_OPTIONS = [
 ];
 
 export const LISTING_TYPE_LABELS: Record<string, string> = {
-  rent: "🏠 Location",
-  sell: "🛒 Vente",
-  troc: "🔄 Troc",
-  rent_sell: "🏷️ Loc/Vente",
+  rent: "Location",
+  sell: "Vente",
+  troc: "Troc",
+  rent_sell: "Location/Vente",
 };
 
 export const RATING_FILTER_OPTIONS = [

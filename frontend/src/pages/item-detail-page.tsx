@@ -1,11 +1,11 @@
 import { Navigation } from "../components/layout/navigation";
 import { useParams, useNavigate } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Star, MapPin, Shield, Clock, CheckCircle, Heart, Share2,
   Calendar, ChevronLeft, ChevronRight, Loader2, ArrowLeft,
   Tag, MessageCircle, ShoppingCart, RefreshCw, Eye, AlertCircle,
-  Home, HandCoins,
+  Home, HandCoins, Info,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -13,7 +13,7 @@ import { Footer } from "../components/layout/footer";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth.store";
-import { bookingsService, itemsService, salesService, trocService } from "../services/api.service";
+import { bookingsService, trocService } from "../services/api.service";
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
 
@@ -26,10 +26,10 @@ const CONDITION_LABELS: Record<string, string> = {
 };
 
 const LISTING_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
-  rent: { label: "Location", icon: Home, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  sell: { label: "Vente", icon: ShoppingCart, color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
-  troc: { label: "Troc", icon: RefreshCw, color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
-  rent_sell: { label: "Location & Vente", icon: HandCoins, color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  rent: { label: "Location", icon: Home, color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+  sell: { label: "Vente", icon: ShoppingCart, color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  troc: { label: "Troc", icon: RefreshCw, color: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" },
+  rent_sell: { label: "Location & Vente", icon: HandCoins, color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
 };
 
 const WILAYAS: Record<number, string> = {
@@ -72,22 +72,17 @@ interface ItemDetail {
   troc_estimated_value: number | null;
   created_at: string;
   owner_id: string;
-}
-
-interface OwnerProfile {
-  id: string;
-  full_name: string;
-  avatar_url: string | null;
-  is_verified: boolean;
-  rating: number;
-  total_reviews: number;
-  created_at: string;
-  wilaya_code: number;
-}
-
-interface CategoryInfo {
-  name: string;
-  slug: string;
+  category?: { name: string; slug: string };
+  owner?: {
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+    is_verified: boolean;
+    rating: number;
+    total_reviews: number;
+    created_at: string;
+    wilaya_code: number;
+  };
 }
 
 export function ItemDetailPage() {
@@ -95,19 +90,15 @@ export function ItemDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   
-  // Modals state
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isTrocModalOpen, setIsTrocModalOpen] = useState(false);
 
   const [item, setItem] = useState<ItemDetail | null>(null);
-  const [owner, setOwner] = useState<OwnerProfile | null>(null);
-  const [category, setCategory] = useState<CategoryInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
-  // Booking form
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [bookingMessage, setBookingMessage] = useState("");
@@ -117,18 +108,26 @@ export function ItemDetailPage() {
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
 
-  // Fetch item data
   useEffect(() => {
     const fetchItem = async () => {
       if (!itemId) return;
       setIsLoading(true);
 
       try {
-        const response = await itemsService.getById(itemId);
-        const itemData = response.data;
-        setItem(itemData as ItemDetail);
-        setOwner(itemData.owner as OwnerProfile);
-        setCategory(itemData.category as CategoryInfo);
+        const { data, error: fetchError } = await supabase
+          .from("items")
+          .select("*, category:categories(name, slug), owner:profiles(*)")
+          .eq("id", itemId)
+          .single();
+
+        if (fetchError || !data) {
+          setError("Annonce introuvable.");
+          setIsLoading(false);
+          return;
+        }
+
+        const itemData = data as any;
+        setItem(itemData);
 
         // Increment view count
         supabase
@@ -139,14 +138,13 @@ export function ItemDetailPage() {
 
         setIsLoading(false);
       } catch (err) {
-        setError("Annonce introuvable.");
+        setError("Une erreur est survenue lors du chargement.");
         setIsLoading(false);
       }
     };
 
     fetchItem();
 
-    // Fetch existing bookings to block dates
     const fetchBookings = async () => {
       if (!itemId) return;
       const { data } = await supabase
@@ -159,7 +157,6 @@ export function ItemDetailPage() {
     fetchBookings();
   }, [itemId]);
 
-  // Navigation
   const nextImage = () => {
     if (!item) return;
     setCurrentImageIndex((prev) => (prev + 1) % item.images.length);
@@ -169,14 +166,12 @@ export function ItemDetailPage() {
     setCurrentImageIndex((prev) => (prev - 1 + item.images.length) % item.images.length);
   };
 
-  // Calculate booking price
   const calculateBooking = () => {
     if (!item?.price_per_day || !startDate || !endDate) return null;
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Check for overlap
     const hasOverlap = existingBookings.some(b => {
         const bStart = new Date(b.start_date);
         const bEnd = new Date(b.end_date);
@@ -203,7 +198,6 @@ export function ItemDetailPage() {
 
   const bookingCalc = calculateBooking();
 
-  // Handle booking submission
   const handleBooking = async () => {
     if (!user || !item || !bookingCalc) return;
     if (user.id === item.owner_id) {
@@ -225,35 +219,27 @@ export function ItemDetailPage() {
       setBookingSuccess(true);
     } catch (err: any) {
       setIsBooking(false);
-      const errorMessage = err.response?.data?.message || err.message;
-      setBookingError(errorMessage.includes("own item")
-        ? "Vous ne pouvez pas réserver votre propre annonce."
-        : "Erreur lors de la réservation : " + errorMessage);
+      setBookingError("Erreur lors de la réservation : " + err.message);
     }
   };
 
-  // Handle Contact Owner
   const handleContactOwner = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
     if (!item) return;
-
-    // Prevent talking to oneself
     if (user.id === item.owner_id) {
-      alert("Vous ne pouvez pas vous envoyer un message à vous-même.");
+      alert("C'est votre propre annonce.");
       return;
     }
 
     setCreatingConversation(true);
 
-    // 1. Check if conversation already exists between these 2 users for this item
     const { data: existingConvs } = await supabase
       .from("conversations")
       .select("id")
       .eq("item_id", item.id)
-      .eq("participant_1", Math.min(Number(user.id.replace(/-/g, '')), Number(item.owner_id.replace(/-/g, ''))) ? user.id : item.owner_id) // We'll just check both ways
       .or(`and(participant_1.eq.${user.id},participant_2.eq.${item.owner_id}),and(participant_1.eq.${item.owner_id},participant_2.eq.${user.id})`)
       .limit(1);
 
@@ -263,8 +249,7 @@ export function ItemDetailPage() {
       return;
     }
 
-    // 2. Create new conversation
-    const { data: newConv, error } = await supabase
+    const { data: newConv, error: convError } = await supabase
       .from("conversations")
       .insert({
         item_id: item.id,
@@ -277,29 +262,28 @@ export function ItemDetailPage() {
 
     setCreatingConversation(false);
 
-    if (!error && newConv) {
+    if (!convError && newConv) {
       navigate("/dashboard", { state: { tab: "Messages", convId: newConv.id } });
     } else {
       alert("Erreur lors de la création de la conversation.");
     }
   };
 
-  // Owner initials
-  const ownerInitials = owner?.full_name
-    ? owner.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+  const ownerInitials = item?.owner?.full_name
+    ? item.owner.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
-  // Member since
-  const memberSince = owner?.created_at
-    ? new Date(owner.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+  const memberSince = item?.owner?.created_at
+    ? new Date(item.owner.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
     : "";
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Navigation />
-        <div className="flex items-center justify-center pt-40">
-          <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A]" />
+        <div className="flex flex-col items-center justify-center pt-40">
+          <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mb-4" />
+          <p className="text-muted-foreground animate-pulse">Chargement de l'annonce...</p>
         </div>
       </div>
     );
@@ -309,12 +293,19 @@ export function ItemDetailPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Navigation />
-        <div className="flex flex-col items-center justify-center pt-40">
-          <AlertCircle className="w-16 h-16 text-muted-foreground/40 mb-4" />
-          <h2 className="text-xl font-bold text-foreground/80 mb-2">Annonce introuvable</h2>
-          <p className="text-muted-foreground mb-6">Cette annonce n'existe plus ou a été supprimée.</p>
-          <Button onClick={() => navigate("/explore")} className="bg-[#FF4F5A] text-white rounded-full px-6">
-            Retour à l'exploration
+        <div className="flex flex-col items-center justify-center pt-40 px-6 text-center">
+          <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+            <AlertCircle className="w-12 h-12 text-muted-foreground/40" />
+          </div>
+          <h2 className="text-3xl font-bold text-foreground mb-3">Annonce introuvable</h2>
+          <p className="text-muted-foreground mb-8 max-w-md">
+            Désolé, cette annonce n'existe plus ou a été supprimée par son propriétaire.
+          </p>
+          <Button 
+            onClick={() => navigate("/explore")} 
+            className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full px-8 h-12 shadow-lg shadow-[#FF4F5A]/20"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" /> Retour à l'exploration
           </Button>
         </div>
       </div>
@@ -327,463 +318,374 @@ export function ItemDetailPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
 
-      <div className="pt-24 pb-16">
+      <main className="pt-24 pb-20">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-          {/* Breadcrumb */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 text-sm text-muted-foreground mb-8"
-          >
-            <button onClick={() => navigate("/explore")} className="hover:text-[#0F2A2E] flex items-center gap-1">
+          {/* Breadcrumb Épuré */}
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-2">
+            <button onClick={() => navigate("/explore")} className="hover:text-foreground flex items-center gap-1 transition-colors">
               <ArrowLeft className="w-4 h-4" /> Explorer
             </button>
-            <span>/</span>
-            {category && (
+            <span className="opacity-30">/</span>
+            {item.category && (
               <>
-                <button onClick={() => navigate(`/explore?category=${category.slug}`)} className="hover:text-[#0F2A2E]">
-                  {category.name}
+                <button onClick={() => navigate(`/explore?category=${item.category?.slug}`)} className="hover:text-foreground transition-colors">
+                  {item.category.name}
                 </button>
-                <span>/</span>
+                <span className="opacity-30">/</span>
               </>
             )}
-            <span className="text-[#0F2A2E] font-medium truncate max-w-[200px]">{item.title}</span>
-          </motion.div>
+            <span className="text-foreground font-medium truncate max-w-[200px]">{item.title}</span>
+          </nav>
 
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* ═══ Left Column — Images & Details ═══ */}
-            <div className="lg:col-span-7">
-              {/* Image Gallery */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative rounded-3xl overflow-hidden mb-8 group"
-              >
-                <div className="relative h-[500px] bg-muted">
+          <div className="grid lg:grid-cols-12 gap-10">
+            {/* ═══ Left Column — Image Gallery & Story ═══ */}
+            <div className="lg:col-span-12 xl:col-span-8">
+              {/* Galerie Premium */}
+              <div className="space-y-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative aspect-[16/10] sm:aspect-video rounded-[2.5rem] overflow-hidden bg-muted group shadow-2xl shadow-black/5"
+                >
                   <ImageWithFallback
                     src={item.images[currentImageIndex] || item.thumbnail_url || ""}
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
 
-                  {/* Arrows */}
+                  {/* Boutons de navigation discrets */}
                   {item.images.length > 1 && (
-                    <>
+                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between opacity-0 group-hover:opacity-100 transition-all duration-300">
                       <button
-                        onClick={prevImage}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white"
+                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                        className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
                       >
-                        <ChevronLeft className="w-6 h-6 text-foreground" />
+                        <ChevronLeft className="w-6 h-6" />
                       </button>
                       <button
-                        onClick={nextImage}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white"
+                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                        className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
                       >
-                        <ChevronRight className="w-6 h-6 text-foreground" />
+                        <ChevronRight className="w-6 h-6" />
                       </button>
-                    </>
-                  )}
-
-                  {/* Dots */}
-                  {item.images.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                      {item.images.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setCurrentImageIndex(i)}
-                          className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? "bg-card w-8" : "bg-white/50"
-                            }`}
-                        />
-                      ))}
                     </div>
                   )}
 
-                  {/* Badge */}
-                  <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${listingConfig.color}`}>
-                    <listingConfig.icon className="w-4 h-4" /> {listingConfig.label}
-                  </span>
+                  {/* Badge flottant */}
+                  <div className="absolute top-6 left-6 flex flex-col gap-2">
+                    <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 backdrop-blur-xl shadow-lg ${listingConfig.color} border border-current/10`}>
+                      <listingConfig.icon className="w-3.5 h-3.5" /> {listingConfig.label}
+                    </span>
+                    <span className="px-4 py-1.5 bg-black/40 backdrop-blur-xl text-white rounded-full text-xs font-bold uppercase tracking-wider border border-white/10">
+                      {CONDITION_LABELS[item.condition] || item.condition}
+                    </span>
+                  </div>
 
-                  {/* Image count */}
-                  <span className="absolute bottom-4 right-4 px-3 py-1 bg-black/50 text-white text-sm rounded-full">
+                  {/* Compteur discret */}
+                  <span className="absolute bottom-6 right-6 px-3 py-1 bg-black/40 backdrop-blur-md text-white/90 text-xs font-medium rounded-full border border-white/10">
                     {currentImageIndex + 1} / {item.images.length}
                   </span>
-                </div>
-              </motion.div>
+                </motion.div>
 
-              {/* Thumbnails */}
-              {item.images.length > 1 && (
-                <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-                  {item.images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentImageIndex(i)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${i === currentImageIndex ? "border-[#FF4F5A]" : "border-transparent opacity-70 hover:opacity-100"
+                {/* Miniatures Sèches */}
+                {item.images.length > 1 && (
+                  <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                    {item.images.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentImageIndex(i)}
+                        className={`relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden transition-all duration-300 ${
+                          i === currentImageIndex 
+                            ? "ring-2 ring-[#FF4F5A] scale-105" 
+                            : "opacity-40 hover:opacity-100 hover:scale-102"
                         }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Description */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-card rounded-3xl p-8 mb-8"
-              >
-                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-4">Description</h2>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
-
-                {/* Tags */}
-                {item.tags && item.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-border">
-                    {item.tags.map((tag, i) => (
-                      <span key={i} className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full flex items-center gap-1">
-                        <Tag className="w-3 h-3" /> {tag}
-                      </span>
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
                     ))}
                   </div>
                 )}
-              </motion.div>
+              </div>
 
-              {/* Metadata / Caractéristiques */}
-              {item.metadata && Object.keys(item.metadata).length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="bg-card rounded-3xl p-8 mb-8"
-                >
-                  <h2 className="text-2xl font-bold text-[#0F2A2E] mb-4">Caractéristiques</h2>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {Object.entries(item.metadata).map(([key, value]) => (
-                      <div key={key} className="flex items-center gap-3">
-                        <div className="w-6 h-6 bg-[#0F2A2E]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="w-4 h-4 text-[#0F2A2E]" />
-                        </div>
-                        <span className="text-foreground/80 capitalize">
-                          {key.replace(/_/g, " ")} : <strong>{typeof value === "boolean" ? (value ? "Oui" : "Non") : value}</strong>
-                        </span>
-                      </div>
-                    ))}
+              {/* Contenu Informatif */}
+              <div className="mt-12 space-y-12">
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-muted rounded-2xl flex items-center justify-center">
+                      <Info className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight">Description</h2>
                   </div>
-                </motion.div>
-              )}
+                  <div className="p-8 rounded-[2rem] bg-card border border-border/50 text-muted-foreground leading-relaxed whitespace-pre-line text-lg">
+                    {item.description}
+                  </div>
+                </section>
 
-              {/* Troc details */}
-              {item.listing_type === "troc" && item.troc_description && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-purple-50 border border-purple-200 rounded-3xl p-8 mb-8"
-                >
-                  <h2 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2">
-                    <RefreshCw className="w-6 h-6" /> Détails du troc
-                  </h2>
-                  <p className="text-purple-700 mb-3">{item.troc_description}</p>
-                  {item.troc_estimated_value && (
-                    <p className="text-sm text-purple-600">
-                      Valeur estimée : <strong>{Number(item.troc_estimated_value).toLocaleString()} DA</strong>
+                {/* Caractéristiques Grille */}
+                {item.metadata && Object.keys(item.metadata).length > 0 && (
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-muted rounded-2xl flex items-center justify-center">
+                        <Tag className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <h2 className="text-2xl font-bold tracking-tight">Caractéristiques</h2>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {Object.entries(item.metadata).map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-4 p-5 rounded-2xl bg-muted/30 border border-border/40">
+                          <CheckCircle className="w-5 h-5 text-[#FF4F5A]" />
+                          <div className="flex flex-col">
+                            <span className="text-xs uppercase tracking-widest text-muted-foreground/60 font-bold">{key.replace(/_/g, " ")}</span>
+                            <span className="font-semibold text-foreground">
+                              {typeof value === "boolean" ? (value ? "Oui" : "Non") : value}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Troc Section Spéciale */}
+                {item.listing_type === "troc" && item.troc_description && (
+                  <section className="p-10 rounded-[2.5rem] bg-gradient-to-br from-purple-500/5 to-purple-600/10 border border-purple-500/20">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                        <RefreshCw className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-purple-900 dark:text-purple-300">Offre de troc</h2>
+                    </div>
+                    <p className="text-purple-800 dark:text-purple-400/80 text-lg mb-6 leading-relaxed">
+                      {item.troc_description}
                     </p>
-                  )}
-                </motion.div>
-              )}
+                    {item.troc_estimated_value && (
+                      <div className="flex items-center gap-2 text-purple-600/70 font-medium">
+                        <HandCoins className="w-4 h-4" />
+                        Valeur estimée : <strong>{Number(item.troc_estimated_value).toLocaleString()} DA</strong>
+                      </div>
+                    )}
+                  </section>
+                )}
+              </div>
             </div>
 
-            {/* ═══ Right Column — Booking & Owner ═══ */}
-            <div className="lg:col-span-5">
+            {/* ═══ Right Column — Checkout Card ═══ */}
+            <div className="lg:col-span-12 xl:col-span-4 lg:sticky lg:top-28 self-start">
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="sticky top-28"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-[2.5rem] p-10 shadow-2xl shadow-[#0F2A2E]/5 border border-border"
               >
-                {/* Booking Card */}
-                <div className="bg-card rounded-3xl p-8 shadow-xl border border-border">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${listingConfig.color}`}>
-                          {category?.name || ""}
-                        </span>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.condition === "new" ? "bg-emerald-100 text-emerald-700" :
-                          item.condition === "like_new" ? "bg-blue-100 text-blue-700" :
-                            "bg-muted text-muted-foreground"
-                          }`}>
-                          {CONDITION_LABELS[item.condition] || item.condition}
-                        </span>
-                      </div>
-                      <h1 className="text-2xl font-bold text-[#0F2A2E] mb-2">{item.title}</h1>
-                      <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                        <MapPin className="w-4 h-4" />
-                        {WILAYAS[item.wilaya_code] || item.location}
-                      </p>
-                    </div>
+                {/* Header Produit */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold uppercase tracking-widest text-[#FF4F5A] px-3 py-1 bg-[#FF4F5A]/5 rounded-full">
+                      {item.category?.name || "Général"}
+                    </span>
                     <div className="flex gap-2">
-                      <button
+                       <button
                         onClick={() => setIsLiked(!isLiked)}
-                        className="w-10 h-10 bg-muted hover:bg-muted rounded-full flex items-center justify-center transition-all"
+                        className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-muted"
                       >
-                        <Heart className={`w-5 h-5 ${isLiked ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-foreground/80"}`} />
+                        <Heart className={`w-5 h-5 ${isLiked ? "fill-[#FF4F5A] text-[#FF4F5A] border-[#FF4F5A]" : "text-foreground"}`} />
                       </button>
-                      <button className="w-10 h-10 bg-muted hover:bg-muted rounded-full flex items-center justify-center transition-all">
-                        <Share2 className="w-5 h-5 text-foreground/80" />
+                      <button className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-muted">
+                        <Share2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
+                  <h1 className="text-3xl font-extrabold text-foreground leading-tight mb-4">{item.title}</h1>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4 text-[#FF4F5A]" />
+                      <span>{WILAYAS[item.wilaya_code] || item.location}</span>
+                    </div>
+                    <div className="w-1 h-1 bg-muted-foreground/30 rounded-full" />
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{item.view_count} vues</span>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Price */}
-                  <div className="mb-6 pb-6 border-b border-border">
+                {/* Prix & Réservation */}
+                <div className="space-y-8 pb-8 mb-8 border-b border-border">
+                  {/* Grille de Prix */}
+                  <div className="grid gap-2">
                     {item.price_per_day && (
-                      <div className="flex items-baseline gap-1 mb-1">
-                        <span className="text-4xl font-bold text-[#0F2A2E]">{Number(item.price_per_day).toLocaleString()} DA</span>
-                        <span className="text-lg text-muted-foreground">/ jour</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-foreground">{Number(item.price_per_day).toLocaleString()} DA</span>
+                        <span className="text-muted-foreground font-medium">/ jour</span>
                       </div>
-                    )}
-                    {item.price_per_week && (
-                      <p className="text-sm text-muted-foreground">{Number(item.price_per_week).toLocaleString()} DA / semaine</p>
-                    )}
-                    {item.price_per_month && (
-                      <p className="text-sm text-muted-foreground">{Number(item.price_per_month).toLocaleString()} DA / mois</p>
                     )}
                     {item.sale_price && (
-                      <div className="flex items-baseline gap-1 mt-2">
-                        <ShoppingCart className="w-5 h-5 text-emerald-600" />
-                        <span className="text-3xl font-bold text-emerald-700">{Number(item.sale_price).toLocaleString()} DA</span>
-                        <span className="text-sm text-muted-foreground ml-1">(vente)</span>
+                      <div className="pt-2">
+                        <span className="text-2xl font-bold text-emerald-600">{Number(item.sale_price).toLocaleString()} DA</span>
+                        <span className="text-sm text-muted-foreground ml-2">(Prix de vente)</span>
                       </div>
-                    )}
-                    {item.is_negotiable && (
-                      <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs font-medium rounded-full">
-                        <MessageCircle className="w-3 h-3" /> Prix négociable
-                      </span>
                     )}
                   </div>
 
-                  {/* Booking form (for rent) */}
+                  {/* Formulaire de réservation épuré */}
                   {(item.listing_type === "rent" || item.listing_type === "rent_sell") && (
-                    <div className="space-y-4 mb-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground/80 mb-2">Date début</label>
-                        <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
-                          <input
-                            type="date"
-                            value={startDate}
-                            onChange={e => setStartDate(e.target.value)}
-                            min={new Date().toISOString().slice(0, 10)}
-                            className="w-full pl-12 pr-4 h-12 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
-                          />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">Début</label>
+                          <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
+                            <input
+                              type="date"
+                              value={startDate}
+                              onChange={e => setStartDate(e.target.value)}
+                              min={new Date().toISOString().slice(0, 10)}
+                              className="w-full pl-11 pr-4 h-12 bg-muted/40 border-none rounded-2xl text-sm focus:ring-2 ring-[#FF4F5A]/20 transition-all font-medium appearance-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">Fin</label>
+                          <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
+                            <input
+                              type="date"
+                              value={endDate}
+                              onChange={e => setEndDate(e.target.value)}
+                              min={startDate || new Date().toISOString().slice(0, 10)}
+                              className="w-full pl-11 pr-4 h-12 bg-muted/40 border-none rounded-2xl text-sm focus:ring-2 ring-[#FF4F5A]/20 transition-all font-medium appearance-none"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground/80 mb-2">Date fin</label>
-                        <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
-                          <input
-                            type="date"
-                            value={endDate}
-                            onChange={e => setEndDate(e.target.value)}
-                            min={startDate || new Date().toISOString().slice(0, 10)}
-                            className="w-full pl-12 pr-4 h-12 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
-                          />
-                        </div>
-                      </div>
 
-              {/* Price breakdown */}
-              {bookingCalc && (
-                <div className="bg-muted/50 rounded-2xl p-4 space-y-2 mt-4">
-                  <div className="flex justify-between text-foreground/80">
-                    <span>{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
-                    <span>{bookingCalc.total.toLocaleString()} DA</span>
-                  </div>
-                  {bookingCalc.deposit > 0 && (
-                    <div className="flex justify-between text-foreground/80">
-                      <span>Caution (remboursable)</span>
-                      <span>{bookingCalc.deposit.toLocaleString()} DA</span>
-                    </div>
-                  )}
-                  <div className="pt-2 border-t border-border flex justify-between font-bold text-[#0F2A2E]">
-                    <span>Total</span>
-                    <span>{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Date conflict warning */}
-              {startDate && endDate && !bookingCalc && new Date(endDate) > new Date(startDate) && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 mt-4">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800">
-                    Ces dates ne sont pas disponibles. L'objet est déjà réservé sur cette période.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-                  {/* Action buttons */}
-                  {bookingSuccess && (
-                    <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
-                      <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                      <p className="font-bold text-emerald-800 mb-1">Réservation envoyée !</p>
-                      <p className="text-sm text-emerald-600">Le propriétaire va examiner votre demande.</p>
-                      <Button
-                        onClick={() => navigate("/dashboard")}
-                        className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 h-10 text-sm"
-                      >
-                        Voir mes réservations
-                      </Button>
-                    </div>
-                  )}
-
-                  {bookingError && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
-                      {bookingError}
-                    </div>
-                  )}
-
-                  {(item.listing_type === "rent" || item.listing_type === "rent_sell") && !bookingSuccess && (
-                    <>
-                      {/* Message to owner */}
-                      <div className="mb-4">
-                        <textarea
-                          value={bookingMessage}
-                          onChange={e => setBookingMessage(e.target.value)}
-                          placeholder="Message au propriétaire (optionnel)..."
-                          rows={2}
-                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
-                        />
-                      </div>
-                      <Button
-                        onClick={() => user ? handleBooking() : navigate("/login")}
-                        className="w-full h-14 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white text-lg font-semibold rounded-2xl shadow-xl shadow-[#FF4F5A]/30 mb-3"
-                        disabled={!bookingCalc || isBooking}
-                      >
-                        {isBooking ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : !user ? (
-                          <>Se connecter pour réserver</>
-                        ) : (
-                          <><Calendar className="w-5 h-5 mr-2" />Réserver maintenant</>
+                      {/* Recap Prix */}
+                      <AnimatePresence>
+                        {bookingCalc && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="p-6 rounded-3xl bg-muted/30 space-y-3"
+                          >
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
+                              <span className="font-bold">{bookingCalc.total.toLocaleString()} DA</span>
+                            </div>
+                            {bookingCalc.deposit > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Caution reversible</span>
+                                <span className="font-bold">{bookingCalc.deposit.toLocaleString()} DA</span>
+                              </div>
+                            )}
+                            <div className="pt-3 border-t border-border/50 flex justify-between items-center">
+                              <span className="font-bold text-lg">Total</span>
+                              <span className="font-black text-xl text-[#FF4F5A]">{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
+                            </div>
+                          </motion.div>
                         )}
-                      </Button>
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions Finales */}
+                <div className="space-y-4">
+                  {bookingSuccess ? (
+                    <div className="p-6 bg-emerald-50 dark:bg-emerald-950/20 rounded-3xl text-center border border-emerald-100 dark:border-emerald-800/50">
+                      <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/30">
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                      <p className="font-bold text-emerald-900 dark:text-emerald-400 mb-4">Réservation envoyée !</p>
+                      <Button onClick={() => navigate("/dashboard")} className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700">Gérer mes réservations</Button>
+                    </div>
+                  ) : (
+                    <>
+                      {(item.listing_type === "rent" || item.listing_type === "rent_sell") && (
+                        <Button
+                          onClick={() => user ? handleBooking() : navigate("/login")}
+                          disabled={!bookingCalc || isBooking}
+                          className="w-full h-16 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-[1.25rem] text-lg font-bold shadow-2xl shadow-[#FF4F5A]/25 transition-transform active:scale-[0.98]"
+                        >
+                          {isBooking ? <Loader2 className="w-6 h-6 animate-spin" /> : "Réserver maintenant"}
+                        </Button>
+                      )}
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        {(item.listing_type === "sell" || item.listing_type === "rent_sell") && (
+                          <Button 
+                            onClick={() => user ? setIsPurchaseModalOpen(true) : navigate("/login")}
+                            className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-2" /> Acheter
+                          </Button>
+                        )}
+                        {(item.listing_type === "troc" || item.listing_type === "rent_sell") && (
+                          <Button 
+                            onClick={() => user ? setIsTrocModalOpen(true) : navigate("/login")}
+                            className="h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" /> Troc
+                          </Button>
+                        )}
+                      </div>
                     </>
-                  )}
-
-                  {(item.listing_type === "sell" || item.listing_type === "rent_sell") && (
-                    <Button
-                      onClick={() => user ? setIsPurchaseModalOpen(true) : navigate("/login")}
-                      className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-semibold rounded-2xl shadow-xl shadow-emerald-600/30 mb-3"
-                    >
-                      <ShoppingCart className="w-5 h-5 mr-2" />
-                      Acheter
-                    </Button>
-                  )}
-
-                  {(item.listing_type === "troc" || item.listing_type === "rent_sell") && (
-                    <Button
-                      onClick={() => user ? setIsTrocModalOpen(true) : navigate("/login")}
-                      className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold rounded-2xl shadow-xl shadow-purple-600/30 mb-3"
-                    >
-                      <RefreshCw className="w-5 h-5 mr-2" />
-                      Proposer un échange
-                    </Button>
                   )}
 
                   <Button
                     onClick={handleContactOwner}
                     disabled={creatingConversation}
                     variant="outline"
-                    className="w-full h-12 rounded-2xl border-[#0F2A2E] text-[#0F2A2E] hover:bg-[#0F2A2E] hover:text-white"
+                    className="w-full h-14 rounded-2xl border-2 border-border font-bold hover:bg-muted"
                   >
-                    {creatingConversation ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <><MessageCircle className="w-5 h-5 mr-2" /> Contacter le propriétaire</>
-                    )}
+                    {creatingConversation ? <Loader2 className="w-5 h-5 animate-spin" /> : "Contacter le propriétaire"}
                   </Button>
-
-                  <p className="text-center text-xs text-muted-foreground/70 mt-3">
-                    <Eye className="w-3 h-3 inline mr-1" />{item.view_count} vues · <Heart className="w-3 h-3 inline mx-1" /> {item.favorite_count} favoris
-                  </p>
                 </div>
 
-                {/* Owner Card */}
-                {owner && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-card rounded-3xl p-6 shadow-lg border border-border mt-6"
-                  >
-                    <h3 className="text-lg font-bold text-[#0F2A2E] mb-4">Publié par</h3>
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 bg-[#0F2A2E] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden">
-                        {owner.avatar_url ? (
-                          <img src={owner.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          ownerInitials
-                        )}
+                {/* Propriétaire Sidebar Card */}
+                {item.owner && (
+                  <div className="mt-10 pt-10 border-t border-border flex items-center gap-4 group cursor-pointer">
+                    <div className="relative w-14 h-14">
+                      <div className="w-full h-full bg-[#0F2A2E] rounded-2xl flex items-center justify-center text-white font-black text-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+                        {item.owner.avatar_url ? (
+                          <img src={item.owner.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : ownerInitials}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-foreground">{owner.full_name || "Utilisateur"}</h4>
-                          {owner.is_verified && (
-                            <div className="w-5 h-5 bg-[#FF4F5A] rounded-full flex items-center justify-center">
-                              <CheckCircle className="w-3 h-3 text-white" />
-                            </div>
-                          )}
+                      {item.owner.is_verified && (
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#FF4F5A] border-4 border-card rounded-full flex items-center justify-center">
+                          <CheckCircle className="w-2.5 h-2.5 text-white" />
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mb-1">
-                          {owner.rating > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                              <span>{Number(owner.rating).toFixed(1)}</span>
-                            </div>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {WILAYAS[owner.wilaya_code] || ""}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground/70 mb-3">
-                          <Clock className="w-3 h-3 inline mr-1" />
-                          Membre depuis {memberSince}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Trust Badge */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-3xl p-6 mt-6"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-[#FF4F5A]" />
+                      )}
                     </div>
                     <div>
-                      <h4 className="font-bold text-white">Transaction sécurisée</h4>
-                      <p className="text-sm text-white/70">Protection Karrily incluse</p>
+                      <h4 className="font-bold text-foreground group-hover:text-[#FF4F5A] transition-colors">{item.owner.full_name}</h4>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                          <span className="font-bold text-foreground/80">{Number(item.owner.rating || 0).toFixed(1)}</span>
+                        </div>
+                        <span className="opacity-30">|</span>
+                        <span>{item.owner.total_reviews} avis</span>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-white/80 leading-relaxed">
-                    Chaque transaction est protégée par notre garantie. Louez, achetez ou échangez en toute confiance.
-                  </p>
-                </motion.div>
+                )}
               </motion.div>
+
+              {/* Security Shield */}
+              <div className="mt-6 p-6 rounded-[2rem] bg-[#0F2A2E] text-white flex items-center gap-6 shadow-xl">
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-7 h-7 text-[#FF4F5A]" />
+                </div>
+                <div>
+                  <h4 className="font-bold leading-tight">Garantie Karrily</h4>
+                  <p className="text-xs text-white/60 mt-1 leading-relaxed">Paiement sécurisé et protection de vos biens à chaque étape.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+
       <Footer />
 
       {item && (
@@ -798,7 +700,7 @@ export function ItemDetailPage() {
           <TrocProposalModal 
             isOpen={isTrocModalOpen}
             onClose={() => setIsTrocModalOpen(false)}
-            item={item}
+            requestedItem={item}
             onSuccess={() => {}}
           />
         </>
@@ -806,3 +708,4 @@ export function ItemDetailPage() {
     </div>
   );
 }
+

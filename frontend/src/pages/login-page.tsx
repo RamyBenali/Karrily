@@ -128,7 +128,10 @@ export function LoginPage() {
                                     type="email"
                                     placeholder="votre@email.com"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (error) setError("");
+                                    }}
                                     className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-12 pr-4 text-foreground placeholder:text-muted-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-2 focus:ring-[#0F2A2E]/20 focus:outline-none dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20"
                                     required
                                 />
@@ -146,7 +149,10 @@ export function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (error) setError("");
+                                    }}
                                     className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-12 pr-12 text-foreground placeholder:text-muted-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-2 focus:ring-[#0F2A2E]/20 focus:outline-none dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20"
                                     required
                                     minLength={6}

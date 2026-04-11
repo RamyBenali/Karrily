@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
-import { ShoppingCart, Loader2, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Loader2, CheckCircle2, ShieldCheck, Info } from "lucide-react";
 import { salesService } from "../../services/api.service";
+import { motion, AnimatePresence } from "motion/react";
 
 interface PurchaseRequestModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
     try {
       await salesService.create({
         item_id: item.id,
-        message
+        message: message.trim() || undefined
       });
       setSuccess(true);
       onSuccess();
@@ -31,9 +32,9 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
         onClose();
         setSuccess(false);
         setMessage("");
-      }, 2000);
+      }, 3000);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Une erreur est survenue");
+      setError(err.message || "Une erreur est survenue lors de la demande.");
     } finally {
       setIsSubmitting(false);
     }
@@ -41,66 +42,101 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] rounded-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-[#0F2A2E] flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-emerald-600" />
-            Demande d'achat
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-[2.5rem] shadow-2xl bg-background">
+        <div className="bg-[#0F2A2E] p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black flex items-center gap-3">
+              <ShoppingCart className="w-8 h-8 text-emerald-400" />
+              Demande d'achat
+            </DialogTitle>
+            <p className="text-emerald-100/60 font-medium">Envoyez une demande sécurisée au vendeur</p>
+          </DialogHeader>
+        </div>
 
-        {success ? (
-          <div className="py-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">Demande envoyée !</h3>
-              <p className="text-gray-500 text-sm">Le vendeur a été notifié de votre intérêt.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6 pt-4">
-            <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-                <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#0F2A2E] line-clamp-1">{item.title}</h4>
-                <p className="text-emerald-700 font-bold">{Number(item.sale_price).toLocaleString()} DA</p>
-              </div>
-            </div>
+        <div className="p-8">
+          <AnimatePresence mode="wait">
+            {success ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-10 text-center space-y-6"
+              >
+                <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground">Demande envoyée !</h3>
+                  <p className="text-muted-foreground mt-2 max-w-[280px] mx-auto text-sm">
+                    Le vendeur a été notifié. Vous recevrez une réponse dans votre tableau de bord.
+                  </p>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-8"
+              >
+                {/* Article Recap */}
+                <div className="flex items-center gap-6 p-5 bg-muted/30 rounded-[2rem] border border-border/50">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
+                    <img 
+                      src={item.thumbnail_url || item.images?.[0]} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-lg text-foreground truncate">{item.title}</h4>
+                    <p className="text-[#FF4F5A] text-xl font-black mt-1">
+                      {Number(item.sale_price).toLocaleString()} DA
+                    </p>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">
-                Message au vendeur (optionnel)
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ex: Bonjour, je suis intéressé par votre objet..."
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[100px]"
-              />
-            </div>
+                {/* Message Input */}
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">
+                    Votre message
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Bonjour, je suis très intéressé par cet article..."
+                    className="w-full px-6 py-5 bg-muted/30 border-none rounded-3xl text-sm resize-none focus:ring-2 ring-emerald-500/20 min-h-[120px] transition-all"
+                  />
+                </div>
 
-            {error && <p className="text-sm text-red-600 ml-1">{error}</p>}
+                {error && (
+                  <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-2xl text-xs font-bold border border-red-100 dark:border-red-900/30">
+                    <Info className="w-4 h-4 flex-shrink-0" />
+                    {error}
+                  </div>
+                )}
 
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-semibold rounded-2xl"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Confirmer la demande"
-              )}
-            </Button>
-            <p className="text-center text-xs text-gray-400">
-              Le vendeur doit valider votre demande avant de finaliser la vente.
-            </p>
-          </div>
-        )}
+                <div className="space-y-4">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-black rounded-2xl shadow-xl shadow-emerald-600/20 transition-all active:scale-95"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      "Confirmer l'achat"
+                    )}
+                  </Button>
+                  
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    Paiement sécurisé Garanti
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </DialogContent>
     </Dialog>
   );

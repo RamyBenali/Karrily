@@ -128,7 +128,10 @@ export function SignupPage() {
                                     type="text"
                                     placeholder="Votre nom complet"
                                     value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
+                                    onChange={(e) => {
+                                        setFullName(e.target.value);
+                                        if (error) setError("");
+                                    }}
                                     className={inputClasses}
                                     required
                                 />
@@ -146,7 +149,10 @@ export function SignupPage() {
                                     type="email"
                                     placeholder="votre@email.com"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (error) setError("");
+                                    }}
                                     className={inputClasses}
                                     required
                                 />
@@ -164,7 +170,10 @@ export function SignupPage() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Minimum 8 caractères"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (error) setError("");
+                                    }}
                                     className={`${inputClasses} !pr-12`}
                                     required
                                     minLength={8}

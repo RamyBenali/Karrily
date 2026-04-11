@@ -6,6 +6,14 @@ import {
   LayoutGrid,
   X,
   ChevronDown,
+  Filter,
+  RotateCcw,
+  Check,
+  Star,
+  MapPin,
+  Tag,
+  Box,
+  Coins,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Slider } from "../ui/slider";
@@ -19,7 +27,7 @@ import {
 } from "./explore-constants";
 import { cn } from "../ui/utils";
 
-export const EXPLORE_BUDGET_MAX = 200_000;
+export const EXPLORE_BUDGET_MAX = 500_000;
 
 export interface ExploreCategoryLite {
   id: string;
@@ -80,326 +88,236 @@ export function ExploreFilterSidebar({
   const singleSlug = selectedCategorySlugs.length === 1 ? selectedCategorySlugs[0] : "";
 
   return (
-    <div
+    <aside
       className={cn(
-        "explore-filter-sidebar rounded-2xl border p-5 shadow-lg",
+        "bg-card border border-border rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 sticky top-28 h-fit",
         className,
       )}
     >
-      {onCloseMobile ? (
-        <div className="mb-4 flex items-center justify-between lg:hidden">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Filtres
-          </span>
-          <button
-            type="button"
-            className="rounded-full p-2 transition-colors hover:bg-white/10"
-            onClick={onCloseMobile}
-            aria-label="Fermer"
-          >
-            <X className="h-5 w-5 text-muted-foreground" />
-          </button>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-12">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-[#FF4F5A]/10 text-[#FF4F5A] rounded-2xl flex items-center justify-center">
+            <Filter className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black tracking-tight">Filtres</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FF4F5A] mt-0.5">{totalCount} Annonces</p>
+          </div>
         </div>
-      ) : null}
-
-      <div className="mb-8">
-        <p className="mb-6 text-[11px] font-medium tracking-wide opacity-70" style={{ color: "var(--ex-muted)" }}>
-          {totalCount} unité{totalCount !== 1 ? "s" : ""} identifiée{totalCount !== 1 ? "s" : ""} dans le secteur
-        </p>
-
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--ex-title)" }}>
-            Filtres
-          </h2>
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="text-[10px] font-bold uppercase tracking-[0.2em] transition-opacity hover:opacity-80"
-            style={{ color: "var(--ex-reset)" }}
-          >
-            RESET
-          </button>
-        </div>
+        <button
+          onClick={resetFilters}
+          className="w-12 h-12 rounded-2xl bg-muted/50 hover:bg-muted text-muted-foreground transition-all flex items-center justify-center group"
+          title="Réinitialiser"
+        >
+          <RotateCcw className="w-5 h-4 group-hover:rotate-180 transition-transform duration-500" />
+        </button>
       </div>
 
-      <section className="mb-8">
-        <h3
-          className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em]"
-          style={{ color: "var(--ex-muted)" }}
-        >
-          Secteurs
-        </h3>
-        <ul className="grid grid-cols-1 gap-1">
-          {categories.map((cat) => {
-            const checked = selectedCategorySlugs.includes(cat.slug);
-            return (
-              <li key={cat.id}>
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl py-2 transition-all hover:bg-white/5 group">
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-border bg-transparent transition-all checked:border-[#FF4F5A] checked:bg-[#FF4F5A]"
-                      checked={checked}
-                      onChange={() => {
-                        setSelectedCategorySlugs((prev) => toggleSlug(prev, cat.slug));
-                        setCategoryFilters({});
-                      }}
-                    />
-                    <svg
-                      className="absolute h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+      <div className="space-y-14">
+        {/* Catégories */}
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2.5">
+              <Tag className="w-4 h-4 text-[#FF4F5A]" /> Catégories
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {categories.map((cat) => {
+              const checked = selectedCategorySlugs.includes(cat.slug);
+              return (
+                <label 
+                  key={cat.id}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all group",
+                    checked ? "bg-foreground/5 shadow-sm" : "hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className={cn(
+                      "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                      checked ? "bg-[#FF4F5A] border-[#FF4F5A]" : "border-border group-hover:border-foreground/20"
+                    )}>
+                      {checked && <Check className="w-4 h-4 text-white stroke-[3.5px]" />}
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={checked}
+                        onChange={() => {
+                          setSelectedCategorySlugs((prev) => toggleSlug(prev, cat.slug));
+                          setCategoryFilters({});
+                        }}
+                      />
+                    </div>
+                    <span className={cn(
+                      "text-[14px] font-bold transition-colors",
+                      checked ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )}>
+                      {cat.name}
+                    </span>
                   </div>
-                  <span className={cn(
-                    "min-w-0 flex-1 text-[13.5px] font-medium transition-colors group-hover:text-[#FF4F5A]",
-                    checked ? "text-[#FF4F5A]" : "text-foreground/80"
-                  )}>
-                    {cat.name}
-                  </span>
-                  <span className="shrink-0 tabular-nums text-[11px] font-medium opacity-40">
+                  <span className="text-[11px] font-black text-muted-foreground/30 tabular-nums">
                     {cat.item_count}
                   </span>
                 </label>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+              );
+            })}
+          </div>
+        </section>
 
-      <section className="mb-8">
-        <h3
-          className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em]"
-          style={{ color: "var(--ex-muted)" }}
-        >
-          BUDGET (EUR)
-        </h3>
-        <div className="explore-budget-slider px-0.5 pt-1">
-          <Slider
-            min={0}
-            max={EXPLORE_BUDGET_MAX}
-            step={1000}
-            value={budgetRange}
-            onValueChange={(v) => {
-              const next = v as [number, number];
-              setBudgetRange([next[0], next[1]]);
-            }}
-            className="w-full"
-          />
-        </div>
-        <div className="mt-2 flex justify-between text-xs" style={{ color: "var(--ex-muted)" }}>
-          <span>{budgetRange[0].toLocaleString("fr-DZ")} DA</span>
-          <span>
-            {budgetRange[1] >= EXPLORE_BUDGET_MAX
-              ? `${EXPLORE_BUDGET_MAX.toLocaleString("fr-DZ")}+ DA`
-              : `${budgetRange[1].toLocaleString("fr-DZ")} DA`}
-          </span>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <label
-          className="mb-4 block text-[10px] font-bold uppercase tracking-[0.1em]"
-          style={{ color: "var(--ex-muted)" }}
-          htmlFor="sidebar-rating"
-        >
-          Note minimum
-        </label>
-        <div className="relative group">
-          <select
-            id="sidebar-rating"
-            className="w-full appearance-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] font-medium text-foreground outline-none transition-all focus:border-[#FF4F5A]/50 group-hover:border-border/80"
-            value={minRating}
-            onChange={(e) => setMinRating(e.target.value)}
-          >
-            {RATING_FILTER_OPTIONS.map((o) => (
-              <option key={o.value || "all"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <label
-          className="mb-4 block text-[10px] font-bold uppercase tracking-[0.1em]"
-          style={{ color: "var(--ex-muted)" }}
-          htmlFor="sidebar-wilaya"
-        >
-          Wilaya
-        </label>
-        <div className="relative group">
-          <select
-            id="sidebar-wilaya"
-            className="w-full appearance-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] font-medium text-foreground outline-none transition-all focus:border-[#FF4F5A]/50 group-hover:border-border/80"
-            value={selectedWilaya}
-            onChange={(e) => setSelectedWilaya(e.target.value)}
-          >
-            <option value="">Toute l&apos;Algérie</option>
-            {WILAYAS.map((w) => (
-              <option key={w.code} value={w.code}>
-                {w.code} — {w.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
-        </div>
-      </section>
-
-      <section className="mb-4">
-        <span
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-widest"
-          style={{ color: "var(--ex-muted)" }}
-        >
-          Type d&apos;annonce
-        </span>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setSelectedListingType("")}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
-              !selectedListingType 
-                ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20" 
-                : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
-            )}
-          >
-            Tous
-          </button>
-          {Object.entries(LISTING_TYPE_LABELS).map(([val, label]) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => setSelectedListingType(val)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
-                selectedListingType === val
-                  ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20"
-                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-6">
-        <span
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-widest"
-          style={{ color: "var(--ex-muted)" }}
-        >
-          État
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { v: "", l: "Tous" },
-            { v: "new", l: "Neuf" },
-            { v: "like_new", l: "Comme neuf" },
-            { v: "good", l: "Bon" },
-            { v: "fair", l: "Correct" },
-          ].map((c) => (
-            <button
-              key={c.v || "all"}
-              type="button"
-              onClick={() => setSelectedCondition(c.v)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
-                selectedCondition === c.v
-                  ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20"
-                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {c.l}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {activeCategoryFilters.length > 0 && singleSlug ? (
-        <section className="mb-2 rounded-xl border p-4" style={{ borderColor: "var(--ex-border)", background: "var(--ex-nested-bg)" }}>
-          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--ex-title)" }}>
-            Filtres {categories.find((c) => c.slug === singleSlug)?.name}
+        {/* Budget */}
+        <section>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-10 flex items-center gap-2.5">
+            <Coins className="w-4 h-4 text-[#FF4F5A]" /> Budget Maximum
           </h3>
-          <div className="flex flex-col gap-3">
-            {activeCategoryFilters.map((filter) => (
-              <div key={filter.key}>
-                {filter.type === "select" ? (
-                  <>
-                    <label className="mb-1 block text-xs" style={{ color: "var(--ex-muted)" }}>
-                      {filter.label}
-                    </label>
-                    <select
-                      className="explore-select w-full rounded-lg border px-2 py-2 text-sm"
-                      style={{
-                        background: "var(--ex-input-bg)",
-                        borderColor: "var(--ex-border)",
-                        color: "var(--ex-label)",
-                      }}
-                      value={categoryFilters[filter.key] || ""}
-                      onChange={(e) =>
-                        setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))
-                      }
-                    >
-                      <option value="">Tous</option>
-                      {filter.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                ) : null}
-                {filter.type === "number" ? (
-                  <>
-                    <label className="mb-1 block text-xs" style={{ color: "var(--ex-muted)" }}>
-                      {filter.label}
-                    </label>
+          <div className="px-1 gap-6 flex flex-col">
+             <Slider
+              min={0}
+              max={EXPLORE_BUDGET_MAX}
+              step={100}
+              value={budgetRange}
+              onValueChange={(v) => setBudgetRange(v as [number, number])}
+            />
+            <div className="flex justify-between items-center gap-3">
+              <div className="flex-1 bg-muted/50 p-4 rounded-2xl border border-border/30">
+                <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Min</p>
+                <span className="text-sm font-black tabular-nums">{budgetRange[0].toLocaleString()} DA</span>
+              </div>
+              <div className="w-2 h-0.5 bg-border rounded-full" />
+              <div className="flex-1 bg-muted/50 p-4 rounded-2xl border border-border/30">
+                <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Max</p>
+                <span className="text-sm font-black tabular-nums">
+                  {budgetRange[1] >= EXPLORE_BUDGET_MAX ? `${EXPLORE_BUDGET_MAX.toLocaleString()}+` : budgetRange[1].toLocaleString()} DA
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Localisation */}
+        <section>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-6 flex items-center gap-2.5">
+            <MapPin className="w-4 h-4 text-[#FF4F5A]" /> Wilaya
+          </h3>
+          <div className="relative group">
+            <select
+              className="w-full h-16 pl-6 pr-12 rounded-2xl bg-muted/50 border border-transparent text-sm font-bold appearance-none hover:bg-muted focus:bg-card focus:border-[#FF4F5A]/30 transition-all cursor-pointer outline-none"
+              value={selectedWilaya}
+              onChange={(e) => setSelectedWilaya(e.target.value)}
+            >
+              <option value="">Toute l'Algérie</option>
+              {WILAYAS.map((w) => (
+                <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none group-focus-within:rotate-180 transition-transform" />
+          </div>
+        </section>
+
+         {/* Type & État */}
+         <section className="space-y-10">
+            <div>
+              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-5">Modalité</h3>
+              <div className="flex flex-wrap gap-2.5">
+                {["", ...Object.keys(LISTING_TYPE_LABELS)].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setSelectedListingType(val)}
+                    className={cn(
+                      "px-6 py-3 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all border-2",
+                      selectedListingType === val 
+                        ? "bg-[#FF4F5A] border-[#FF4F5A] text-white shadow-xl shadow-[#FF4F5A]/25" 
+                        : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {val === "" ? "Tous" : LISTING_TYPE_LABELS[val]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-5">Condition</h3>
+              <div className="flex flex-wrap gap-2.5">
+                 {[
+                  { v: "", l: "Tous" },
+                  { v: "new", l: "Neuf" },
+                  { v: "like_new", l: "Élite" },
+                  { v: "good", l: "Bon" },
+                ].map((c) => (
+                  <button
+                    key={c.v}
+                    onClick={() => setSelectedCondition(c.v)}
+                    className={cn(
+                      "px-6 py-3 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all border-2",
+                      selectedCondition === c.v 
+                        ? "bg-foreground border-foreground text-background shadow-xl shadow-foreground/15" 
+                        : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {c.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+         </section>
+
+        {/* Dynamic Filters */}
+        {activeCategoryFilters.length > 0 && singleSlug && (
+          <section className="pt-10 border-t-2 border-dashed border-border/50">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-foreground mb-8">
+              Filtres Spécifiques
+            </h3>
+            <div className="space-y-8">
+              {activeCategoryFilters.map((filter) => (
+                <div key={filter.key} className="space-y-3">
+                  <label className="text-[11px] font-black text-muted-foreground px-3 uppercase tracking-wider">{filter.label}</label>
+                  {filter.type === "select" ? (
+                    <div className="relative group">
+                      <select
+                        className="w-full h-14 px-6 rounded-2xl bg-muted/30 border border-transparent text-sm font-bold appearance-none focus:bg-card focus:border-[#FF4F5A]/20 transition-all outline-none"
+                        value={categoryFilters[filter.key] || ""}
+                        onChange={(e) => setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))}
+                      >
+                        <option value="">Indifférent</option>
+                        {filter.options?.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none group-focus-within:rotate-180 transition-transform" />
+                    </div>
+                  ) : filter.type === "number" ? (
                     <Input
                       type="number"
                       value={categoryFilters[filter.key] || ""}
-                      onChange={(e) =>
-                        setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))
-                      }
-                      placeholder={filter.unit ? `Ex: 80 ${filter.unit}` : ""}
-                      className="rounded-lg text-sm"
-                      min={filter.min}
-                      max={filter.max}
+                      onChange={(e) => setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))}
+                      placeholder={filter.unit || ""}
+                      className="h-14 rounded-2xl bg-muted/30 border-transparent px-6 text-sm font-bold focus:border-[#FF4F5A]/20"
                     />
-                  </>
-                ) : null}
-                {filter.type === "checkbox" ? (
-                  <label className="flex cursor-pointer items-center gap-2 py-1">
-                    <input
-                      type="checkbox"
-                      className="explore-sector-checkbox h-4 w-4 rounded"
-                      checked={categoryFilters[filter.key] === "true"}
-                      onChange={(e) =>
-                        setCategoryFilters((prev) => ({
-                          ...prev,
-                          [filter.key]: e.target.checked ? "true" : "",
-                        }))
-                      }
-                    />
-                    <span className="text-sm" style={{ color: "var(--ex-label)" }}>
-                      {filter.label}
-                    </span>
-                  </label>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </div>
+                  ) : filter.type === "checkbox" ? (
+                    <label className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl cursor-pointer transition-all hover:bg-muted/50">
+                       <div className={cn(
+                        "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                        categoryFilters[filter.key] === "true" ? "bg-emerald-500 border-emerald-500" : "border-border"
+                      )}>
+                        {categoryFilters[filter.key] === "true" && <Check className="w-4 h-4 text-white stroke-[3.5px]" />}
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={categoryFilters[filter.key] === "true"}
+                          onChange={(e) => setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.checked ? "true" : "" }))}
+                        />
+                      </div>
+                      <span className="text-[14px] font-bold">Oui, inclure</span>
+                    </label>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -431,110 +349,104 @@ export function ExploreToolbar({
   onOpenMobileFilters,
 }: ToolbarProps) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="relative min-w-0 flex-1 sm:max-w-xl">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex flex-col md:flex-row items-center gap-6 mb-12">
+      {/* Search Premium */}
+      <div className="relative flex-1 w-full flex items-center group">
+        <div className="absolute left-7 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors">
+          <Search className="w-6 h-6" />
+        </div>
         <input
           type="search"
           value={debouncedSearch}
           onChange={(e) => setDebouncedSearch(e.target.value)}
-          placeholder="Rechercher une annonce…"
-          className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-10 text-[15px] text-foreground shadow-sm outline-none ring-[#FF4F5A]/0 transition-[box-shadow,border-color] focus:border-[#FF4F5A]/50 focus:ring-2 focus:ring-[#FF4F5A]/25"
+          placeholder="Rechercher sur Karrily..."
+          className="w-full h-20 pl-16 pr-16 rounded-[2rem] bg-card border border-border/50 text-lg font-medium shadow-2xl shadow-black/5 outline-none focus:ring-8 ring-[#FF4F5A]/5 focus:border-[#FF4F5A]/20 transition-all placeholder:text-muted-foreground/50"
         />
-        {debouncedSearch ? (
+        {debouncedSearch && (
           <button
-            type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:text-foreground"
             onClick={() => setDebouncedSearch("")}
-            aria-label="Effacer"
+            className="absolute right-7 w-8 h-8 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
           >
-            <X className="h-4 w-4" />
+            <X className="w-4 h-4" />
           </button>
-        ) : null}
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        <button
-          type="button"
-          className="relative flex h-12 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/50 lg:hidden"
-          onClick={onOpenMobileFilters}
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filtres
-          {activeFilterCount > 0 ? (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FF4F5A] px-1.5 text-[11px] font-bold text-white">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </button>
-
-        <div className="flex rounded-full border border-border bg-muted/40 p-1">
+      <div className="flex items-center gap-5 w-full md:w-auto">
+        {/* Sort Dropdown */}
+        <div className="relative flex-1 md:flex-none">
           <button
-            type="button"
-            className={cn(
-              "rounded-full p-2 transition-colors",
-              layout === "grid" ? "bg-card text-[#0F2A2E] shadow-sm dark:text-foreground" : "text-muted-foreground",
-            )}
-            onClick={() => setLayout("grid")}
-            aria-label="Grille compacte"
-          >
-            <Grid3x3 className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "rounded-full p-2 transition-colors",
-              layout === "large" ? "bg-card text-[#0F2A2E] shadow-sm dark:text-foreground" : "text-muted-foreground",
-            )}
-            onClick={() => setLayout("large")}
-            aria-label="Grille large"
-          >
-            <LayoutGrid className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="relative">
-          <button
-            type="button"
             onClick={() => setShowSort(!showSort)}
-            className="flex h-12 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm"
+            className="w-full md:w-[240px] h-20 px-8 rounded-[2rem] bg-card border border-border/50 flex items-center justify-between font-black text-sm shadow-xl shadow-black/5 hover:bg-muted/50 transition-all group"
           >
-            {SORT_OPTIONS.find((o) => o.value === sortBy)?.label}
-            <ChevronDown className="h-4 w-4 opacity-70" />
+             <div className="flex flex-col items-start translate-y-[-1px]">
+               <span className="text-[9px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider">Trier par</span>
+               <span className="truncate">{SORT_OPTIONS.find((o) => o.value === sortBy)?.label}</span>
+             </div>
+            <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform duration-300", showSort && "rotate-180")} />
           </button>
+          
           <AnimatePresence>
-            {showSort ? (
+            {showSort && (
               <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                className="absolute right-0 top-full z-20 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-xl"
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-full md:w-[240px] bg-card rounded-[2.5rem] border border-border/50 shadow-2xl p-3"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    type="button"
-                    className={cn(
-                      "w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted",
-                      sortBy === opt.value ? "font-semibold text-[#FF4F5A]" : "text-foreground",
-                    )}
                     onClick={() => {
                       setSortBy(opt.value);
                       setShowSort(false);
                     }}
+                    className={cn(
+                      "w-full text-left px-6 py-4 rounded-2xl text-sm font-bold transition-all",
+                      sortBy === opt.value 
+                        ? "bg-[#FF4F5A] text-white" 
+                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    )}
                   >
                     {opt.label}
                   </button>
                 ))}
               </motion.div>
-            ) : null}
+            )}
           </AnimatePresence>
         </div>
 
-        <p className="hidden text-sm text-muted-foreground sm:block">
-          <span className="font-semibold text-foreground">{totalCount}</span> résultat
-          {totalCount !== 1 ? "s" : ""}
-        </p>
+        {/* Layout Switcher */}
+        <div className="flex bg-card p-2 rounded-[2rem] border border-border/50 shadow-xl shadow-black/5 h-20">
+          <button
+            onClick={() => setLayout("grid")}
+            className={cn(
+              "w-14 h-full rounded-2xl transition-all flex items-center justify-center",
+              layout === "grid" ? "bg-foreground text-background shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+            aria-label="Grille"
+          >
+            <Grid3x3 className="w-6 h-6" />
+          </button>
+          <button
+            onClick={() => setLayout("large")}
+            className={cn(
+              "w-14 h-full rounded-2xl transition-all flex items-center justify-center",
+              layout === "large" ? "bg-foreground text-background shadow-lg" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+            aria-label="Liste"
+          >
+            <LayoutGrid className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Mobile Toggle */}
+        <button
+          onClick={onOpenMobileFilters}
+          className="md:hidden h-20 w-20 flex items-center justify-center rounded-[2rem] bg-foreground text-background shadow-xl"
+        >
+          <SlidersHorizontal className="w-7 h-7" />
+        </button>
       </div>
     </div>
   );

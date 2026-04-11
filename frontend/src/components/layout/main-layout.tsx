@@ -3,13 +3,14 @@ import { Navigation } from "./navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocation } from "react-router";
+import { cn } from "../ui/utils";
 
 export function MainLayout() {
   const location = useLocation();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Desktop Header */}
+      {/* Desktop Header - Always visible as requested */}
       <Navigation />
 
       {/* Main Content Area */}
@@ -28,7 +29,7 @@ export function MainLayout() {
         </AnimatePresence>
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - Restored for consistent experience */}
       <BottomNav />
     </div>
   );

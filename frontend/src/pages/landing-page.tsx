@@ -101,7 +101,7 @@ export function LandingPage() {
       {/* Hero Section - Bold & Impactful */}
       <div className="relative min-h-screen bg-gradient-to-br from-[#0F2A2E] via-[#1A4851] to-[#0F2A2E] overflow-hidden">
         {/* Navigation */}
-        <Navigation variant="transparent" />
+        <Navigation />
 
         {/* Enhanced Floating Objects Background with glow effects */}
         <div className="absolute inset-0 overflow-hidden opacity-10">
@@ -438,7 +438,7 @@ export function LandingPage() {
       </div>
 
       {/* How Karilly Works */}
-      <div className="bg-[#0F2A2E] py-24 relative overflow-hidden">
+      <div className="bg-[#1A4851] py-24 relative overflow-hidden">
         {/* Subtle background decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#1A4851] rounded-full blur-[120px] opacity-20 -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FF4F5A] rounded-full blur-[120px] opacity-10 -ml-48 -mb-48" />

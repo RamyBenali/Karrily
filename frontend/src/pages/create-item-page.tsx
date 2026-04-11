@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
     ArrowLeft, ArrowRight, Upload, X, MapPin, Tag, DollarSign,
     Image as ImageIcon, Loader2, CheckCircle2, Camera, Plus,
-    Home, ShoppingCart, RefreshCw, HandCoins,
+    Home, ShoppingCart, RefreshCw, HandCoins, Info, ChevronRight,
 } from "lucide-react";
 import { Navigation } from "../components/layout/navigation";
 import { Button } from "../components/ui/button";
@@ -12,9 +12,9 @@ import { Input } from "../components/ui/input";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { itemsService } from "../services/api.service";
-import { CATEGORY_FILTERS, FilterField } from "../components/explore/explore-constants";
+import { CATEGORY_FILTERS } from "../components/explore/explore-constants";
+import { Footer } from "../components/layout/footer";
 
-// 58 Wilayas
 const WILAYAS = [
     { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
     { code: 4, name: "Oum El Bouaghi" }, { code: 5, name: "Batna" }, { code: 6, name: "Béjaïa" },
@@ -32,28 +32,25 @@ const WILAYAS = [
     { code: 39, name: "El Oued" }, { code: 40, name: "Khenchela" }, { code: 41, name: "Souk Ahras" },
     { code: 42, name: "Tipaza" }, { code: 43, name: "Mila" }, { code: 44, name: "Aïn Defla" },
     { code: 45, name: "Naâma" }, { code: 46, name: "Aïn Témouchent" }, { code: 47, name: "Ghardaïa" },
-    { code: 48, name: "Relizane" }, { code: 49, name: "El M'Ghair" }, { code: 50, name: "El Meniaa" },
-    { code: 51, name: "Ouled Djellal" }, { code: 52, name: "Bordj Badji Mokhtar" },
-    { code: 53, name: "Béni Abbès" }, { code: 54, name: "Timimoun" }, { code: 55, name: "Touggourt" },
-    { code: 56, name: "Djanet" }, { code: 57, name: "In Salah" }, { code: 58, name: "In Guezzam" },
+    { code: 48, name: "Relizane" },
 ];
 
 const LISTING_TYPES = [
     { value: "rent", label: "Location", icon: Home, desc: "Louer votre bien temporairement" },
     { value: "sell", label: "Vente", icon: ShoppingCart, desc: "Vendre votre bien définitivement" },
     { value: "troc", label: "Troc", icon: RefreshCw, desc: "Échanger contre un autre objet" },
-    { value: "rent_sell", label: "Location & Vente", icon: HandCoins, desc: "Proposer les deux options" },
+    { value: "rent_sell", label: "Mixte", icon: HandCoins, desc: "Location et vente possibles" },
 ];
 
 const CONDITIONS = [
-    { value: "new", label: "Neuf", color: "bg-emerald-100 text-emerald-700" },
-    { value: "like_new", label: "Comme neuf", color: "bg-blue-100 text-blue-700" },
-    { value: "good", label: "Bon état", color: "bg-yellow-100 text-yellow-700" },
-    { value: "fair", label: "Correct", color: "bg-orange-100 text-orange-700" },
-    { value: "poor", label: "Usé", color: "bg-red-100 text-red-700" },
+    { value: "new", label: "Neuf", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+    { value: "like_new", label: "Comme neuf", color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    { value: "good", label: "Bon état", color: "bg-slate-50 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400" },
+    { value: "fair", label: "Correct", color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+    { value: "poor", label: "Usé", color: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
 ];
 
-const STEPS = ["Type", "Détails", "Photos", "Prix", "Confirmation"];
+const STEPS = ["Modalité", "Détails", "Photos", "Offre", "Récap"];
 
 interface FormData {
     listing_type: string;
@@ -98,7 +95,7 @@ export function CreateItemPage() {
         title: "",
         description: "",
         category_id: "",
-        condition: "good",
+        condition: "new",
         tags: "",
         images: [],
         imagePreviewUrls: [],
@@ -115,7 +112,6 @@ export function CreateItemPage() {
         metadata: {},
     });
 
-    // Fetch categories
     useEffect(() => {
         const fetchCategories = async () => {
             const { data } = await supabase
@@ -133,8 +129,7 @@ export function CreateItemPage() {
         setForm(prev => ({ ...prev, ...updates }));
     };
 
-    // Image handling
-    const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (form.images.length + files.length > 8) {
             setError("Maximum 8 images autorisées.");
@@ -148,50 +143,35 @@ export function CreateItemPage() {
     };
 
     const removeImage = (index: number) => {
-        URL.revokeObjectURL(form.imagePreviewUrls[index]);
-        updateForm({
-            images: form.images.filter((_, i) => i !== index),
-            imagePreviewUrls: form.imagePreviewUrls.filter((_, i) => i !== index),
-        });
+        const newImages = [...form.images];
+        const newPreviews = [...form.imagePreviewUrls];
+        URL.revokeObjectURL(newPreviews[index]);
+        newImages.splice(index, 1);
+        newPreviews.splice(index, 1);
+        updateForm({ images: newImages, imagePreviewUrls: newPreviews });
     };
 
-    // Validation per step
     const canProceed = () => {
         switch (step) {
             case 0: return form.listing_type !== "";
             case 1: return form.title.trim().length >= 5 && form.description.trim().length >= 10 && form.category_id !== "";
             case 2: return form.images.length >= 1;
             case 3: {
-                if (form.listing_type === "rent" || form.listing_type === "rent_sell") {
-                    if (!form.price_per_day) return false;
-                }
-                if (form.listing_type === "sell" || form.listing_type === "rent_sell") {
-                    if (!form.sale_price) return false;
-                }
-                
-                // Validate metadata
-                const selectedCat = categories.find(c => c.id === form.category_id);
-                if (selectedCat) {
-                    const filters = CATEGORY_FILTERS[selectedCat.slug] || [];
-                    for (const f of filters) {
-                        if (!form.metadata[f.key]) return false;
-                    }
-                }
-
+                if ((form.listing_type === "rent" || form.listing_type === "rent_sell") && !form.price_per_day) return false;
+                if ((form.listing_type === "sell" || form.listing_type === "rent_sell") && !form.sale_price) return false;
+                if (form.listing_type === "troc" && !form.troc_description) return false;
                 return form.wilaya_code !== "";
             }
             default: return true;
         }
     };
 
-    // Submit
     const handleSubmit = async () => {
         if (!user) return;
         setIsSubmitting(true);
         setError("");
 
         try {
-            // 1. Upload images
             const imageUrls: string[] = [];
             for (const file of form.images) {
                 const fileExt = file.name.split(".").pop();
@@ -209,8 +189,8 @@ export function CreateItemPage() {
 
             const wilaya = WILAYAS.find(w => w.code === Number(form.wilaya_code));
 
-            // 2. Insert item via Backend API
             const response = await itemsService.create({
+                owner_id: user.id,
                 title: form.title.trim(),
                 description: form.description.trim(),
                 listing_type: form.listing_type,
@@ -230,9 +210,9 @@ export function CreateItemPage() {
                 troc_description: form.troc_description || null,
                 troc_estimated_value: form.troc_estimated_value ? Number(form.troc_estimated_value) : null,
                 metadata: form.metadata,
+                is_available: true,
             });
 
-            // Success — go to item page
             navigate(`/item/${response.data.id}`);
         } catch (err: any) {
             setError(err.message || "Erreur lors de la publication.");
@@ -244,532 +224,353 @@ export function CreateItemPage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navigation />
 
-            <div className="pt-24 pb-16">
-                <div className="max-w-3xl mx-auto px-6">
-                    {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8"
-                    >
-                        <button
+            <main className="pt-24 pb-20">
+                <div className="max-w-4xl mx-auto px-6">
+                    {/* Header Épuré */}
+                    <div className="mb-12">
+                        <motion.button
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
                             onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
-                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground/80 mb-4 transition-colors"
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                            {step > 0 ? "Étape précédente" : "Retour"}
-                        </button>
-                        <h1 className="text-4xl font-bold text-foreground mb-2">Publier une annonce</h1>
-                        <p className="text-muted-foreground">Étape {step + 1} sur {STEPS.length}</p>
-                    </motion.div>
-
-                    {/* Progress Bar */}
-                    <div className="flex gap-2 mb-8">
-                        {STEPS.map((s, i) => (
-                            <div key={s} className="flex-1 flex flex-col items-center gap-1">
-                                <div className={`h-1.5 w-full rounded-full transition-all duration-500 ${i <= step ? "bg-[#FF4F5A]" : "bg-gray-200"
-                                    }`} />
-                                <span className={`text-xs font-medium ${i <= step ? "text-[#FF4F5A]" : "text-muted-foreground/70"}`}>
-                                    {s}
-                                </span>
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            <span>{step > 0 ? "Étape précédente" : "Retour"}</span>
+                        </motion.button>
+                        
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            <div>
+                                <h1 className="text-4xl font-extrabold tracking-tight mb-2">Publiez votre annonce</h1>
+                                <p className="text-muted-foreground text-lg">Donnez une seconde vie à vos objets en quelques clics.</p>
                             </div>
-                        ))}
+                            <div className="flex gap-1.5">
+                                {STEPS.map((s, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`h-1.5 w-12 rounded-full transition-all duration-500 ${i <= step ? "bg-[#FF4F5A]" : "bg-muted"}`} 
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Error */}
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm"
-                        >
-                            {error}
-                        </motion.div>
-                    )}
-
-                    <AnimatePresence mode="wait">
-                        {/* ═══ STEP 0: Type d'annonce ═══ */}
-                        {step === 0 && (
+                    {/* Zone de contenu */}
+                    <div className="relative min-h-[500px]">
+                        {error && (
                             <motion.div
-                                key="step0"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-2xl mb-8 flex items-center gap-3"
                             >
-                                <h2 className="text-2xl font-bold text-foreground mb-2">Que souhaitez-vous faire ?</h2>
-                                <p className="text-muted-foreground mb-6">Choisissez le type d'annonce</p>
+                                <Info className="w-5 h-5 flex-shrink-0" />
+                                <p className="text-sm font-medium">{error}</p>
+                            </motion.div>
+                        )}
 
-                                <div className="grid sm:grid-cols-2 gap-4">
+                        <AnimatePresence mode="wait">
+                            {/* ÉTAPE 0: TYPE */}
+                            {step === 0 && (
+                                <motion.div
+                                    key="step0"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="grid sm:grid-cols-2 gap-4"
+                                >
                                     {LISTING_TYPES.map(type => (
                                         <button
                                             key={type.value}
                                             onClick={() => updateForm({ listing_type: type.value })}
-                                            className={`p-6 rounded-2xl border-2 text-left transition-all hover:shadow-md ${form.listing_type === type.value
-                                                    ? "border-[#FF4F5A] bg-[#FF4F5A]/5 shadow-md"
-                                                    : "border-border hover:border-gray-300"
-                                                }`}
+                                            className={`p-8 rounded-[2rem] border-2 text-left transition-all group ${
+                                                form.listing_type === type.value
+                                                    ? "border-[#FF4F5A] bg-[#FF4F5A]/5 shadow-xl shadow-[#FF4F5A]/5 scale-[1.02]"
+                                                    : "border-border hover:border-foreground/20 hover:bg-muted/30"
+                                            }`}
                                         >
-                                            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                                                <type.icon className="w-6 h-6 text-foreground" />
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-colors ${
+                                                form.listing_type === type.value ? "bg-[#FF4F5A] text-white" : "bg-muted text-foreground"
+                                            }`}>
+                                                <type.icon className="w-7 h-7" />
                                             </div>
-                                            <h3 className="text-lg font-bold text-foreground mt-3">{type.label}</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">{type.desc}</p>
+                                            <h3 className="text-xl font-bold mb-2">{type.label}</h3>
+                                            <p className="text-muted-foreground text-sm leading-relaxed">{type.desc}</p>
                                         </button>
                                     ))}
-                                </div>
-                            </motion.div>
-                        )}
+                                </motion.div>
+                            )}
 
-                        {/* ═══ STEP 1: Détails ═══ */}
-                        {step === 1 && (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-card rounded-3xl p-8 shadow-lg border border-border space-y-6"
-                            >
-                                <div>
-                                    <h2 className="text-2xl font-bold text-foreground mb-2">Décrivez votre bien</h2>
-                                    <p className="text-muted-foreground">Plus votre annonce est détaillée, plus elle attirera de monde</p>
-                                </div>
+                            {/* ÉTAPE 1: DÉTAILS */}
+                            {step === 1 && (
+                                <motion.div
+                                    key="step1"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="bg-card rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-border space-y-10"
+                                >
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Titre de l'annonce</label>
+                                            <Input
+                                                value={form.title}
+                                                onChange={e => updateForm({ title: e.target.value })}
+                                                placeholder="Ex: Appareil Photo Sony Alpha 7 IV"
+                                                className="h-16 text-lg rounded-3xl bg-muted/30 border-none px-6 focus:ring-2 ring-[#FF4F5A]/20"
+                                            />
+                                        </div>
 
-                                {/* Title */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                                        Titre de l'annonce *
-                                    </label>
-                                    <Input
-                                        value={form.title}
-                                        onChange={e => updateForm({ title: e.target.value })}
-                                        placeholder="Ex: Appartement F3 meublé centre-ville"
-                                        className="h-12 rounded-2xl bg-muted/50 border-border"
-                                        maxLength={100}
-                                    />
-                                    <p className="text-xs text-muted-foreground/70 mt-1 text-right">{form.title.length}/100</p>
-                                </div>
-
-                                {/* Category */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">Catégorie *</label>
-                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                                        {categories.map(cat => (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => updateForm({ category_id: cat.id })}
-                                                className={`p-3 rounded-xl border text-center text-sm font-medium transition-all ${form.category_id === cat.id
-                                                        ? "border-[#FF4F5A] bg-[#FF4F5A]/5 text-[#FF4F5A]"
-                                                        : "border-border text-muted-foreground hover:border-gray-300"
-                                                    }`}
-                                            >
-                                                {cat.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Description */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">Description *</label>
-                                    <textarea
-                                        value={form.description}
-                                        onChange={e => updateForm({ description: e.target.value })}
-                                        rows={5}
-                                        placeholder="Décrivez votre bien en détail : caractéristiques, état, ce qui est inclus..."
-                                        className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
-                                        maxLength={2000}
-                                    />
-                                    <p className="text-xs text-muted-foreground/70 mt-1 text-right">{form.description.length}/2000</p>
-                                </div>
-
-                                {/* Condition */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">État</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {CONDITIONS.map(c => (
-                                            <button
-                                                key={c.value}
-                                                onClick={() => updateForm({ condition: c.value })}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${form.condition === c.value
-                                                        ? c.color + " ring-2 ring-offset-1 ring-current"
-                                                        : "bg-muted text-muted-foreground hover:bg-muted"
-                                                    }`}
-                                            >
-                                                {c.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Tags */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                                        Tags <span className="font-normal text-muted-foreground/70">(séparés par des virgules)</span>
-                                    </label>
-                                    <Input
-                                        value={form.tags}
-                                        onChange={e => updateForm({ tags: e.target.value })}
-                                        placeholder="Ex: meublé, wifi, parking"
-                                        className="h-12 rounded-2xl bg-muted/50 border-border"
-                                    />
-                                </div>
-
-                                {/* Dynamic Metadata Fields */}
-                                {(() => {
-                                    const selectedCat = categories.find(c => c.id === form.category_id);
-                                    if (!selectedCat) return null;
-                                    const filters = CATEGORY_FILTERS[selectedCat.slug] || [];
-                                    if (filters.length === 0) return null;
-
-                                    return (
-                                        <div className="pt-4 border-t border-border space-y-6">
-                                            <h3 className="font-bold text-foreground">Caractéristiques spécifiques ({selectedCat.name})</h3>
-                                            <div className="grid sm:grid-cols-2 gap-6">
-                                                {filters.map(f => (
-                                                    <div key={f.key}>
-                                                        <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                                                            {f.label} *
-                                                        </label>
-                                                        {f.type === "select" && (
-                                                            <select
-                                                                value={form.metadata[f.key] || ""}
-                                                                onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
-                                                                className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
-                                                            >
-                                                                <option value="">Sélectionner...</option>
-                                                                {f.options?.map(opt => (
-                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                                ))}
-                                                            </select>
-                                                        )}
-                                                        {f.type === "number" && (
-                                                            <Input
-                                                                type="number"
-                                                                value={form.metadata[f.key] || ""}
-                                                                onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
-                                                                placeholder={f.unit ? `Ex: 100 ${f.unit}` : "Ex: 2023"}
-                                                                className="h-12 rounded-2xl bg-muted/50 border-border"
-                                                                min={f.min}
-                                                                max={f.max}
-                                                            />
-                                                        )}
-                                                        {f.type === "checkbox" && (
-                                                            <label className="flex items-center gap-3 cursor-pointer h-12">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={form.metadata[f.key] === true}
-                                                                    onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.checked } })}
-                                                                    className="w-5 h-5 rounded accent-[#FF4F5A]"
-                                                                />
-                                                                <span className="text-sm text-foreground/80">{f.label}</span>
-                                                            </label>
-                                                        )}
-                                                    </div>
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Catégorie</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {categories.map(cat => (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => updateForm({ category_id: cat.id })}
+                                                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                                                            form.category_id === cat.id
+                                                                ? "bg-[#FF4F5A] text-white shadow-lg shadow-[#FF4F5A]/20"
+                                                                : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                                                        }`}
+                                                    >
+                                                        {cat.name}
+                                                    </button>
                                                 ))}
                                             </div>
                                         </div>
-                                    );
-                                })()}
-                            </motion.div>
-                        )}
 
-                        {/* ═══ STEP 2: Photos ═══ */}
-                        {step === 2 && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
-                            >
-                                <h2 className="text-2xl font-bold text-foreground mb-2">Ajoutez des photos</h2>
-                                <p className="text-muted-foreground mb-6">Minimum 1 photo, maximum 8. La première sera la couverture.</p>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                    {/* Existing previews */}
-                                    {form.imagePreviewUrls.map((url, i) => (
-                                        <div key={i} className="relative aspect-square rounded-2xl overflow-hidden group">
-                                            <img src={url} alt="" className="w-full h-full object-cover" />
-                                            {i === 0 && (
-                                                <span className="absolute top-2 left-2 px-2 py-1 bg-[#FF4F5A] text-white text-xs font-medium rounded-lg">
-                                                    Couverture
-                                                </span>
-                                            )}
-                                            <button
-                                                onClick={() => removeImage(i)}
-                                                className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <X className="w-4 h-4 text-white" />
-                                            </button>
-                                        </div>
-                                    ))}
-
-                                    {/* Add button */}
-                                    {form.images.length < 8 && (
-                                        <label className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#FF4F5A] flex flex-col items-center justify-center cursor-pointer transition-colors group">
-                                            <Plus className="w-8 h-8 text-muted-foreground/70 group-hover:text-[#FF4F5A] transition-colors" />
-                                            <span className="text-sm text-muted-foreground/70 group-hover:text-[#FF4F5A] mt-1">Ajouter</span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                multiple
-                                                onChange={handleImageAdd}
-                                                className="hidden"
-                                            />
-                                        </label>
-                                    )}
-                                </div>
-
-                                <p className="text-xs text-muted-foreground/70 mt-4">{form.images.length}/8 photos</p>
-                            </motion.div>
-                        )}
-
-                        {/* ═══ STEP 3: Prix & Localisation ═══ */}
-                        {step === 3 && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-card rounded-3xl p-8 shadow-lg border border-border space-y-6"
-                            >
-                                <div>
-                                    <h2 className="text-2xl font-bold text-foreground mb-2">Prix & Localisation</h2>
-                                    <p className="text-muted-foreground">Définissez vos tarifs et votre emplacement</p>
-                                </div>
-
-                                {/* Rental prices */}
-                                {(form.listing_type === "rent" || form.listing_type === "rent_sell") && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-semibold text-foreground/80">Tarifs de location (DA)</h3>
-                                        <div className="grid sm:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="text-sm text-muted-foreground mb-1 block">Par jour *</label>
-                                                <Input
-                                                    type="number"
-                                                    value={form.price_per_day}
-                                                    onChange={e => updateForm({ price_per_day: e.target.value })}
-                                                    placeholder="5000"
-                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-muted-foreground mb-1 block">Par semaine</label>
-                                                <Input
-                                                    type="number"
-                                                    value={form.price_per_week}
-                                                    onChange={e => updateForm({ price_per_week: e.target.value })}
-                                                    placeholder="25000"
-                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-muted-foreground mb-1 block">Par mois</label>
-                                                <Input
-                                                    type="number"
-                                                    value={form.price_per_month}
-                                                    onChange={e => updateForm({ price_per_month: e.target.value })}
-                                                    placeholder="80000"
-                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm text-muted-foreground mb-1 block">Caution (DA)</label>
-                                            <Input
-                                                type="number"
-                                                value={form.deposit_amount}
-                                                onChange={e => updateForm({ deposit_amount: e.target.value })}
-                                                placeholder="10000"
-                                                className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Sale price */}
-                                {(form.listing_type === "sell" || form.listing_type === "rent_sell") && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-semibold text-foreground/80">Prix de vente (DA)</h3>
-                                        <Input
-                                            type="number"
-                                            value={form.sale_price}
-                                            onChange={e => updateForm({ sale_price: e.target.value })}
-                                            placeholder="150000"
-                                            className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
-                                        />
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={form.is_negotiable}
-                                                onChange={e => updateForm({ is_negotiable: e.target.checked })}
-                                                className="w-5 h-5 rounded accent-[#FF4F5A]"
-                                            />
-                                            <span className="text-sm text-foreground/80">Prix négociable</span>
-                                        </label>
-                                    </div>
-                                )}
-
-                                {/* Troc */}
-                                {(form.listing_type === "troc") && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-semibold text-foreground/80">Détails du troc</h3>
-                                        <div>
-                                            <label className="text-sm text-muted-foreground mb-1 block">Qu'acceptez-vous en échange ?</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Description</label>
                                             <textarea
-                                                value={form.troc_description}
-                                                onChange={e => updateForm({ troc_description: e.target.value })}
-                                                rows={3}
-                                                placeholder="Ex: J'accepte un smartphone ou une tablette en bon état"
-                                                className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
+                                                value={form.description}
+                                                onChange={e => updateForm({ description: e.target.value })}
+                                                rows={6}
+                                                placeholder="Décrivez votre objet en détail..."
+                                                className="w-full px-6 py-5 bg-muted/30 border-none rounded-3xl text-lg resize-none focus:ring-2 ring-[#FF4F5A]/20 transition-all"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-sm text-muted-foreground mb-1 block">Valeur estimée (DA)</label>
-                                            <Input
-                                                type="number"
-                                                value={form.troc_estimated_value}
-                                                onChange={e => updateForm({ troc_estimated_value: e.target.value })}
-                                                placeholder="50000"
-                                                className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
-                                            />
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">État de l'objet</label>
+                                            <div className="flex flex-wrap gap-3">
+                                                {CONDITIONS.map(c => (
+                                                    <button
+                                                        key={c.value}
+                                                        onClick={() => updateForm({ condition: c.value })}
+                                                        className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all border-2 ${
+                                                            form.condition === c.value
+                                                                ? "border-[#FF4F5A] text-[#FF4F5A] bg-[#FF4F5A]/5"
+                                                                : "border-transparent bg-muted text-muted-foreground"
+                                                        }`}
+                                                    >
+                                                        {c.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                )}
+                                </motion.div>
+                            )}
 
-                                {/* Wilaya */}
-                                <div>
-                                    <h3 className="font-semibold text-foreground/80 mb-3">Localisation *</h3>
-                                    <select
-                                        value={form.wilaya_code}
-                                        onChange={e => updateForm({ wilaya_code: e.target.value })}
-                                        className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] max-w-md"
-                                    >
-                                        <option value="">Sélectionnez votre wilaya</option>
-                                        {WILAYAS.map(w => (
-                                            <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
+                            {/* ÉTAPE 2: PHOTOS */}
+                            {step === 2 && (
+                                <motion.div
+                                    key="step2"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="bg-card rounded-[2.5rem] p-10 border border-border"
+                                >
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {form.imagePreviewUrls.map((url, i) => (
+                                            <div key={i} className="relative aspect-square rounded-[1.5rem] overflow-hidden group shadow-lg">
+                                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button 
+                                                        onClick={() => removeImage(i)}
+                                                        className="w-10 h-10 bg-white text-red-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                                                    >
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                {i === 0 && <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-black uppercase tracking-wider">Couverture</span>}
+                                            </div>
                                         ))}
-                                    </select>
-                                </div>
-                            </motion.div>
-                        )}
+                                        
+                                        {form.images.length < 8 && (
+                                            <label className="aspect-square rounded-[1.5rem] border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors group">
+                                                <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                                    <Plus className="w-6 h-6 text-muted-foreground" />
+                                                </div>
+                                                <span className="text-xs font-bold text-muted-foreground">Ajouter</span>
+                                                <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
+                                            </label>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
 
-                        {/* ═══ STEP 4: Confirmation ═══ */}
-                        {step === 4 && (
-                            <motion.div
-                                key="step4"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
-                            >
-                                <h2 className="text-2xl font-bold text-foreground mb-6">Récapitulatif</h2>
+                            {/* ÉTAPE 3: OFFRE */}
+                            {step === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="bg-card rounded-[2.5rem] p-10 border border-border space-y-12"
+                                >
+                                    <div className="grid md:grid-cols-2 gap-10">
+                                        {(form.listing_type === "rent" || form.listing_type === "rent_sell") && (
+                                            <div className="space-y-6">
+                                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                                    <Home className="w-5 h-5 text-[#FF4F5A]" /> Prix de Location
+                                                </h3>
+                                                <div className="space-y-4">
+                                                    <div className="relative">
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA / Jour</span>
+                                                        <Input 
+                                                            type="number" 
+                                                            value={form.price_per_day}
+                                                            onChange={e => updateForm({ price_per_day: e.target.value })}
+                                                            className="h-14 rounded-2xl bg-muted/30 border-none pl-6 pr-24 font-bold text-lg" 
+                                                        />
+                                                    </div>
+                                                    <div className="relative">
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">Caution DA</span>
+                                                        <Input 
+                                                            type="number" 
+                                                            value={form.deposit_amount}
+                                                            onChange={e => updateForm({ deposit_amount: e.target.value })}
+                                                            className="h-14 rounded-2xl bg-muted/30 border-none pl-6 pr-24" 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
-                                {/* Preview */}
-                                <div className="space-y-4">
-                                    {/* Image */}
-                                    {form.imagePreviewUrls[0] && (
-                                        <div className="h-48 rounded-2xl overflow-hidden">
+                                        {(form.listing_type === "sell" || form.listing_type === "rent_sell") && (
+                                            <div className="space-y-6">
+                                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> Prix de Vente
+                                                </h3>
+                                                <div className="space-y-4">
+                                                    <div className="relative">
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA Total</span>
+                                                        <Input 
+                                                            type="number" 
+                                                            value={form.sale_price}
+                                                            onChange={e => updateForm({ sale_price: e.target.value })}
+                                                            className="h-14 rounded-2xl bg-muted/30 border-none pl-6 pr-24 font-bold text-lg" 
+                                                        />
+                                                    </div>
+                                                     <label className="flex items-center gap-3 cursor-pointer p-4 bg-muted/30 rounded-2xl">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={form.is_negotiable}
+                                                            onChange={e => updateForm({ is_negotiable: e.target.checked })}
+                                                            className="w-5 h-5 accent-[#FF4F5A]" 
+                                                        />
+                                                        <span className="text-sm font-bold">Prix négociable</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-8 border-t border-border">
+                                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                            <MapPin className="w-5 h-5 text-blue-600" /> Localisation
+                                        </h3>
+                                        <select
+                                            value={form.wilaya_code}
+                                            onChange={e => updateForm({ wilaya_code: e.target.value })}
+                                            className="w-full h-16 px-6 bg-muted/30 border-none rounded-2xl font-bold text-lg focus:ring-2 ring-[#FF4F5A]/20"
+                                        >
+                                            <option value="">Sélectionnez votre Wilaya</option>
+                                            {WILAYAS.map(w => (
+                                                <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* ÉTAPE 4: RÉCAP */}
+                            {step === 4 && (
+                                <motion.div
+                                    key="step4"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="bg-card rounded-[2.5rem] p-10 border border-border"
+                                >
+                                    <div className="flex flex-col md:flex-row gap-10">
+                                        <div className="w-full md:w-1/2 rounded-[2rem] overflow-hidden aspect-square h-80">
                                             <img src={form.imagePreviewUrls[0]} alt="" className="w-full h-full object-cover" />
                                         </div>
-                                    )}
-
-                                    <div className="grid sm:grid-cols-2 gap-4">
-                                        <div className="p-4 bg-muted/50 rounded-xl">
-                                            <p className="text-xs text-muted-foreground/70 mb-1">Type</p>
-                                            <p className="font-semibold text-foreground">
-                                                {LISTING_TYPES.find(t => t.value === form.listing_type)?.label}
-                                            </p>
-                                        </div>
-                                        <div className="p-4 bg-muted/50 rounded-xl">
-                                            <p className="text-xs text-muted-foreground/70 mb-1">État</p>
-                                            <p className="font-semibold text-foreground">
-                                                {CONDITIONS.find(c => c.value === form.condition)?.label}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-muted/50 rounded-xl">
-                                        <p className="text-xs text-muted-foreground/70 mb-1">Titre</p>
-                                        <p className="font-semibold text-foreground text-lg">{form.title}</p>
-                                    </div>
-
-                                    <div className="p-4 bg-muted/50 rounded-xl">
-                                        <p className="text-xs text-muted-foreground/70 mb-1">Description</p>
-                                        <p className="text-foreground/80 text-sm">{form.description}</p>
-                                    </div>
-
-                                    <div className="grid sm:grid-cols-2 gap-4">
-                                        {form.price_per_day && (
-                                            <div className="p-4 bg-muted/50 rounded-xl">
-                                                <p className="text-xs text-muted-foreground/70 mb-1">Prix / jour</p>
-                                                <p className="font-bold text-foreground text-lg">{Number(form.price_per_day).toLocaleString()} DA</p>
+                                        <div className="flex-1 space-y-6">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]">{LISTING_TYPES.find(t => t.value === form.listing_type)?.label}</span>
+                                                <h2 className="text-3xl font-bold mt-1">{form.title}</h2>
+                                                <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                                                    <MapPin className="w-4 h-4" />
+                                                    <span>{WILAYAS.find(w => w.code === Number(form.wilaya_code))?.name}</span>
+                                                </div>
                                             </div>
-                                        )}
-                                        {form.sale_price && (
-                                            <div className="p-4 bg-muted/50 rounded-xl">
-                                                <p className="text-xs text-muted-foreground/70 mb-1">Prix de vente</p>
-                                                <p className="font-bold text-foreground text-lg">{Number(form.sale_price).toLocaleString()} DA</p>
+
+                                            <div className="p-6 bg-muted/30 rounded-3xl space-y-3">
+                                                {form.price_per_day && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-muted-foreground font-medium">Prix journalier</span>
+                                                        <span className="text-xl font-black">{Number(form.price_per_day).toLocaleString()} DA</span>
+                                                    </div>
+                                                )}
+                                                {form.sale_price && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-muted-foreground font-medium">Prix de vente</span>
+                                                        <span className="text-xl font-black text-emerald-600">{Number(form.sale_price).toLocaleString()} DA</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                        <div className="p-4 bg-muted/50 rounded-xl">
-                                            <p className="text-xs text-muted-foreground/70 mb-1">Localisation</p>
-                                            <p className="font-semibold text-foreground flex items-center gap-1">
-                                                <MapPin className="w-4 h-4" />
-                                                {WILAYAS.find(w => w.code === Number(form.wilaya_code))?.name}
-                                            </p>
-                                        </div>
-                                        <div className="p-4 bg-muted/50 rounded-xl">
-                                            <p className="text-xs text-muted-foreground/70 mb-1">Photos</p>
-                                            <p className="font-semibold text-foreground">{form.images.length} photo(s)</p>
+
+                                            <p className="text-muted-foreground italic line-clamp-3">"{form.description}"</p>
                                         </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                    {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-8">
+                    {/* Navigation Bar Basse */}
+                    <div className="mt-12 flex items-center justify-between">
                         <Button
-                            variant="outline"
-                            onClick={() => setStep(Math.max(0, step - 1))}
-                            disabled={step === 0}
-                            className="rounded-full px-6 h-12"
+                            variant="ghost"
+                            onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
+                            className="rounded-2xl h-14 px-8 font-bold"
                         >
-                            <ArrowLeft className="w-5 h-5 mr-2" />
-                            Précédent
+                            {step === 0 ? "Annuler" : "Retour"}
                         </Button>
 
-                        {step < STEPS.length - 1 ? (
-                            <Button
-                                onClick={() => setStep(step + 1)}
-                                disabled={!canProceed()}
-                                className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full px-8 h-12 shadow-lg shadow-[#FF4F5A]/25 disabled:opacity-50"
-                            >
-                                Suivant
-                                <ArrowRight className="w-5 h-5 ml-2" />
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full px-8 h-12 shadow-lg shadow-[#FF4F5A]/25"
-                            >
-                                {isSubmitting ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <CheckCircle2 className="w-5 h-5 mr-2" />
-                                        Publier l'annonce
-                                    </>
-                                )}
-                            </Button>
-                        )}
+                        <Button
+                            onClick={() => step < 4 ? setStep(step + 1) : handleSubmit()}
+                            disabled={!canProceed() || isSubmitting}
+                            className={`rounded-2xl h-14 px-10 font-black text-lg shadow-xl transition-all active:scale-95 ${
+                                step === 4 ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20" : "bg-foreground text-background"
+                            }`}
+                        >
+                            {isSubmitting ? (
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                            ) : (
+                                <>
+                                    {step === 4 ? "Publier l'annonce" : "Continuer"}
+                                    <ChevronRight className="w-5 h-5 ml-2" />
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
-            </div>
+            </main>
+
+            <Footer />
         </div>
     );
 }

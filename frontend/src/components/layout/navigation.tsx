@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
@@ -8,19 +8,17 @@ import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../context/theme-context";
 import { ThemeToggle } from "./theme-toggle";
 import { useNotifications } from "../../hooks/useNotifications";
+import { supabase } from "../../lib/supabase";
+import { cn } from "../ui/utils";
 
-const CATEGORIES = [
-  { icon: Home, label: "Immobilier", slug: "immobilier" },
-  { icon: Car, label: "Véhicules", slug: "vehicules" },
-  { icon: Laptop, label: "Électronique", slug: "electronique" },
-  { icon: Wrench, label: "Outillage", slug: "outillage" },
-  { icon: Armchair, label: "Mobilier", slug: "mobilier" },
-  { icon: Camera, label: "Photo & Vidéo", slug: "photo-video" },
-  { icon: Dumbbell, label: "Sport", slug: "sport" },
-  { icon: PartyPopper, label: "Événementiel", slug: "evenementiel" },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+}
 
-export function Navigation({ variant = "default" }: { variant?: "default" | "transparent" }) {
+export function Navigation() {
   const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuthStore();
   const { isDark } = useTheme();
@@ -28,15 +26,26 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   
-  const isTransparent = false;
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, slug")
+        .is("parent_id", null)
+        .eq("is_active", true)
+        .order("sort_order");
+      if (data) setCategories(data);
+    };
+    fetchCategories();
+  }, []);
 
-  // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -68,147 +77,119 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
       .slice(0, 2)
     : "U";
 
-  const logoVariant = isDark ? "white" : "default";
+  const getCategoryIcon = (slug: string) => {
+    switch (slug) {
+      case 'immobilier': return Home;
+      case 'vehicules': return Car;
+      case 'electronique': return Laptop;
+      case 'outillage': return Wrench;
+      case 'mobilier': return Armchair;
+      case 'photo-video': return Camera;
+      case 'sport': return Dumbbell;
+      case 'evenementiel': return PartyPopper;
+      default: return LayoutGrid;
+    }
+  };
 
   return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-md transition-all duration-300 dark:shadow-none"
-    >
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <KarillyLogo className="h-8 transition-all" variant={logoVariant} />
-            </motion.div>
-          </Link>
+          
+          {/* Logo & Main Nav */}
+          <div className="flex items-center gap-12">
+            <Link to="/" className="flex items-center gap-3 active:scale-95 transition-transform">
+              <KarillyLogo className="h-8" variant={isDark ? "white" : "default"} />
+            </Link>
 
-          {/* Desktop Navigation - Hidden on Mobile */}
-          <div className="hidden lg:flex items-center gap-8">
-            <button
-              onClick={() => navigate('/explore')}
-              className={`text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
-                ? "text-white/90 hover:text-white"
-                : "text-[#0F2A2E] hover:text-[#FF4F5A]"
-                }`}
-            >
-              Explorer
-            </button>
-            <div className="relative" ref={categoriesRef}>
+            <div className="hidden lg:flex items-center gap-8">
               <button
-                onClick={() => setShowCategories(!showCategories)}
-                className={`flex items-center gap-1 text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
-                  ? "text-white/90 hover:text-white"
-                  : "text-[#0F2A2E] hover:text-[#FF4F5A]"
-                  }`}
+                onClick={() => navigate('/explore')}
+                className="text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors"
               >
-                Catégories
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showCategories ? "rotate-180" : ""}`} />
+                Explorer
               </button>
-              
-              {/* Categories Dropdown */}
-              <AnimatePresence>
-                {showCategories && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-1/2 -translate-x-1/2 top-12 w-[320px] bg-card rounded-2xl shadow-xl border border-border overflow-hidden"
-                  >
-                    <div className="p-2">
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat.slug}
-                          onClick={() => {
-                            navigate(`/explore?category=${cat.slug}`);
-                            setShowCategories(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                        >
-                          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                            <cat.icon className="w-4.5 h-4.5 text-[#FF4F5A]" />
-                          </div>
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="border-t border-border p-2">
-                      <button
-                        onClick={() => {
-                          navigate('/explore');
-                          setShowCategories(false);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#FF4F5A] hover:bg-[#FF4F5A]/5 transition-colors"
-                      >
-                        Voir toutes les catégories
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+              <div className="relative" ref={categoriesRef}>
+                <button
+                  onClick={() => setShowCategories(!showCategories)}
+                  className="flex items-center gap-1 text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors group"
+                >
+                  Catégories
+                  <ChevronDown className={cn("w-4 h-4 transition-transform", showCategories && "rotate-180")} />
+                </button>
+                
+                <AnimatePresence>
+                  {showCategories && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-0 top-12 w-[300px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden p-3"
+                    >
+                      <div className="grid grid-cols-1 gap-1">
+                        {categories.map((cat) => {
+                          const Icon = getCategoryIcon(cat.slug);
+                          return (
+                            <button
+                              key={cat.id}
+                              onClick={() => {
+                                navigate(`/explore?category=${cat.slug}`);
+                                setShowCategories(false);
+                              }}
+                              className="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-muted transition-all text-sm font-bold group"
+                            >
+                              <div className="w-10 h-10 rounded-xl bg-muted group-hover:bg-background flex items-center justify-center transition-colors">
+                                <Icon className="w-5 h-5 text-[#FF4F5A]" />
+                              </div>
+                              {cat.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('how-it-works');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else navigate('/#how-it-works');
+                }}
+                className="text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors"
+              >
+                Comment ça marche
+              </button>
             </div>
-            <button className={`text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
-              ? "text-white/90 hover:text-white"
-              : "text-foreground/85 hover:text-foreground"
-              }`}>
-              Comment ça marche
-            </button>
-            {isAuthenticated && (
-              <button
-                onClick={() => navigate('/create')}
-                className={`text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
-                  ? "text-white/90 hover:text-white"
-                  : "text-foreground/85 hover:text-foreground"
-                  }`}
-              >
-                Publier une annonce
-              </button>
-            )}
           </div>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:block">
-              <ThemeToggle transparent={isTransparent} />
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block">
+              <ThemeToggle />
             </div>
 
             {isAuthenticated ? (
-              <>
-                {/* Favorites */}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+              <div className="flex items-center gap-3">
+                <button
                   onClick={() => navigate('/dashboard')}
-                  className={`hidden lg:flex items-center justify-center w-10 h-10 rounded-full transition-colors ${isTransparent
-                    ? "hover:bg-white/10"
-                    : "hover:bg-muted"
-                    }`}
+                  className="w-10 h-10 rounded-2xl hover:bg-muted flex items-center justify-center text-foreground transition-all"
                 >
-                  <Heart className={`w-5 h-5 ${isTransparent ? "text-white" : "text-foreground"}`} />
-                </motion.button>
+                  <Heart className="w-5 h-5" />
+                </button>
 
-                {/* Notifications Bell */}
                 <div className="relative" ref={notifMenuRef}>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors relative ${isTransparent
-                      ? "hover:bg-white/10"
-                      : "hover:bg-muted"
-                      }`}
+                    className="w-10 h-10 rounded-2xl hover:bg-muted flex items-center justify-center text-foreground relative transition-all"
                   >
-                    <Bell className={`w-5 h-5 ${isTransparent ? "text-white" : "text-foreground"}`} />
+                    <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-4 h-4 bg-[#FF4F5A] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
-                        {unreadCount}
-                      </span>
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF4F5A] rounded-full border border-background" />
                     )}
-                  </motion.button>
+                  </button>
 
                   <AnimatePresence>
                     {showNotifications && (
@@ -216,46 +197,32 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-80 bg-card rounded-2xl shadow-xl border border-border overflow-hidden z-50 shadow-2xl"
+                        className="absolute right-0 mt-4 w-[360px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden z-50"
                       >
-                        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20">
-                          <h3 className="font-bold text-sm text-foreground">Notifications</h3>
+                        <div className="p-6 border-b border-border/50 flex justify-between items-center">
+                          <h3 className="font-black text-xs uppercase tracking-widest">Notifications</h3>
                           {unreadCount > 0 && (
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
-                              className="text-xs text-[#FF4F5A] font-semibold hover:underline"
-                            >
-                              Tout lire
-                            </button>
+                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-[#FF4F5A]">Tout lire</button>
                           )}
                         </div>
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="max-h-[400px] overflow-y-auto no-scrollbar">
                           {notifications.length === 0 ? (
-                            <div className="p-10 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
-                              <Bell className="w-8 h-8 opacity-20" />
-                              Aucune notification
+                            <div className="py-20 text-center text-muted-foreground text-sm px-10">
+                              Aucune notification pour le moment.
                             </div>
                           ) : (
                             notifications.map(notif => (
                               <div 
-                                key={notif.id} 
-                                onClick={() => { if(!notif.is_read) markAsRead(notif.id); navigate(notif.link || '/dashboard'); setShowNotifications(false); }}
-                                className={`p-4 border-b border-border hover:bg-muted/50 transition-colors relative group cursor-pointer ${!notif.is_read ? 'bg-[#FF4F5A]/5' : ''}`}
-                              >
-                                <div className="pr-6">
-                                  <p className="font-bold text-xs mb-1 text-foreground">{notif.title}</p>
-                                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{notif.content}</p>
-                                  <p className="text-[10px] text-muted-foreground mt-2">{new Date(notif.created_at).toLocaleDateString()}</p>
-                                </div>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
-                                  className="absolute top-3 right-3 p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                                {!notif.is_read && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#FF4F5A]" />
+                                key={notif.id}
+                                onClick={() => { markAsRead(notif.id); navigate(notif.link || '/dashboard'); setShowNotifications(false); }}
+                                className={cn(
+                                  "p-5 border-b border-border/30 hover:bg-muted/50 cursor-pointer transition-all relative",
+                                  !notif.is_read && "bg-[#FF4F5A]/5"
                                 )}
+                              >
+                                <p className="font-bold text-sm mb-1">{notif.title}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-2">{notif.content}</p>
+                                <p className="text-[10px] text-muted-foreground/50 mt-2 font-medium">Il y a 2 heures</p>
                               </div>
                             ))
                           )}
@@ -265,88 +232,49 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                   </AnimatePresence>
                 </div>
 
-                {/* User Avatar / Menu */}
                 <div className="relative" ref={userMenuRef}>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-border hover:shadow-md transition-all bg-card"
+                    className="flex items-center gap-3 p-1.5 rounded-2xl border border-border/50 hover:bg-muted transition-all"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-8 h-8 rounded-xl bg-[#0F2A2E] text-white flex items-center justify-center text-[10px] font-black">
                       {userInitials}
                     </div>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  </motion.button>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground sm:block hidden" />
+                  </button>
 
-                  {/* Dropdown */}
                   <AnimatePresence>
                     {showUserMenu && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-14 w-64 bg-card rounded-2xl shadow-xl border border-border overflow-hidden"
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-14 w-60 bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden p-2"
                       >
-                        <div className="px-4 py-3 border-b border-border">
-                          <p className="font-semibold text-foreground text-sm">
-                            {user?.user_metadata?.full_name || "Utilisateur"}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                        <div className="px-5 py-4 border-b border-border/50 mb-1">
+                          <p className="font-black text-xs truncate">{user?.user_metadata?.full_name || "Utilisateur"}</p>
+                          <p className="text-[10px] text-muted-foreground truncate font-medium mt-0.5">{user?.email}</p>
                         </div>
-                        <div className="py-2">
-                          <button
-                            onClick={() => { navigate('/dashboard'); setShowUserMenu(false); }}
-                            className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-muted flex items-center gap-3 transition-colors"
-                          >
-                            <User className="w-4 h-4" /> Mon profil
-                          </button>
-                          <button
-                            onClick={() => { navigate('/dashboard'); setShowUserMenu(false); }}
-                            className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-muted flex items-center gap-3 transition-colors"
-                          >
-                            <Heart className="w-4 h-4" /> Mes favoris
-                          </button>
-                        </div>
-                        <div className="border-t border-border py-2">
-                          <button
-                            onClick={handleSignOut}
-                            className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors"
-                          >
-                            <LogOut className="w-4 h-4" /> Déconnexion
-                          </button>
+                        <button onClick={() => { navigate('/dashboard'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
+                        <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
+                        <div className="border-t border-border/50 mt-1 pt-1">
+                           <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-red-500 transition-all"><LogOut className="w-4 h-4" /> Déconnexion</button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <Button
-                  onClick={() => navigate('/login')}
-                  variant="ghost"
-                  className={`hidden lg:flex h-10 px-5 rounded-full font-medium transition-colors ${
-                    isTransparent ? "text-white hover:bg-white/10" : "text-[#0F2A2E] hover:bg-[#0F2A2E]/5"
-                  }`}
-                >
-                  Connexion
-                </Button>
-                <Button
-                  onClick={() => navigate('/signup')}
-                  className="hidden lg:flex bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-10 rounded-full shadow-lg shadow-[#FF4F5A]/25 hover:shadow-xl hover:shadow-[#FF4F5A]/40 transition-all hover:scale-105"
-                >
-                  S'inscrire
-                </Button>
-              </>
+              <div className="flex items-center gap-3">
+                <Button onClick={() => navigate('/login')} variant="ghost" className="rounded-2xl font-bold h-11 px-6">Connexion</Button>
+                <Button onClick={() => navigate('/signup')} className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-2xl font-bold h-11 px-6 shadow-lg shadow-[#FF4F5A]/20">S'inscrire</Button>
+              </div>
             )}
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className={`lg:hidden flex items-center justify-center w-10 h-10 ${isTransparent ? "text-white" : "text-foreground"
-                }`}
+              className="lg:hidden w-11 h-11 flex items-center justify-center rounded-2xl hover:bg-muted transition-all"
             >
               {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -361,48 +289,44 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-card border-t border-border shadow-lg"
+            className="lg:hidden bg-card border-t border-border/50 overflow-hidden"
           >
-            <div className="px-6 py-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-border py-2 mb-2">
-                <span className="text-sm font-semibold text-muted-foreground">Thème</span>
-                <ThemeToggle transparent={false} />
-              </div>
-              <button onClick={() => { navigate('/explore'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Explorer</button>
-              
-              {/* Mobile Categories */}
-              <div className="border-b border-border pb-3">
-                <p className="text-sm font-semibold text-muted-foreground mb-2">Catégories</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.slug}
-                      onClick={() => { navigate(`/explore?category=${cat.slug}`); setShowMobileMenu(false); }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <cat.icon className="w-4 h-4 text-[#FF4F5A]" />
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {isAuthenticated ? (
-                <>
-                  <button onClick={() => { navigate('/dashboard'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Mon profil</button>
-                  <button onClick={() => { navigate('/lender'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Publier une annonce</button>
-                  <button onClick={() => { handleSignOut(); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-red-500 font-medium">Déconnexion</button>
-                </>
-              ) : (
-                <div className="flex gap-3 pt-2">
-                  <Button onClick={() => { navigate('/login'); setShowMobileMenu(false); }} variant="outline" className="flex-1 rounded-full">Connexion</Button>
-                  <Button onClick={() => { navigate('/signup'); setShowMobileMenu(false); }} className="flex-1 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full">S'inscrire</Button>
-                </div>
-              )}
+            <div className="p-6 space-y-8">
+               <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">Navigation</p>
+                  <button onClick={() => { navigate('/explore'); setShowMobileMenu(false); }} className="block w-full text-left p-3 rounded-2xl font-bold hover:bg-muted">Explorer</button>
+               </div>
+               <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">Catégories</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {categories.map(cat => (
+                      <button 
+                        key={cat.id} 
+                        onClick={() => { navigate(`/explore?category=${cat.slug}`); setShowMobileMenu(false); }}
+                        className="flex items-center gap-2 p-3 rounded-2xl bg-muted/50 font-bold text-xs"
+                      >
+                         <LayoutGrid className="w-3.5 h-3.5 text-[#FF4F5A]" />
+                         {cat.name}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+               {!isAuthenticated && (
+                  <div className="flex gap-4 pt-4 border-t border-border/50">
+                    <Button onClick={() => { navigate('/login'); setShowMobileMenu(false); }} variant="outline" className="flex-1 rounded-2xl h-14 font-bold">Connexion</Button>
+                    <Button onClick={() => { navigate('/signup'); setShowMobileMenu(false); }} className="flex-1 bg-[#FF4F5A] text-white rounded-2xl h-14 font-bold">S'inscrire</Button>
+                  </div>
+               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </nav>
+  );
+}
+
+function PlusCircle({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
   );
 }
