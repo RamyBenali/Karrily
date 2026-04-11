@@ -175,8 +175,8 @@ export function LenderDashboard() {
             className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 lg:mb-8 gap-4"
           >
             <div>
-              <h1 className="text-3xl lg:text-5xl font-bold text-[#0F2A2E] mb-2 leading-tight">Propriétaire</h1>
-              <p className="text-lg lg:text-xl text-gray-600 hidden lg:block">Gérez vos annonces et suivez vos revenus</p>
+              <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2 leading-tight">Propriétaire</h1>
+              <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">Gérez vos annonces et suivez vos revenus</p>
             </div>
             <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
               <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
@@ -200,7 +200,7 @@ export function LenderDashboard() {
                 className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
                   activeView === tab.id
                     ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
-                    : "bg-white text-gray-600 border border-gray-100"
+                    : "bg-card text-muted-foreground border border-border"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -214,7 +214,7 @@ export function LenderDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="hidden lg:inline-flex bg-white rounded-3xl p-2 shadow-lg border border-gray-100 mb-8 gap-2 flex-wrap"
+            className="hidden lg:inline-flex bg-card rounded-3xl p-2 shadow-lg border border-border mb-8 gap-2 flex-wrap"
           >
             {[
               { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
@@ -230,7 +230,7 @@ export function LenderDashboard() {
                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all ${
                   activeView === tab.id
                     ? "bg-[#0F2A2E] text-white shadow-lg"
-                    : "text-gray-700 hover:bg-gray-100"
+                    : "text-foreground/80 hover:bg-muted"
                 }`}
               >
                 <tab.icon className="w-5 h-5" />
@@ -304,12 +304,12 @@ export function LenderDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+                className="bg-card rounded-3xl p-8 shadow-xl border border-border"
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-1">Aperçu des revenus</h2>
-                    <p className="text-gray-600">Vos tendances de gains mensuels</p>
+                    <h2 className="text-2xl font-bold text-foreground mb-1">Aperçu des revenus</h2>
+                    <p className="text-muted-foreground">Vos tendances de gains mensuels</p>
                   </div>
                 </div>
                 <div className="h-80 opacity-50">
@@ -344,14 +344,14 @@ export function LenderDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+              className="bg-card rounded-3xl p-8 shadow-xl border border-border"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Mes Annonces</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Mes Annonces</h2>
               <div className="space-y-4">
                 {myListings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="flex flex-col md:flex-row gap-6 p-6 bg-gray-50 rounded-3xl hover:shadow-lg transition-all group"
+                    className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
                   >
                     <div className="w-full md:w-56 h-40 rounded-2xl overflow-hidden flex-shrink-0">
                       <ImageWithFallback
@@ -363,31 +363,31 @@ export function LenderDashboard() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <span className="inline-block px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-full mb-2">
+                          <span className="inline-block px-3 py-1 bg-card text-foreground/80 text-xs font-medium rounded-full mb-2">
                             {listing.category?.name || "Général"}
                           </span>
-                          <h3 className="text-xl font-bold text-[#0F2A2E]">{listing.title}</h3>
+                          <h3 className="text-xl font-bold text-foreground">{listing.title}</h3>
                           <div className="flex items-baseline gap-2 mt-2">
                             {listing.price_per_day && (
                                 <>
-                                  <span className="text-2xl font-bold text-[#0F2A2E]">{listing.price_per_day} DZD</span>
-                                  <span className="text-gray-500">/ jour</span>
+                                  <span className="text-2xl font-bold text-foreground">{listing.price_per_day} DZD</span>
+                                  <span className="text-muted-foreground">/ jour</span>
                                 </>
                             )}
                             {!listing.price_per_day && listing.sale_price && (
-                                 <span className="text-2xl font-bold text-[#0F2A2E]">{listing.sale_price} DZD</span>
+                                 <span className="text-2xl font-bold text-foreground">{listing.sale_price} DZD</span>
                             )}
                           </div>
                         </div>
-                        <span className={`px-4 py-2 rounded-full text-sm font-medium ${listing.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`px-4 py-2 rounded-full text-sm font-medium ${listing.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-muted text-foreground/80'}`}>
                           {listing.status === 'active' ? "Actif" : "Brouillon"}
                         </span>
                       </div>
                       
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                          <div className="text-sm text-gray-500">Vues</div>
-                          <div className="text-lg font-bold text-gray-900">{listing.view_count || 0}</div>
+                          <div className="text-sm text-muted-foreground">Vues</div>
+                          <div className="text-lg font-bold text-foreground">{listing.view_count || 0}</div>
                         </div>
                       </div>
 
@@ -413,7 +413,7 @@ export function LenderDashboard() {
                   </div>
                 ))}
                 {myListings.length === 0 && (
-                   <p className="text-gray-500 p-4 font-medium">Vous n'avez publié aucune annonce.</p>
+                   <p className="text-muted-foreground p-4 font-medium">Vous n'avez publié aucune annonce.</p>
                 )}
               </div>
             </motion.div>
@@ -424,9 +424,9 @@ export function LenderDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+              className="bg-card rounded-3xl p-8 shadow-xl border border-border"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Demandes & Réservations</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Demandes & Réservations</h2>
               <div className="space-y-4">
                 {upcomingBookings.map((booking) => {
                   const isStarted = new Date() >= new Date(booking.start_date);
@@ -435,7 +435,7 @@ export function LenderDashboard() {
                   return (
                     <div
                       key={booking.id}
-                      className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-gray-50 rounded-3xl"
+                      className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-muted/50 rounded-3xl"
                     >
                       <div className="flex-1 mb-4 md:mb-0">
                         <div className="flex items-center gap-3 mb-2">
@@ -443,23 +443,23 @@ export function LenderDashboard() {
                             {booking.renter?.full_name ? booking.renter.full_name[0] : "U"}
                           </div>
                           <div>
-                            <h4 className="font-bold text-gray-900">{booking.renter?.full_name || "Utilisateur"}</h4>
-                            <p className="text-sm text-gray-500">{booking.item?.title || "Annonce"}</p>
+                            <h4 className="font-bold text-foreground">{booking.renter?.full_name || "Utilisateur"}</h4>
+                            <p className="text-sm text-muted-foreground">{booking.item?.title || "Annonce"}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 ml-15">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground ml-15">
                           <Calendar className="w-4 h-4" />
                           <span>{new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="text-sm text-gray-500">Gains Prévus</div>
-                          <div className="text-xl font-bold text-[#0F2A2E]">{booking.total_price} DZD</div>
+                          <div className="text-sm text-muted-foreground">Gains Prévus</div>
+                          <div className="text-xl font-bold text-foreground">{booking.total_price} DZD</div>
                           <div className={`text-xs font-semibold mt-1 uppercase tracking-wide px-3 py-1 rounded-full inline-block ${
                             booking.status === 'confirmed' ? 'bg-blue-100 text-blue-700' : 
                             booking.status === 'active' ? 'bg-green-100 text-green-700' :
-                            booking.status === 'completed' ? 'bg-gray-100 text-gray-700' :
+                            booking.status === 'completed' ? 'bg-muted text-foreground/80' :
                             booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-red-100 text-red-700' : 
                             'bg-amber-100 text-amber-700'
                           }`}>
@@ -502,7 +502,7 @@ export function LenderDashboard() {
                   );
                 })}
                 {upcomingBookings.length === 0 && (
-                   <p className="text-gray-500 p-4">Aucune demande de réservation pour le moment.</p>
+                   <p className="text-muted-foreground p-4">Aucune demande de réservation pour le moment.</p>
                 )}
               </div>
             </motion.div>
@@ -513,14 +513,14 @@ export function LenderDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+              className="bg-card rounded-3xl p-8 shadow-xl border border-border"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Demandes d'Achat</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Demandes d'Achat</h2>
               <div className="space-y-4">
                 {mySales.map((sale) => (
                   <div
                     key={sale.id}
-                    className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-gray-50 rounded-3xl"
+                    className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-muted/50 rounded-3xl"
                   >
                     <div className="flex-1 mb-4 md:mb-0">
                       <div className="flex items-center gap-3 mb-2">
@@ -528,15 +528,15 @@ export function LenderDashboard() {
                           {sale.buyer?.full_name ? sale.buyer.full_name[0] : "B"}
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-900">{sale.buyer?.full_name || "Acheteur"}</h4>
-                          <p className="text-sm text-gray-500">{sale.item?.title || "Objet"}</p>
+                          <h4 className="font-bold text-foreground">{sale.buyer?.full_name || "Acheteur"}</h4>
+                          <p className="text-sm text-muted-foreground">{sale.item?.title || "Objet"}</p>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 italic ml-[60px]">"{sale.message || "Pas de message."}"</p>
+                      <p className="text-sm text-muted-foreground italic ml-[60px]">"{sale.message || "Pas de message."}"</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-sm text-gray-500">Prix de vente</div>
+                        <div className="text-sm text-muted-foreground">Prix de vente</div>
                         <div className="text-xl font-bold text-emerald-700">{sale.price} DZD</div>
                         <div className={`text-xs font-semibold mt-1 uppercase tracking-wide px-3 py-1 rounded-full inline-block ${
                           sale.status === 'accepted' ? 'bg-blue-100 text-blue-700' : 
@@ -576,7 +576,7 @@ export function LenderDashboard() {
                   </div>
                 ))}
                 {mySales.length === 0 && (
-                   <p className="text-gray-500 p-4">Aucune demande d'achat en cours.</p>
+                   <p className="text-muted-foreground p-4">Aucune demande d'achat en cours.</p>
                 )}
               </div>
             </motion.div>
@@ -587,14 +587,14 @@ export function LenderDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100"
+              className="bg-card rounded-3xl p-8 shadow-xl border border-border"
             >
-              <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Propositions de Troc</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Propositions de Troc</h2>
               <div className="space-y-4">
                 {trocProposals.map((proposal) => (
                   <div
                     key={proposal.id}
-                    className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-gray-50 rounded-3xl"
+                    className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-muted/50 rounded-3xl"
                   >
                     <div className="flex-1 mb-4 md:mb-0">
                       <div className="flex items-center gap-3 mb-4">
@@ -602,24 +602,24 @@ export function LenderDashboard() {
                           {proposal.proposer?.full_name ? proposal.proposer.full_name[0] : "T"}
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-900">{proposal.proposer?.full_name || "Utilisateur"}</h4>
-                          <p className="text-sm text-gray-500">Contre votre objet : {proposal.requested_item?.title}</p>
+                          <h4 className="font-bold text-foreground">{proposal.proposer?.full_name || "Utilisateur"}</h4>
+                          <p className="text-sm text-muted-foreground">Contre votre objet : {proposal.requested_item?.title}</p>
                         </div>
                       </div>
                       
-                      <div className="ml-[60px] p-4 bg-white rounded-2xl border border-purple-100">
+                      <div className="ml-[60px] p-4 bg-card rounded-2xl border border-purple-100">
                         <p className="text-xs font-bold text-purple-600 uppercase mb-2">Objet Proposé :</p>
                         {proposal.offered_item ? (
                           <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                             <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden">
                                 <img src={proposal.offered_item.thumbnail_url} className="w-full h-full object-cover" />
                              </div>
-                             <p className="font-bold text-gray-800">{proposal.offered_item.title}</p>
+                             <p className="font-bold text-foreground">{proposal.offered_item.title}</p>
                           </div>
                         ) : (
                           <div className="space-y-1">
-                             <p className="font-bold text-gray-800">{proposal.offered_item_data?.title || "Objet personnel"}</p>
-                             <p className="text-xs text-gray-500 line-clamp-2">{proposal.offered_item_data?.description}</p>
+                             <p className="font-bold text-foreground">{proposal.offered_item_data?.title || "Objet personnel"}</p>
+                             <p className="text-xs text-muted-foreground line-clamp-2">{proposal.offered_item_data?.description}</p>
                              <div className="flex flex-wrap gap-2 mt-2">
                                 {proposal.offered_item_data?.estimated_value && (
                                    <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded-md flex items-center gap-1">
@@ -627,14 +627,14 @@ export function LenderDashboard() {
                                    </span>
                                 )}
                                 {proposal.offered_item_data?.wilaya_code && (
-                                   <span className="px-2 py-0.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-md flex items-center gap-1">
+                                   <span className="px-2 py-0.5 bg-muted/50 text-muted-foreground text-[10px] font-bold rounded-md flex items-center gap-1">
                                       <MapPin className="w-3 h-3" /> {WILAYAS[Number(proposal.offered_item_data.wilaya_code)] || proposal.offered_item_data.wilaya_code}
                                    </span>
                                 )}
                              </div>
                           </div>
                         )}
-                        {proposal.message && <p className="mt-3 text-sm text-gray-600">"{proposal.message}"</p>}
+                        {proposal.message && <p className="mt-3 text-sm text-muted-foreground">"{proposal.message}"</p>}
                       </div>
                     </div>
                     
@@ -669,7 +669,7 @@ export function LenderDashboard() {
                   </div>
                 ))}
                 {trocProposals.length === 0 && (
-                   <p className="text-gray-500 p-4">Aucune proposition de troc reçue.</p>
+                   <p className="text-muted-foreground p-4">Aucune proposition de troc reçue.</p>
                 )}
               </div>
             </motion.div>
@@ -682,8 +682,8 @@ export function LenderDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Détails des revenus (Bientôt disponible)</h2>
+              <div className="bg-card rounded-3xl p-8 shadow-xl border border-border">
+                <h2 className="text-2xl font-bold text-foreground mb-6">Détails des revenus (Bientôt disponible)</h2>
                 <div className="grid md:grid-cols-3 gap-6 mb-8 opacity-50">
                   {[
                     { label: "Ce Mois", value: "0 DZD", change: "" },
@@ -691,9 +691,9 @@ export function LenderDashboard() {
                     { label: "Total", value: "0 DZD", change: "" }
                   ].map((stat) => (
                     <div key={stat.label} className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl">
-                      <div className="text-sm text-gray-500 mb-1">{stat.label}</div>
+                      <div className="text-sm text-muted-foreground mb-1">{stat.label}</div>
                       <div className="flex items-baseline gap-2">
-                        <div className="text-3xl font-bold text-[#0F2A2E]">{stat.value}</div>
+                        <div className="text-3xl font-bold text-foreground">{stat.value}</div>
                       </div>
                     </div>
                   ))}

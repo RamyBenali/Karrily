@@ -5,6 +5,7 @@ import {
   Star, MapPin, Shield, Clock, CheckCircle, Heart, Share2,
   Calendar, ChevronLeft, ChevronRight, Loader2, ArrowLeft,
   Tag, MessageCircle, ShoppingCart, RefreshCw, Eye, AlertCircle,
+  Home, HandCoins,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -24,11 +25,11 @@ const CONDITION_LABELS: Record<string, string> = {
   poor: "Usé",
 };
 
-const LISTING_TYPE_CONFIG: Record<string, { label: string; emoji: string; color: string }> = {
-  rent: { label: "Location", emoji: "🏠", color: "bg-blue-100 text-blue-700" },
-  sell: { label: "Vente", emoji: "🛒", color: "bg-emerald-100 text-emerald-700" },
-  troc: { label: "Troc", emoji: "🔄", color: "bg-purple-100 text-purple-700" },
-  rent_sell: { label: "Location & Vente", emoji: "🏷️", color: "bg-amber-100 text-amber-700" },
+const LISTING_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
+  rent: { label: "Location", icon: Home, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+  sell: { label: "Vente", icon: ShoppingCart, color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+  troc: { label: "Troc", icon: RefreshCw, color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
+  rent_sell: { label: "Location & Vente", icon: HandCoins, color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
 };
 
 const WILAYAS: Record<number, string> = {
@@ -309,9 +310,9 @@ export function ItemDetailPage() {
       <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="flex flex-col items-center justify-center pt-40">
-          <AlertCircle className="w-16 h-16 text-gray-300 mb-4" />
-          <h2 className="text-xl font-bold text-gray-700 mb-2">Annonce introuvable</h2>
-          <p className="text-gray-500 mb-6">Cette annonce n'existe plus ou a été supprimée.</p>
+          <AlertCircle className="w-16 h-16 text-muted-foreground/40 mb-4" />
+          <h2 className="text-xl font-bold text-foreground/80 mb-2">Annonce introuvable</h2>
+          <p className="text-muted-foreground mb-6">Cette annonce n'existe plus ou a été supprimée.</p>
           <Button onClick={() => navigate("/explore")} className="bg-[#FF4F5A] text-white rounded-full px-6">
             Retour à l'exploration
           </Button>
@@ -332,7 +333,7 @@ export function ItemDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 text-sm text-gray-600 mb-8"
+            className="flex items-center gap-2 text-sm text-muted-foreground mb-8"
           >
             <button onClick={() => navigate("/explore")} className="hover:text-[#0F2A2E] flex items-center gap-1">
               <ArrowLeft className="w-4 h-4" /> Explorer
@@ -358,7 +359,7 @@ export function ItemDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative rounded-3xl overflow-hidden mb-8 group"
               >
-                <div className="relative h-[500px] bg-gray-200">
+                <div className="relative h-[500px] bg-muted">
                   <ImageWithFallback
                     src={item.images[currentImageIndex] || item.thumbnail_url || ""}
                     alt={item.title}
@@ -372,13 +373,13 @@ export function ItemDetailPage() {
                         onClick={prevImage}
                         className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white"
                       >
-                        <ChevronLeft className="w-6 h-6 text-gray-900" />
+                        <ChevronLeft className="w-6 h-6 text-foreground" />
                       </button>
                       <button
                         onClick={nextImage}
                         className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white"
                       >
-                        <ChevronRight className="w-6 h-6 text-gray-900" />
+                        <ChevronRight className="w-6 h-6 text-foreground" />
                       </button>
                     </>
                   )}
@@ -390,7 +391,7 @@ export function ItemDetailPage() {
                         <button
                           key={i}
                           onClick={() => setCurrentImageIndex(i)}
-                          className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? "bg-white w-8" : "bg-white/50"
+                          className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? "bg-card w-8" : "bg-white/50"
                             }`}
                         />
                       ))}
@@ -398,8 +399,8 @@ export function ItemDetailPage() {
                   )}
 
                   {/* Badge */}
-                  <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium ${listingConfig.color}`}>
-                    {listingConfig.emoji} {listingConfig.label}
+                  <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${listingConfig.color}`}>
+                    <listingConfig.icon className="w-4 h-4" /> {listingConfig.label}
                   </span>
 
                   {/* Image count */}
@@ -430,16 +431,16 @@ export function ItemDetailPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-3xl p-8 mb-8"
+                className="bg-card rounded-3xl p-8 mb-8"
               >
                 <h2 className="text-2xl font-bold text-[#0F2A2E] mb-4">Description</h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">{item.description}</p>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
 
                 {/* Tags */}
                 {item.tags && item.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-gray-100">
+                  <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-border">
                     {item.tags.map((tag, i) => (
-                      <span key={i} className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full flex items-center gap-1">
+                      <span key={i} className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-full flex items-center gap-1">
                         <Tag className="w-3 h-3" /> {tag}
                       </span>
                     ))}
@@ -453,7 +454,7 @@ export function ItemDetailPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="bg-white rounded-3xl p-8 mb-8"
+                  className="bg-card rounded-3xl p-8 mb-8"
                 >
                   <h2 className="text-2xl font-bold text-[#0F2A2E] mb-4">Caractéristiques</h2>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -462,7 +463,7 @@ export function ItemDetailPage() {
                         <div className="w-6 h-6 bg-[#0F2A2E]/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <CheckCircle className="w-4 h-4 text-[#0F2A2E]" />
                         </div>
-                        <span className="text-gray-700 capitalize">
+                        <span className="text-foreground/80 capitalize">
                           {key.replace(/_/g, " ")} : <strong>{typeof value === "boolean" ? (value ? "Oui" : "Non") : value}</strong>
                         </span>
                       </div>
@@ -500,7 +501,7 @@ export function ItemDetailPage() {
                 className="sticky top-28"
               >
                 {/* Booking Card */}
-                <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
+                <div className="bg-card rounded-3xl p-8 shadow-xl border border-border">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -510,13 +511,13 @@ export function ItemDetailPage() {
                         </span>
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.condition === "new" ? "bg-emerald-100 text-emerald-700" :
                           item.condition === "like_new" ? "bg-blue-100 text-blue-700" :
-                            "bg-gray-100 text-gray-600"
+                            "bg-muted text-muted-foreground"
                           }`}>
                           {CONDITION_LABELS[item.condition] || item.condition}
                         </span>
                       </div>
                       <h1 className="text-2xl font-bold text-[#0F2A2E] mb-2">{item.title}</h1>
-                      <p className="text-gray-600 flex items-center gap-1 text-sm">
+                      <p className="text-muted-foreground flex items-center gap-1 text-sm">
                         <MapPin className="w-4 h-4" />
                         {WILAYAS[item.wilaya_code] || item.location}
                       </p>
@@ -524,40 +525,40 @@ export function ItemDetailPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setIsLiked(!isLiked)}
-                        className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-all"
+                        className="w-10 h-10 bg-muted hover:bg-muted rounded-full flex items-center justify-center transition-all"
                       >
-                        <Heart className={`w-5 h-5 ${isLiked ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-gray-700"}`} />
+                        <Heart className={`w-5 h-5 ${isLiked ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-foreground/80"}`} />
                       </button>
-                      <button className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-all">
-                        <Share2 className="w-5 h-5 text-gray-700" />
+                      <button className="w-10 h-10 bg-muted hover:bg-muted rounded-full flex items-center justify-center transition-all">
+                        <Share2 className="w-5 h-5 text-foreground/80" />
                       </button>
                     </div>
                   </div>
 
                   {/* Price */}
-                  <div className="mb-6 pb-6 border-b border-gray-200">
+                  <div className="mb-6 pb-6 border-b border-border">
                     {item.price_per_day && (
                       <div className="flex items-baseline gap-1 mb-1">
                         <span className="text-4xl font-bold text-[#0F2A2E]">{Number(item.price_per_day).toLocaleString()} DA</span>
-                        <span className="text-lg text-gray-500">/ jour</span>
+                        <span className="text-lg text-muted-foreground">/ jour</span>
                       </div>
                     )}
                     {item.price_per_week && (
-                      <p className="text-sm text-gray-500">{Number(item.price_per_week).toLocaleString()} DA / semaine</p>
+                      <p className="text-sm text-muted-foreground">{Number(item.price_per_week).toLocaleString()} DA / semaine</p>
                     )}
                     {item.price_per_month && (
-                      <p className="text-sm text-gray-500">{Number(item.price_per_month).toLocaleString()} DA / mois</p>
+                      <p className="text-sm text-muted-foreground">{Number(item.price_per_month).toLocaleString()} DA / mois</p>
                     )}
                     {item.sale_price && (
                       <div className="flex items-baseline gap-1 mt-2">
                         <ShoppingCart className="w-5 h-5 text-emerald-600" />
                         <span className="text-3xl font-bold text-emerald-700">{Number(item.sale_price).toLocaleString()} DA</span>
-                        <span className="text-sm text-gray-500 ml-1">(vente)</span>
+                        <span className="text-sm text-muted-foreground ml-1">(vente)</span>
                       </div>
                     )}
                     {item.is_negotiable && (
-                      <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-                        💬 Prix négociable
+                      <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs font-medium rounded-full">
+                        <MessageCircle className="w-3 h-3" /> Prix négociable
                       </span>
                     )}
                   </div>
@@ -566,46 +567,46 @@ export function ItemDetailPage() {
                   {(item.listing_type === "rent" || item.listing_type === "rent_sell") && (
                     <div className="space-y-4 mb-6">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Date début</label>
+                        <label className="block text-sm font-semibold text-foreground/80 mb-2">Date début</label>
                         <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
                           <input
                             type="date"
                             value={startDate}
                             onChange={e => setStartDate(e.target.value)}
                             min={new Date().toISOString().slice(0, 10)}
-                            className="w-full pl-12 pr-4 h-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
+                            className="w-full pl-12 pr-4 h-12 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Date fin</label>
+                        <label className="block text-sm font-semibold text-foreground/80 mb-2">Date fin</label>
                         <div className="relative">
-                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
                           <input
                             type="date"
                             value={endDate}
                             onChange={e => setEndDate(e.target.value)}
                             min={startDate || new Date().toISOString().slice(0, 10)}
-                            className="w-full pl-12 pr-4 h-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
+                            className="w-full pl-12 pr-4 h-12 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
                           />
                         </div>
                       </div>
 
               {/* Price breakdown */}
               {bookingCalc && (
-                <div className="bg-gray-50 rounded-2xl p-4 space-y-2 mt-4">
-                  <div className="flex justify-between text-gray-700">
+                <div className="bg-muted/50 rounded-2xl p-4 space-y-2 mt-4">
+                  <div className="flex justify-between text-foreground/80">
                     <span>{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
                     <span>{bookingCalc.total.toLocaleString()} DA</span>
                   </div>
                   {bookingCalc.deposit > 0 && (
-                    <div className="flex justify-between text-gray-700">
+                    <div className="flex justify-between text-foreground/80">
                       <span>Caution (remboursable)</span>
                       <span>{bookingCalc.deposit.toLocaleString()} DA</span>
                     </div>
                   )}
-                  <div className="pt-2 border-t border-gray-200 flex justify-between font-bold text-[#0F2A2E]">
+                  <div className="pt-2 border-t border-border flex justify-between font-bold text-[#0F2A2E]">
                     <span>Total</span>
                     <span>{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
                   </div>
@@ -654,7 +655,7 @@ export function ItemDetailPage() {
                           onChange={e => setBookingMessage(e.target.value)}
                           placeholder="Message au propriétaire (optionnel)..."
                           rows={2}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                         />
                       </div>
                       <Button
@@ -706,8 +707,8 @@ export function ItemDetailPage() {
                     )}
                   </Button>
 
-                  <p className="text-center text-xs text-gray-400 mt-3">
-                    <Eye className="w-3 h-3 inline mr-1" />{item.view_count} vues · ❤️ {item.favorite_count} favoris
+                  <p className="text-center text-xs text-muted-foreground/70 mt-3">
+                    <Eye className="w-3 h-3 inline mr-1" />{item.view_count} vues · <Heart className="w-3 h-3 inline mx-1" /> {item.favorite_count} favoris
                   </p>
                 </div>
 
@@ -717,7 +718,7 @@ export function ItemDetailPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 mt-6"
+                    className="bg-card rounded-3xl p-6 shadow-lg border border-border mt-6"
                   >
                     <h3 className="text-lg font-bold text-[#0F2A2E] mb-4">Publié par</h3>
                     <div className="flex items-start gap-4">
@@ -730,14 +731,14 @@ export function ItemDetailPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-gray-900">{owner.full_name || "Utilisateur"}</h4>
+                          <h4 className="font-bold text-foreground">{owner.full_name || "Utilisateur"}</h4>
                           {owner.is_verified && (
                             <div className="w-5 h-5 bg-[#FF4F5A] rounded-full flex items-center justify-center">
                               <CheckCircle className="w-3 h-3 text-white" />
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-600 mb-1">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mb-1">
                           {owner.rating > 0 && (
                             <div className="flex items-center gap-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -749,7 +750,7 @@ export function ItemDetailPage() {
                             {WILAYAS[owner.wilaya_code] || ""}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 mb-3">
+                        <p className="text-xs text-muted-foreground/70 mb-3">
                           <Clock className="w-3 h-3 inline mr-1" />
                           Membre depuis {memberSince}
                         </p>

@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { motion } from "motion/react";
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2, Wallet, Globe, Users, RefreshCw } from "lucide-react";
 import { useAuthStore } from "../store/auth.store";
 import { KarillyLogo } from "../components/brand/karilly-logo";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { ThemeToggle } from "../components/layout/theme-toggle";
 import { useTheme } from "../context/theme-context";
 
 export function SignupPage() {
@@ -57,9 +55,6 @@ export function SignupPage() {
     if (success) {
         return (
             <div className="relative flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
-                <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-                    <ThemeToggle />
-                </div>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -69,12 +64,12 @@ export function SignupPage() {
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", delay: 0.2 }}
-                        className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                        className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
                     >
                         <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                     </motion.div>
                     <h2 className="mb-3 text-2xl font-bold text-foreground">
-                        Compte créé avec succès ! 🎉
+                        Compte créé avec succès !
                     </h2>
                     <p className="mb-6 text-muted-foreground">
                         Un email de confirmation a été envoyé à <strong>{email}</strong>.
@@ -91,11 +86,10 @@ export function SignupPage() {
         );
     }
 
+    const inputClasses = "h-12 w-full rounded-xl border border-border bg-muted/40 pl-12 pr-4 text-foreground placeholder:text-muted-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-2 focus:ring-[#0F2A2E]/20 focus:outline-none dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20";
+
     return (
         <div className="relative flex min-h-screen bg-background text-foreground">
-            <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-                <ThemeToggle />
-            </div>
             {/* Left — Form */}
             <div className="flex flex-1 items-center justify-center bg-background p-6 lg:p-12">
                 <motion.div
@@ -104,13 +98,8 @@ export function SignupPage() {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    {/* Logo */}
-                    <Link to="/" className="mb-8 inline-block">
-                        <KarillyLogo className="h-10" variant={isDark ? "white" : "default"} />
-                    </Link>
-
-                    <h2 className="mb-2 text-3xl font-bold text-foreground">
-                        Créer un compte 🚀
+                    <h2 className="mt-8 mb-2 text-3xl font-bold text-foreground">
+                        Créer un compte
                     </h2>
                     <p className="mb-8 text-muted-foreground">
                         Rejoignez la communauté Karrily et commencez à louer, vendre ou échanger.
@@ -134,13 +123,13 @@ export function SignupPage() {
                                 Nom complet
                             </label>
                             <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                <Input
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                <input
                                     type="text"
                                     placeholder="Votre nom complet"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="h-12 rounded-xl border-border bg-muted/40 pl-12 text-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-[#0F2A2E]/20"
+                                    className={inputClasses}
                                     required
                                 />
                             </div>
@@ -152,13 +141,13 @@ export function SignupPage() {
                                 Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                <Input
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                <input
                                     type="email"
                                     placeholder="votre@email.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="h-12 rounded-xl border-border bg-muted/40 pl-12 text-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-[#0F2A2E]/20"
+                                    className={inputClasses}
                                     required
                                 />
                             </div>
@@ -170,13 +159,13 @@ export function SignupPage() {
                                 Mot de passe
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                <Input
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Minimum 8 caractères"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="h-12 rounded-xl border-border bg-muted/40 pl-12 pr-12 text-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-[#0F2A2E]/20"
+                                    className={`${inputClasses} !pr-12`}
                                     required
                                     minLength={8}
                                 />
@@ -213,7 +202,7 @@ export function SignupPage() {
                                                 )}
                                             </div>
                                             <span
-                                                className={`text-xs ${item.check ? "text-emerald-600" : "text-muted-foreground"
+                                                className={`text-xs ${item.check ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
                                                     }`}
                                             >
                                                 {item.label}
@@ -230,17 +219,17 @@ export function SignupPage() {
                                 Confirmer le mot de passe
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                <Input
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Retapez votre mot de passe"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className={`h-12 rounded-xl border-border bg-muted/40 pl-12 text-foreground transition-all focus:bg-card ${confirmPassword.length > 0
+                                    className={`h-12 w-full rounded-xl border bg-muted/40 pl-12 pr-4 text-foreground placeholder:text-muted-foreground transition-all focus:bg-card focus:outline-none ${confirmPassword.length > 0
                                             ? passwordChecks.match
-                                                ? "border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/20"
-                                                : "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                                            : "focus:border-[#0F2A2E] focus:ring-[#0F2A2E]/20"
+                                                ? "border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                                : "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                                            : "border-border focus:border-[#0F2A2E] focus:ring-2 focus:ring-[#0F2A2E]/20 dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20"
                                         }`}
                                     required
                                     minLength={8}
@@ -311,22 +300,22 @@ export function SignupPage() {
                         <div className="space-y-6">
                             {[
                                 {
-                                    icon: "💰",
+                                    icon: Wallet,
                                     title: "Économisez",
                                     desc: "Louez au lieu d'acheter. Économisez jusqu'à 80% sur vos besoins ponctuels.",
                                 },
                                 {
-                                    icon: "🌍",
+                                    icon: Globe,
                                     title: "Éco-responsable",
                                     desc: "Partagez les ressources et réduisez votre empreinte carbone.",
                                 },
                                 {
-                                    icon: "🤝",
+                                    icon: Users,
                                     title: "Communauté de confiance",
                                     desc: "Profils vérifiés, avis authentiques, garantie Karrily.",
                                 },
                                 {
-                                    icon: "🔄",
+                                    icon: RefreshCw,
                                     title: "Troc innovant",
                                     desc: "Échangez vos objets sans dépenser un dinar.",
                                 },
@@ -338,7 +327,9 @@ export function SignupPage() {
                                     transition={{ delay: 0.3 + i * 0.15 }}
                                     className="flex items-start gap-4 text-left bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10"
                                 >
-                                    <span className="text-3xl">{item.icon}</span>
+                                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                                        <item.icon className="w-5 h-5 text-[#FF4F5A]" />
+                                    </div>
                                     <div>
                                         <h3 className="text-white font-semibold">{item.title}</h3>
                                         <p className="text-white/60 text-sm mt-1">{item.desc}</p>

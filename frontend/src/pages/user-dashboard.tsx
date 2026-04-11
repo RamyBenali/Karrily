@@ -78,7 +78,7 @@ const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
   pending: { label: "En attente", color: "bg-amber-100 text-amber-700" },
   confirmed: { label: "Confirmée", color: "bg-blue-100 text-blue-700" },
   active: { label: "Active", color: "bg-green-100 text-green-700" },
-  completed: { label: "Terminée", color: "bg-gray-100 text-gray-700" },
+  completed: { label: "Terminée", color: "bg-muted text-foreground/80" },
   cancelled: { label: "Annulée", color: "bg-red-100 text-red-700" },
   rejected: { label: "Refusée", color: "bg-red-100 text-red-700" },
 };
@@ -429,8 +429,8 @@ export function UserDashboard() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6 lg:mb-8"
           >
-            <h1 className="text-3xl lg:text-5xl font-bold text-[#0F2A2E] mb-2 leading-tight">Mon compte</h1>
-            <p className="text-lg lg:text-xl text-gray-600 hidden lg:block">Gérez vos locations et votre compte</p>
+            <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2 leading-tight">Mon compte</h1>
+            <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">Gérez vos locations et votre compte</p>
           </motion.div>
 
           {/* Mobile Tabs - Horizontal Scroll */}
@@ -442,7 +442,7 @@ export function UserDashboard() {
                 className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
                   activeTab === item.label
                     ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
-                    : "bg-white text-gray-600 border border-gray-100"
+                    : "bg-card text-muted-foreground border border-border"
                 }`}
               >
                 <item.icon className="w-4 h-4" />
@@ -458,9 +458,9 @@ export function UserDashboard() {
               animate={{ opacity: 1, x: 0 }}
               className="hidden lg:block lg:col-span-3"
             >
-              <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 sticky top-28">
+              <div className="bg-card rounded-3xl p-6 shadow-lg border border-border sticky top-28">
                 {/* User Info */}
-                <div className="flex items-center gap-4 pb-6 mb-6 border-b border-gray-200">
+                <div className="flex items-center gap-4 pb-6 mb-6 border-b border-border">
                   <div className="relative group">
                     {profile.avatar_url ? (
                       <img
@@ -475,10 +475,10 @@ export function UserDashboard() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-gray-900 truncate">
+                    <h3 className="font-bold text-foreground truncate">
                       {profile.full_name || "Utilisateur"}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate">{profile.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
                   </div>
                 </div>
 
@@ -490,7 +490,7 @@ export function UserDashboard() {
                       onClick={() => setActiveTab(item.label)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === item.label
                         ? "bg-[#0F2A2E] text-white shadow-lg"
-                        : "text-gray-700 hover:bg-gray-100"
+                        : "text-foreground hover:bg-muted"
                         }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -499,7 +499,7 @@ export function UserDashboard() {
                   ))}
                 </nav>
 
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-6 border-t border-border">
                   <Button
                     onClick={() => navigate('/lender')}
                     className="w-full h-11 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-2xl"
@@ -522,14 +522,14 @@ export function UserDashboard() {
                   <div className="flex gap-2 mb-6">
                     <button
                       onClick={() => setBookingTab("renter")}
-                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "renter" ? "bg-[#0F2A2E] text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "renter" ? "bg-[#0F2A2E] text-white" : "bg-card text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       Mes réservations
                     </button>
                     <button
                       onClick={() => setBookingTab("owner")}
-                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "owner" ? "bg-[#0F2A2E] text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "owner" ? "bg-[#0F2A2E] text-white" : "bg-card text-muted-foreground hover:bg-muted"
                         }`}
                     >
                       Demandes reçues
@@ -548,22 +548,22 @@ export function UserDashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100"
+                        className="bg-card rounded-3xl p-6 shadow-lg border border-border"
                       >
                         <div className="flex items-center justify-between mb-4">
                           <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${stat.color}15` }}>
                             <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
                           </div>
                         </div>
-                        <div className="text-4xl font-bold text-[#0F2A2E] mb-1">{stat.value}</div>
-                        <div className="text-gray-600">{stat.label}</div>
+                        <div className="text-4xl font-bold text-foreground mb-1">{stat.value}</div>
+                        <div className="text-muted-foreground">{stat.label}</div>
                       </motion.div>
                     ))}
                   </div>
 
                   {/* Bookings List */}
-                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">
+                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
+                    <h2 className="text-2xl font-bold text-foreground mb-6">
                       {bookingTab === "renter" ? "Mes réservations" : "Demandes reçues"}
                     </h2>
 
@@ -573,15 +573,15 @@ export function UserDashboard() {
                       </div>
                     ) : bookings.length === 0 ? (
                       <div className="text-center py-12">
-                        <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">Aucune réservation pour le moment</p>
+                        <Calendar className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                        <p className="text-muted-foreground">Aucune réservation pour le moment</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         {bookings.map((booking) => (
                           <div
                             key={booking.id}
-                            className="flex flex-col md:flex-row gap-6 p-6 bg-gray-50 rounded-3xl hover:shadow-lg transition-all group"
+                            className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
                           >
                             <div
                               className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer"
@@ -597,22 +597,22 @@ export function UserDashboard() {
                               <div className="flex items-start justify-between mb-3">
                                 <div>
                                   <h3
-                                    className="text-xl font-bold text-[#0F2A2E] hover:text-[#FF4F5A] transition-colors cursor-pointer"
+                                    className="text-xl font-bold text-foreground hover:text-[#FF4F5A] transition-colors cursor-pointer"
                                     onClick={() => navigate(`/item/${booking.item_id}`)}
                                   >
                                     {(booking.items as any)?.title || "Annonce"}
                                   </h3>
-                                  <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                                     <MapPin className="w-4 h-4" />
                                     {(booking.items as any)?.location || ""}
                                   </p>
                                 </div>
-                                <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-gray-100 text-gray-700"
+                                <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-muted text-foreground/80"
                                   }`}>
                                   {BOOKING_STATUS[booking.status]?.label || booking.status}
                                 </span>
                               </div>
-                              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                                 <div className="flex items-center gap-2">
                                   <Calendar className="w-4 h-4" />
                                   <span>
@@ -621,15 +621,15 @@ export function UserDashboard() {
                                     {new Date(booking.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                                   </span>
                                 </div>
-                                <div className="font-semibold text-[#0F2A2E]">
+                                <div className="font-semibold text-foreground">
                                   {Number(booking.total_price).toLocaleString()} DA
                                 </div>
                                 {booking.deposit_amount > 0 && (
-                                  <span className="text-xs text-gray-400">+ {Number(booking.deposit_amount).toLocaleString()} DA caution</span>
+                                  <span className="text-xs text-muted-foreground">+ {Number(booking.deposit_amount).toLocaleString()} DA caution</span>
                                 )}
                               </div>
                               {booking.message && (
-                                <p className="text-sm text-gray-500 italic mb-3">« {booking.message} »</p>
+                                <p className="text-sm text-muted-foreground italic mb-3">« {booking.message} »</p>
                               )}
                               <div className="flex gap-3">
                                 {/* Owner actions */}
@@ -709,14 +709,14 @@ export function UserDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6 flex items-center gap-2">
+                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
+                    <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                        <ShoppingCart className="w-6 h-6" /> Mes demandes d'achat
                     </h2>
                     
                     <div className="space-y-4">
                       {mySales.map((sale) => (
-                        <div key={sale.id} className="flex flex-col md:flex-row gap-6 p-6 bg-gray-50 rounded-3xl group">
+                        <div key={sale.id} className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl group">
                           <div className="w-full md:w-32 h-24 rounded-2xl overflow-hidden flex-shrink-0">
                             <ImageWithFallback 
                               src={sale.item?.thumbnail_url} 
@@ -726,7 +726,7 @@ export function UserDashboard() {
                           </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
-                              <h3 className="text-lg font-bold text-[#0F2A2E] cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${sale.item_id}`)}>{sale.item?.title}</h3>
+                              <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${sale.item_id}`)}>{sale.item?.title}</h3>
                               <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
                                 sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                                 sale.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
@@ -739,8 +739,8 @@ export function UserDashboard() {
                                  sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
                               </span>
                             </div>
-                            <p className="text-2xl font-bold text-[#0F2A2E] mb-2">{sale.price} DZD</p>
-                            <p className="text-sm text-gray-500">Vendeur : {sale.seller?.full_name}</p>
+                            <p className="text-2xl font-bold text-foreground mb-2">{sale.price} DZD</p>
+                            <p className="text-sm text-muted-foreground">Vendeur : {sale.seller?.full_name}</p>
                             {sale.status === 'accepted' && (
                               <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex flex-col gap-3">
                                 <div className="flex items-center gap-3">
@@ -761,8 +761,8 @@ export function UserDashboard() {
                       ))}
                       {mySales.length === 0 && (
                         <div className="text-center py-12">
-                          <ShoppingCart className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                          <p className="text-gray-500">Aucune demande d'achat en cours.</p>
+                          <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                          <p className="text-muted-foreground">Aucune demande d'achat en cours.</p>
                         </div>
                       )}
                     </div>
@@ -776,18 +776,18 @@ export function UserDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6 flex items-center gap-2">
+                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
+                    <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                        <RefreshCw className="w-6 h-6" /> Mes propositions de troc
                     </h2>
                     
                     <div className="space-y-4">
                       {myTroc.map((proposal) => (
-                        <div key={proposal.id} className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                        <div key={proposal.id} className="p-6 bg-muted/50 rounded-3xl border border-border">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                               <p className="text-xs font-bold text-gray-400 uppercase mb-1">Objet souhaité</p>
-                               <h3 className="text-lg font-bold text-[#0F2A2E] cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
+                               <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">Objet souhaité</p>
+                               <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
                             </div>
                             <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
                                 proposal.status === 'pending' ? 'bg-purple-100 text-purple-700' :
@@ -802,13 +802,13 @@ export function UserDashboard() {
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100">
+                          <div className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border">
                              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
                                 <RefreshCw className="w-5 h-5 rotate-45" />
                              </div>
                              <div>
                                 <p className="text-xs font-bold text-purple-600 uppercase">Votre proposition :</p>
-                                <p className="font-bold text-gray-800">
+                                <p className="font-bold text-foreground">
                                   {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || "Objet personnel")}
                                 </p>
                              </div>
@@ -817,8 +817,8 @@ export function UserDashboard() {
                       ))}
                       {myTroc.length === 0 && (
                         <div className="text-center py-12">
-                          <RefreshCw className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                          <p className="text-gray-500">Aucune proposition d'échange envoyée.</p>
+                          <RefreshCw className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                          <p className="text-muted-foreground">Aucune proposition d'échange envoyée.</p>
                         </div>
                       )}
                     </div>
@@ -831,13 +831,13 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100"
+                  className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Mes favoris</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">Mes favoris</h2>
                   <div className="text-center py-12">
-                    <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-2">Aucun favori pour le moment</p>
-                    <p className="text-sm text-gray-400">Explorez les annonces et ajoutez vos favoris !</p>
+                    <Heart className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">Aucun favori pour le moment</p>
+                    <p className="text-sm text-muted-foreground/70">Explorez les annonces et ajoutez vos favoris !</p>
                     <Button
                       onClick={() => navigate('/explore')}
                       className="mt-6 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full"
@@ -853,16 +853,16 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden h-[600px] flex"
+                  className="bg-card rounded-3xl shadow-lg border border-border overflow-hidden h-[600px] flex"
                 >
                   {/* Left Column: Conversations List */}
-                  <div className="w-1/3 border-r border-gray-100 flex flex-col h-full bg-gray-50/50">
-                    <div className="p-6 border-b border-gray-100 bg-white">
-                      <h2 className="text-xl font-bold text-[#0F2A2E]">Messages</h2>
+                  <div className="w-1/3 border-r border-border flex flex-col h-full bg-gray-50/50">
+                    <div className="p-6 border-b border-border bg-white">
+                      <h2 className="text-xl font-bold text-foreground">Messages</h2>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       {conversations.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm">
+                        <div className="p-8 text-center text-muted-foreground text-sm">
                           Aucune conversation pour le moment.
                         </div>
                       ) : (
@@ -870,7 +870,7 @@ export function UserDashboard() {
                           <div
                             key={conv.id}
                             onClick={() => setActiveConversationId(conv.id)}
-                            className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${activeConversationId === conv.id ? "bg-[#FF4F5A]/5 border-l-4 border-l-[#FF4F5A]" : "hover:bg-white"
+                            className={`p-4 border-b border-border cursor-pointer transition-colors ${activeConversationId === conv.id ? "bg-[#FF4F5A]/5 border-l-4 border-l-[#FF4F5A]" : "hover:bg-white"
                               }`}
                           >
                             <div className="flex gap-3 items-center">
@@ -885,15 +885,15 @@ export function UserDashboard() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-center mb-1">
-                                  <h4 className="font-bold text-gray-900 truncate">{conv.other_user?.full_name}</h4>
-                                  <span className="text-xs text-gray-400">
+                                  <h4 className="font-bold text-foreground truncate">{conv.other_user?.full_name}</h4>
+                                  <span className="text-xs text-muted-foreground/70">
                                     {new Date(conv.last_message_at).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit' })}
                                   </span>
                                 </div>
                                 <p className="text-xs font-semibold text-[#FF4F5A] truncate mb-0.5">
                                   {conv.items?.title || "Annonce supprimée"}
                                 </p>
-                                <p className="text-sm text-gray-500 truncate">
+                                <p className="text-sm text-muted-foreground truncate">
                                   {conv.last_message_preview || "Nouvelle conversation"}
                                 </p>
                               </div>
@@ -905,9 +905,9 @@ export function UserDashboard() {
                   </div>
 
                   {/* Right Column: Active Chat */}
-                  <div className="flex-1 flex flex-col h-full bg-white relative">
+                  <div className="flex-1 flex flex-col h-full bg-card relative">
                     {!activeConversationId ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/70">
                         <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
                         <p>Sélectionnez une conversation</p>
                       </div>
@@ -917,7 +917,7 @@ export function UserDashboard() {
                         {(() => {
                           const conv = conversations.find(c => c.id === activeConversationId);
                           return conv ? (
-                            <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-white shadow-sm z-10">
+                            <div className="p-4 border-b border-border flex items-center gap-4 bg-card shadow-sm z-10">
                               <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                                 {conv.other_user?.avatar_url ? (
                                   <img src={conv.other_user.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -928,8 +928,8 @@ export function UserDashboard() {
                                 )}
                               </div>
                               <div>
-                                <h3 className="font-bold text-[#0F2A2E]">{conv.other_user?.full_name}</h3>
-                                <p className="text-xs text-gray-500 cursor-pointer hover:text-[#FF4F5A]" onClick={() => conv.item_id && navigate(`/item/${conv.item_id}`)}>
+                                <h3 className="font-bold text-foreground">{conv.other_user?.full_name}</h3>
+                                <p className="text-xs text-muted-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => conv.item_id && navigate(`/item/${conv.item_id}`)}>
                                   Lié à : <span className="underline">{conv.items?.title}</span>
                                 </p>
                               </div>
@@ -940,17 +940,17 @@ export function UserDashboard() {
                         {/* Chat Messages */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 flex flex-col-reverse">
                           {isLoadingMsgs ? (
-                            <div className="flex justify-center my-auto"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                            <div className="flex justify-center my-auto"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground/70" /></div>
                           ) : (
                             // Render messages in reverse order (assuming CSS flex-col-reverse)
                             [...messages].reverse().map(msg => {
                               const isMe = msg.sender_id === user?.id;
                               return (
                                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                                  <div className={`max-w-[70%] rounded-2xl px-5 py-3 ${isMe ? "bg-[#FF4F5A] text-white rounded-br-sm shadow-sm" : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm"
+                                  <div className={`max-w-[70%] rounded-2xl px-5 py-3 ${isMe ? "bg-[#FF4F5A] text-white rounded-br-sm shadow-sm" : "bg-card border border-border text-foreground rounded-bl-sm shadow-sm"
                                     }`}>
                                     <p className="text-sm" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
-                                    <p className={`text-[10px] mt-1 text-right ${isMe ? "text-white/70" : "text-gray-400"}`}>
+                                    <p className={`text-[10px] mt-1 text-right ${isMe ? "text-white/70" : "text-muted-foreground/70"}`}>
                                       {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                   </div>
@@ -961,13 +961,13 @@ export function UserDashboard() {
                         </div>
 
                         {/* Chat Input */}
-                        <div className="p-4 border-t border-gray-100 bg-white">
+                        <div className="p-4 border-t border-border bg-white">
                           <form onSubmit={handleSendMessage} className="flex gap-2">
                             <Input
                               value={newMessage}
                               onChange={e => setNewMessage(e.target.value)}
                               placeholder="Écrivez votre message..."
-                              className="flex-1 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-[#FF4F5A]"
+                              className="flex-1 rounded-full bg-muted/50 border-border focus-visible:ring-[#FF4F5A]"
                             />
                             <Button
                               type="submit"
@@ -989,12 +989,12 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100"
+                  className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Historique des locations</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">Historique des locations</h2>
                   <div className="text-center py-12">
-                    <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Aucune location passée</p>
+                    <Clock className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucune location passée</p>
                   </div>
                 </motion.div>
               )}
@@ -1007,8 +1007,8 @@ export function UserDashboard() {
                   className="space-y-6"
                 >
                   {/* Avatar Section */}
-                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Photo de profil</h2>
+                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
+                    <h2 className="text-2xl font-bold text-foreground mb-6">Photo de profil</h2>
                     <div className="flex items-center gap-6">
                       <div className="relative group">
                         {profile.avatar_url ? (
@@ -1033,15 +1033,15 @@ export function UserDashboard() {
                         </label>
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Changer votre photo</p>
-                        <p className="text-sm text-gray-500">JPG, PNG ou WebP. Max 2 Mo.</p>
+                        <p className="font-semibold text-foreground">Changer votre photo</p>
+                        <p className="text-sm text-muted-foreground">JPG, PNG ou WebP. Max 2 Mo.</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Profile Form */}
-                  <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Informations personnelles</h2>
+                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
+                    <h2 className="text-2xl font-bold text-foreground mb-6">Informations personnelles</h2>
 
                     {profileError && (
                       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">
@@ -1067,54 +1067,54 @@ export function UserDashboard() {
                       <div className="space-y-5">
                         {/* Full Name */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
                             Nom complet
                           </label>
                           <Input
                             type="text"
                             value={profile.full_name}
                             onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
-                            className="h-12 bg-gray-50 border-gray-200 rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
+                            className="h-12 bg-muted/50 border-border rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
                             placeholder="Votre nom complet"
                           />
                         </div>
 
                         {/* Email (read-only) */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email <span className="text-gray-400 font-normal">(non modifiable)</span>
+                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
+                            Email <span className="text-muted-foreground/70 font-normal">(non modifiable)</span>
                           </label>
                           <Input
                             type="email"
                             value={profile.email}
                             disabled
-                            className="h-12 bg-gray-100 border-gray-200 rounded-2xl text-gray-500 cursor-not-allowed"
+                            className="h-12 bg-muted border-border rounded-2xl text-muted-foreground cursor-not-allowed"
                           />
                         </div>
 
                         {/* Phone */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
                             Téléphone
                           </label>
                           <Input
                             type="tel"
                             value={profile.phone}
                             onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
-                            className="h-12 bg-gray-50 border-gray-200 rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
+                            className="h-12 bg-muted/50 border-border rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
                             placeholder="+213 5XX XX XX XX"
                           />
                         </div>
 
                         {/* Wilaya */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
                             Wilaya
                           </label>
                           <select
                             value={profile.wilaya_code || ""}
                             onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
-                            className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] appearance-none"
+                            className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] appearance-none"
                           >
                             <option value="">Sélectionnez votre wilaya</option>
                             {WILAYAS.map(w => (
@@ -1127,18 +1127,18 @@ export function UserDashboard() {
 
                         {/* Bio */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
                             Bio
                           </label>
                           <textarea
                             value={profile.bio}
                             onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
                             rows={4}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] resize-none"
+                            className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] resize-none"
                             placeholder="Décrivez-vous en quelques mots..."
                             maxLength={500}
                           />
-                          <p className="text-xs text-gray-400 mt-1 text-right">
+                          <p className="text-xs text-muted-foreground/70 mt-1 text-right">
                             {profile.bio.length}/500
                           </p>
                         </div>

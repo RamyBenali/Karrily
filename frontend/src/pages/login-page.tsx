@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { motion } from "motion/react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Home, Car, Camera, Wrench, PartyPopper, Dumbbell } from "lucide-react";
 import { useAuthStore } from "../store/auth.store";
 import { KarillyLogo } from "../components/brand/karilly-logo";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { ThemeToggle } from "../components/layout/theme-toggle";
 import { useTheme } from "../context/theme-context";
 
 export function LoginPage() {
@@ -34,11 +32,17 @@ export function LoginPage() {
         }
     };
 
+    const categoryIcons = [
+        { icon: Home, label: "Immobilier" },
+        { icon: Car, label: "Véhicules" },
+        { icon: Camera, label: "Électronique" },
+        { icon: Wrench, label: "Outillage" },
+        { icon: PartyPopper, label: "Événementiel" },
+        { icon: Dumbbell, label: "Sport" },
+    ];
+
     return (
         <div className="relative flex min-h-screen bg-background text-foreground">
-            <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-                <ThemeToggle />
-            </div>
             {/* Left — Decorative Panel */}
             <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#0F2A2E] via-[#1a3f44] to-[#0F2A2E] items-center justify-center p-12 overflow-hidden">
                 {/* Background shapes */}
@@ -68,14 +72,7 @@ export function LoginPage() {
                         transition={{ duration: 0.6, delay: 0.2 }}
                         className="grid grid-cols-3 gap-4 mt-12"
                     >
-                        {[
-                            { emoji: "🏠", label: "Immobilier" },
-                            { emoji: "🚗", label: "Véhicules" },
-                            { emoji: "📸", label: "Électronique" },
-                            { emoji: "🔧", label: "Outillage" },
-                            { emoji: "🎪", label: "Événementiel" },
-                            { emoji: "⚽", label: "Sport" },
-                        ].map((cat, i) => (
+                        {categoryIcons.map((cat, i) => (
                             <motion.div
                                 key={cat.label}
                                 initial={{ opacity: 0, scale: 0.8 }}
@@ -83,7 +80,9 @@ export function LoginPage() {
                                 transition={{ delay: 0.4 + i * 0.1 }}
                                 className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10"
                             >
-                                <span className="text-2xl">{cat.emoji}</span>
+                                <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-white/10 flex items-center justify-center">
+                                    <cat.icon className="w-5 h-5 text-[#FF4F5A]" />
+                                </div>
                                 <p className="text-white/60 text-sm mt-1">{cat.label}</p>
                             </motion.div>
                         ))}
@@ -99,13 +98,8 @@ export function LoginPage() {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    {/* Logo */}
-                    <Link to="/" className="mb-8 inline-block">
-                        <KarillyLogo className="h-10" variant={isDark ? "white" : "default"} />
-                    </Link>
-
-                    <h2 className="mb-2 text-3xl font-bold text-foreground">
-                        Bon retour ! 👋
+                    <h2 className="mt-8 mb-2 text-3xl font-bold text-foreground">
+                        Bon retour !
                     </h2>
                     <p className="mb-8 text-muted-foreground">
                         Connectez-vous pour accéder à votre compte.
@@ -124,18 +118,18 @@ export function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email */}
-                        <div className="relative">
+                        <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
                                 Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                <Input
+                                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                <input
                                     type="email"
                                     placeholder="votre@email.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="h-12 rounded-xl border-border bg-muted/40 pl-12 text-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-[#0F2A2E]/20"
+                                    className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-12 pr-4 text-foreground placeholder:text-muted-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-2 focus:ring-[#0F2A2E]/20 focus:outline-none dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20"
                                     required
                                 />
                             </div>
@@ -147,13 +141,13 @@ export function LoginPage() {
                                 Mot de passe
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                <Input
+                                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="h-12 rounded-xl border-border bg-muted/40 pl-12 pr-12 text-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-[#0F2A2E]/20"
+                                    className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-12 pr-12 text-foreground placeholder:text-muted-foreground transition-all focus:border-[#0F2A2E] focus:bg-card focus:ring-2 focus:ring-[#0F2A2E]/20 focus:outline-none dark:focus:border-[#FF4F5A] dark:focus:ring-[#FF4F5A]/20"
                                     required
                                     minLength={6}
                                 />

@@ -216,11 +216,11 @@ export function AdminPanel() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Karrily Admin</h1>
-                <p className="text-xs text-gray-400">Control Panel</p>
+                <p className="text-xs text-muted-foreground/70">Control Panel</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => navigate("/")}>
+              <Button variant="ghost" className="text-muted-foreground/70 hover:text-white" onClick={() => navigate("/")}>
                 Quitter l'admin
               </Button>
             </div>
@@ -233,7 +233,7 @@ export function AdminPanel() {
           {/* Header */}
           <div className="mb-8">
             <h2 className="text-4xl font-bold text-white mb-2">Vue d'ensemble du système</h2>
-            <p className="text-xl text-gray-400">Surveillez et gérez votre plateforme à 200%</p>
+            <p className="text-xl text-muted-foreground/70">Surveillez et gérez votre plateforme à 200%</p>
           </div>
 
           {/* Tab Navigation */}
@@ -249,7 +249,7 @@ export function AdminPanel() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all ${activeTab === tab.id
                     ? "bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74] text-white shadow-xl shadow-[#FF4F5A]/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-muted-foreground/70 hover:text-white hover:bg-white/5"
                   }`}
               >
                 <tab.icon className="w-5 h-5" />
@@ -282,7 +282,7 @@ export function AdminPanel() {
                       </div>
                     </div>
                     <div className="text-4xl font-bold text-white mb-1 relative z-10">{stat.value}</div>
-                    <div className="text-gray-400 relative z-10">{stat.label}</div>
+                    <div className="text-muted-foreground/70 relative z-10">{stat.label}</div>
                   </motion.div>
                 ))}
               </div>
@@ -295,7 +295,7 @@ export function AdminPanel() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold text-white">Gestion des Utilisateurs</h3>
                 <div className="relative w-80">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
                   <input
                     type="text"
                     placeholder="Chercher un email..."
@@ -308,7 +308,7 @@ export function AdminPanel() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/10 text-gray-400 text-sm">
+                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
                       <th className="py-4 px-4 font-semibold">Utilisateur</th>
                       <th className="py-4 px-4 font-semibold hidden md:table-cell">Email</th>
                       <th className="py-4 px-4 font-semibold">Rôle</th>
@@ -321,9 +321,9 @@ export function AdminPanel() {
                       <tr key={u.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="py-4 px-4">
                           <div className="font-medium text-white">{u.full_name || "Sans nom"}</div>
-                          <div className="text-xs text-gray-500 md:hidden">{u.email}</div>
+                          <div className="text-xs text-muted-foreground md:hidden">{u.email}</div>
                         </td>
-                        <td className="py-4 px-4 text-gray-400 hidden md:table-cell">{u.email}</td>
+                        <td className="py-4 px-4 text-muted-foreground/70 hidden md:table-cell">{u.email}</td>
                         <td className="py-4 px-4">
                           <span className={`px-2 py-1 rounded text-xs ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
                             {u.role.toUpperCase()}
@@ -336,7 +336,7 @@ export function AdminPanel() {
                           >
                             {u.is_verified
                               ? <UserCheck className="w-5 h-5 text-green-500 mx-auto" />
-                              : <UserX className="w-5 h-5 text-gray-600 mx-auto hover:text-white" />
+                              : <UserX className="w-5 h-5 text-muted-foreground mx-auto hover:text-white" />
                             }
                           </button>
                         </td>
@@ -366,7 +366,7 @@ export function AdminPanel() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/10 text-gray-400 text-sm">
+                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
                       <th className="py-4 px-4 font-semibold">Titre</th>
                       <th className="py-4 px-4 font-semibold">Catégorie</th>
                       <th className="py-4 px-4 font-semibold hidden lg:table-cell">Propriétaire</th>
@@ -381,8 +381,8 @@ export function AdminPanel() {
                         <td className="py-4 px-4">
                           <div className="font-medium text-white truncate max-w-[200px]" title={item.title}>{item.title}</div>
                         </td>
-                        <td className="py-4 px-4 text-gray-400">{item.categories?.name}</td>
-                        <td className="py-4 px-4 text-gray-400 hidden lg:table-cell truncate max-w-[200px]" title={item.profiles?.email}>
+                        <td className="py-4 px-4 text-muted-foreground/70">{item.categories?.name}</td>
+                        <td className="py-4 px-4 text-muted-foreground/70 hidden lg:table-cell truncate max-w-[200px]" title={item.profiles?.email}>
                           {item.profiles?.full_name} <br /> <span className="text-xs opacity-50">{item.profiles?.email}</span>
                         </td>
                         <td className="py-4 px-4 text-white">{item.price_per_day?.toLocaleString() || 0} DA/j</td>
@@ -419,7 +419,7 @@ export function AdminPanel() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/10 text-gray-400 text-sm">
+                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
                       <th className="py-4 px-4 font-semibold">Annonce</th>
                       <th className="py-4 px-4 font-semibold">Acteurs (Locataire ↔ Proprio)</th>
                       <th className="py-4 px-4 font-semibold">Dates</th>
@@ -432,12 +432,12 @@ export function AdminPanel() {
                     {bookingsList.map((booking) => (
                       <tr key={booking.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="py-4 px-4 text-white font-medium truncate max-w-[150px]" title={booking.items?.title}>{booking.items?.title}</td>
-                        <td className="py-4 px-4 text-gray-400 text-sm">
+                        <td className="py-4 px-4 text-muted-foreground/70 text-sm">
                           <span className="text-blue-400">{booking.renter?.full_name}</span>
                           <span className="mx-2">→</span>
                           <span className="text-purple-400">{booking.owner?.full_name}</span>
                         </td>
-                        <td className="py-4 px-4 text-gray-500 text-xs">
+                        <td className="py-4 px-4 text-muted-foreground text-xs">
                           {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
                         </td>
                         <td className="py-4 px-4 text-white font-bold">{booking.total_price.toLocaleString()} DA</td>

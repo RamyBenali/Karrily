@@ -11,21 +11,21 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   const categories = [
-    { icon: Home, label: "Real Estate", count: "2.4k", color: "#0F2A2E" },
-    { icon: Car, label: "Vehicles", count: "1.8k", color: "#FF4F5A" },
-    { icon: Laptop, label: "Electronics", count: "3.2k", color: "#0F2A2E" },
-    { icon: Wrench, label: "Tools", count: "890", color: "#FF4F5A" },
-    { icon: Armchair, label: "Furniture", count: "1.1k", color: "#0F2A2E" },
-    { icon: Camera, label: "Photo & Video", count: "654", color: "#FF4F5A" },
+    { icon: Home, label: "Immobilier", count: "2.4k", color: "#0F2A2E" },
+    { icon: Car, label: "Véhicules", count: "1.8k", color: "#FF4F5A" },
+    { icon: Laptop, label: "Électronique", count: "3.2k", color: "#0F2A2E" },
+    { icon: Wrench, label: "Outillage", count: "890", color: "#FF4F5A" },
+    { icon: Armchair, label: "Mobilier", count: "1.1k", color: "#0F2A2E" },
+    { icon: Camera, label: "Photo & Vidéo", count: "654", color: "#FF4F5A" },
   ];
 
   const trendingItems = [
     {
       id: 1,
-      title: "Modern Downtown Loft",
-      category: "Real Estate",
+      title: "Loft Moderne Centre-Ville",
+      category: "Immobilier",
       price: 450,
-      period: "night",
+      period: "nuit",
       rating: 4.9,
       reviews: 127,
       image: "https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzE0MzkzODh8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -33,10 +33,10 @@ export function LandingPage() {
     },
     {
       id: 2,
-      title: "Premium Sports Car",
-      category: "Vehicles",
+      title: "Voiture de Sport Premium",
+      category: "Véhicules",
       price: 299,
-      period: "day",
+      period: "jour",
       rating: 5.0,
       reviews: 89,
       image: "https://images.unsplash.com/photo-1762026846208-946fe48e96e1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVtaXVtJTIwc3BvcnRzJTIwY2FyJTIwc2lkZSUyMHZpZXd8ZW58MXx8fHwxNzcxNTA1MjI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -44,10 +44,10 @@ export function LandingPage() {
     },
     {
       id: 3,
-      title: "Professional Camera Kit",
-      category: "Photo & Video",
+      title: "Kit Caméra Professionnelle",
+      category: "Photo & Vidéo",
       price: 85,
-      period: "day",
+      period: "jour",
       rating: 4.8,
       reviews: 203,
       image: "https://images.unsplash.com/photo-1769699167687-540cce99f744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjYW1lcmElMjBlcXVpcG1lbnR8ZW58MXx8fHwxNzcxNDg2NjExfDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -55,10 +55,10 @@ export function LandingPage() {
     },
     {
       id: 4,
-      title: "Designer Furniture Set",
-      category: "Furniture",
+      title: "Ensemble Mobilier Design",
+      category: "Mobilier",
       price: 120,
-      period: "week",
+      period: "semaine",
       rating: 4.7,
       reviews: 56,
       image: "https://images.unsplash.com/photo-1760716478137-d861d5b354e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZXNpZ25lciUyMGZ1cm5pdHVyZSUyMGNoYWlyJTIwbW9kZXJufGVufDF8fHx8MTc3MTUwNTIyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -69,31 +69,31 @@ export function LandingPage() {
   const features = [
     {
       icon: Shield,
-      title: "Verified Owners",
-      description: "Every item and owner goes through our verification process"
+      title: "Propriétaires vérifiés",
+      description: "Chaque annonce et propriétaire passe par notre processus de vérification"
     },
     {
       icon: Clock,
-      title: "Flexible Duration",
-      description: "Rent by the hour, day, week, or month"
+      title: "Durée flexible",
+      description: "Louez à l'heure, à la journée, à la semaine ou au mois"
     },
     {
       icon: TrendingUp,
-      title: "Earn While Idle",
-      description: "Turn your unused items into steady income"
+      title: "Gagnez de l'argent",
+      description: "Transformez vos objets inutilisés en revenu régulier"
     },
     {
       icon: Zap,
-      title: "Instant Booking",
-      description: "Book instantly or request custom arrangements"
+      title: "Réservation instantanée",
+      description: "Réservez instantanément ou demandez des arrangements personnalisés"
     }
   ];
 
   const steps = [
-    { number: "01", title: "Search", description: "Find what you need from thousands of verified items" },
-    { number: "02", title: "Book", description: "Choose your dates and complete secure payment" },
-    { number: "03", title: "Receive", description: "Get it delivered or pick it up locally" },
-    { number: "04", title: "Return", description: "Send it back when you're done. Simple." }
+    { number: "01", title: "Chercher", description: "Trouvez ce dont vous avez besoin parmi des milliers d'annonces vérifiées" },
+    { number: "02", title: "Réserver", description: "Choisissez vos dates et finalisez le paiement sécurisé" },
+    { number: "03", title: "Recevoir", description: "Faites-vous livrer ou récupérez sur place" },
+    { number: "04", title: "Retourner", description: "Renvoyez quand vous avez terminé. Simple." }
   ];
 
   return (
@@ -149,15 +149,15 @@ export function LandingPage() {
                 className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20 shadow-lg shadow-[#FF4F5A]/10"
               >
                 <span className="w-2 h-2 bg-[#FF4F5A] rounded-full animate-pulse shadow-[0_0_10px_rgba(255,79,90,0.8)]" />
-                <span className="text-white text-sm font-medium">Now live in 47 cities</span>
+                <span className="text-white text-sm font-medium">Déjà actif dans 47 villes</span>
                 <Sparkles className="w-4 h-4 text-[#FF4F5A]" />
               </motion.div>
 
               <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 leading-[0.95]">
-                Rent<br />
-                Anything.<br />
+                Louez<br />
+                Tout.<br />
                 <span className="text-[#FF4F5A] relative inline-block">
-                  Anywhere.
+                  Partout.
                   <motion.span
                     className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#FF4F5A] to-transparent rounded-full"
                     initial={{ width: 0 }}
@@ -168,7 +168,7 @@ export function LandingPage() {
               </h1>
 
               <p className="text-xl text-white/80 mb-12 max-w-lg leading-relaxed">
-                The smarter way to access what you need. From homes to cars, tools to tech — rent it all in one place.
+                La façon la plus intelligente d'accéder à ce dont vous avez besoin. De l'immobilier aux véhicules, de l'outillage à la tech — louez tout en un seul endroit.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -183,7 +183,7 @@ export function LandingPage() {
                   onClick={() => navigate('/lender')}
                   className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white px-8 h-14 text-lg rounded-full border border-white/30 hover:border-white/50 transition-all hover:scale-105"
                 >
-                  List Your Items
+                  Publier vos annonces
                 </Button>
               </div>
             </motion.div>
@@ -200,7 +200,7 @@ export function LandingPage() {
               
               <div className="relative rounded-3xl border border-border bg-card/95 p-8 shadow-2xl backdrop-blur-xl hover:shadow-[0_20px_60px_rgba(255,79,90,0.2)] transition-shadow duration-500 dark:border-white/10 dark:bg-[#121a1c]/95">
                 <h3 className="mb-6 flex items-center gap-2 text-2xl font-bold text-foreground">
-                  Find what you need
+                  Trouvez ce que vous cherchez
                   <motion.div
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -214,7 +214,7 @@ export function LandingPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors" />
                     <input
                       type="text"
-                      placeholder="What do you need?"
+                      placeholder="De quoi avez-vous besoin ?"
                       className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all hover:border-border focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                     />
                   </div>
@@ -224,7 +224,7 @@ export function LandingPage() {
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors" />
                       <input
                         type="text"
-                        placeholder="Location"
+                        placeholder="Localisation"
                         className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all hover:border-border focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                       />
                     </div>
@@ -232,7 +232,7 @@ export function LandingPage() {
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors" />
                       <input
                         type="text"
-                        placeholder="When"
+                        placeholder="Quand"
                         className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all hover:border-border focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                       />
                     </div>
@@ -242,14 +242,14 @@ export function LandingPage() {
                     onClick={() => navigate('/explore')}
                     className="w-full h-14 bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-2xl text-lg font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
                   >
-                    Search
+                    Rechercher
                   </Button>
                 </div>
 
                 <div className="mt-6 border-t border-border pt-6">
-                  <p className="mb-3 text-sm text-muted-foreground">Popular searches:</p>
+                  <p className="mb-3 text-sm text-muted-foreground">Recherches populaires :</p>
                   <div className="flex flex-wrap gap-2">
-                    {["Apartments", "Cars", "Cameras", "Power Tools", "Laptops"].map((tag) => (
+                    {["Appartements", "Voitures", "Caméras", "Outillage", "PC Portables"].map((tag) => (
                       <button
                         key={tag}
                         type="button"
@@ -275,8 +275,8 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="mb-3 text-5xl font-bold text-foreground">Browse by Category</h2>
-              <p className="text-xl text-muted-foreground">Discover thousands of items across all categories</p>
+              <h2 className="mb-3 text-5xl font-bold text-foreground">Parcourir par catégorie</h2>
+              <p className="text-xl text-muted-foreground">Découvrez des milliers d'articles dans toutes les catégories</p>
             </motion.div>
           </div>
           <Button 
@@ -284,7 +284,7 @@ export function LandingPage() {
             variant="ghost" 
             className="group hidden items-center gap-2 text-foreground transition-colors hover:text-[#FF4F5A] lg:flex"
           >
-            View All
+            Voir tout
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
@@ -311,7 +311,7 @@ export function LandingPage() {
                   />
                 </div>
                 <h3 className="mb-1 font-semibold text-foreground">{category.label}</h3>
-                <p className="text-sm text-muted-foreground">{category.count} items</p>
+                <p className="text-sm text-muted-foreground">{category.count} annonces</p>
               </div>
               <div 
                 className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -333,8 +333,8 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="mb-12"
           >
-            <h2 className="mb-3 text-5xl font-bold text-foreground">Trending Right Now</h2>
-            <p className="text-xl text-muted-foreground">Most popular rentals this week</p>
+            <h2 className="mb-3 text-5xl font-bold text-foreground">Tendances du moment</h2>
+            <p className="text-xl text-muted-foreground">Les locations les plus populaires cette semaine</p>
           </motion.div>
 
           <div className="grid lg:grid-cols-12 gap-6">
@@ -399,7 +399,7 @@ export function LandingPage() {
                     {item.featured && (
                       <div className="absolute top-4 left-4">
                         <span className="px-3 py-1 bg-[#FF4F5A] text-white text-xs font-medium rounded-full">
-                          Featured
+                          En vedette
                         </span>
                       </div>
                     )}
@@ -430,7 +430,7 @@ export function LandingPage() {
               onClick={() => navigate('/explore')}
               className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white px-8 h-12 rounded-full group"
             >
-              Explore All Rentals
+              Explorer toutes les annonces
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
@@ -438,17 +438,21 @@ export function LandingPage() {
       </div>
 
       {/* How Karilly Works */}
-      <div className="bg-muted/40 py-24">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+      <div className="bg-[#0F2A2E] py-24 relative overflow-hidden">
+        {/* Subtle background decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#1A4851] rounded-full blur-[120px] opacity-20 -mr-48 -mt-48" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FF4F5A] rounded-full blur-[120px] opacity-10 -ml-48 -mb-48" />
+        
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="mb-4 text-5xl font-bold text-foreground">How Karilly Works</h2>
-            <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-              Renting has never been easier. Four simple steps to access anything.
+            <h2 className="mb-4 text-5xl font-bold text-white">Comment fonctionne Karrily</h2>
+            <p className="mx-auto max-w-2xl text-xl text-white/70">
+              La location n'a jamais été aussi simple. Quatre étapes pour accéder à tout.
             </p>
           </motion.div>
 
@@ -460,15 +464,15 @@ export function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="relative rounded-3xl border border-border bg-card p-8 transition-all duration-300 hover:shadow-xl"
+                className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-2xl"
               >
-                <div className="text-6xl font-bold text-[#FF4F5A]/10 mb-4">{step.number}</div>
-                <h3 className="mb-3 text-2xl font-bold text-foreground">{step.title}</h3>
-                <p className="leading-relaxed text-muted-foreground">{step.description}</p>
+                <div className="text-6xl font-bold text-[#FF4F5A]/20 mb-4">{step.number}</div>
+                <h3 className="mb-3 text-2xl font-bold text-white">{step.title}</h3>
+                <p className="leading-relaxed text-white/60">{step.description}</p>
                 
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2">
-                    <ArrowRight className="h-6 w-6 text-muted-foreground/50" />
+                    <ArrowRight className="h-6 w-6 text-white/20" />
                   </div>
                 )}
               </motion.div>
@@ -486,9 +490,9 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="mb-4 text-5xl font-bold text-foreground">Why Trust Karilly</h2>
+            <h2 className="mb-4 text-5xl font-bold text-foreground">Pourquoi faire confiance à Karrily</h2>
             <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-              Built for safety, flexibility, and peace of mind
+              Conçu pour la sécurité, la flexibilité et la tranquillité d'esprit
             </p>
           </motion.div>
 
@@ -523,10 +527,10 @@ export function LandingPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-5xl lg:text-6xl font-bold text-white mb-6">
-                Turn Your Idle Items Into Income
+                Transformez vos objets inutilisés en revenus
               </h2>
               <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                Join thousands of lenders earning passive income by renting out their unused items. It's free to list, and you're always in control.
+                Rejoignez les milliers de loueurs qui génèrent un revenu passif en louant leurs objets inutilisés. C'est gratuit de publier, et vous gardez toujours le contrôle.
               </p>
               <div className="flex flex-wrap gap-4 mb-8">
                 <div className="flex items-center gap-3">
@@ -534,8 +538,8 @@ export function LandingPage() {
                     <Check className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-white font-semibold">Free to list</div>
-                    <div className="text-white/80 text-sm">No upfront costs</div>
+                    <div className="text-white font-semibold">Gratuit à publier</div>
+                    <div className="text-white/80 text-sm">Aucun frais initial</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -543,8 +547,8 @@ export function LandingPage() {
                     <Check className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-white font-semibold">Full protection</div>
-                    <div className="text-white/80 text-sm">Insurance included</div>
+                    <div className="text-white font-semibold">Protection complète</div>
+                    <div className="text-white/80 text-sm">Assurance incluse</div>
                   </div>
                 </div>
               </div>
@@ -569,8 +573,8 @@ export function LandingPage() {
                     <TrendingUp className="w-6 h-6 text-[#FF4F5A]" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg mb-1">Average $892/month</h4>
-                    <p className="text-white/80">Typical earnings for active lenders</p>
+                    <h4 className="text-white font-semibold text-lg mb-1">892 DA en moyenne/mois</h4>
+                    <p className="text-white/80">Revenus typiques des loueurs actifs</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -578,8 +582,8 @@ export function LandingPage() {
                     <Shield className="w-6 h-6 text-[#FF4F5A]" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg mb-1">$1M Protection</h4>
-                    <p className="text-white/80">Every rental is fully insured</p>
+                    <h4 className="text-white font-semibold text-lg mb-1">Protection totale</h4>
+                    <p className="text-white/80">Chaque location est entièrement assurée</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -587,8 +591,8 @@ export function LandingPage() {
                     <Clock className="w-6 h-6 text-[#FF4F5A]" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold text-lg mb-1">5 Minutes Setup</h4>
-                    <p className="text-white/80">List your first item in minutes</p>
+                    <h4 className="text-white font-semibold text-lg mb-1">5 minutes de configuration</h4>
+                    <p className="text-white/80">Publiez votre première annonce en quelques minutes</p>
                   </div>
                 </div>
               </div>
@@ -606,7 +610,7 @@ export function LandingPage() {
                 <KarillyLogo className="h-8" variant="white" />
               </div>
               <p className="text-white/70 mb-6 leading-relaxed">
-                The universal rental marketplace. Rent anything, anywhere, anytime.
+                La marketplace universelle de location et de troc en Algérie. Louez tout, partout, tout le temps.
               </p>
               <div className="flex gap-3">
                 {["Twitter", "Instagram", "LinkedIn"].map((social) => (
@@ -622,16 +626,16 @@ export function LandingPage() {
 
             {[
               {
-                title: "Explore",
-                links: ["All Categories", "Real Estate", "Vehicles", "Electronics", "Tools"]
+                title: "Explorer",
+                links: ["Toutes les catégories", "Immobilier", "Véhicules", "Électronique", "Outillage"]
               },
               {
-                title: "Company",
-                links: ["About Us", "How It Works", "Trust & Safety", "Careers"]
+                title: "L'entreprise",
+                links: ["À propos", "Comment ça marche", "Confiance & Sécurité", "Carrières"]
               },
               {
                 title: "Support",
-                links: ["Help Center", "Contact Us", "FAQs", "Insurance"]
+                links: ["Centre d'aide", "Nous contacter", "FAQ", "Assurance"]
               }
             ].map((column) => (
               <div key={column.title}>
@@ -651,14 +655,14 @@ export function LandingPage() {
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-white/50 text-sm">
-              © 2026 Karilly. All rights reserved.
+              © 2026 Karrily. Tous droits réservés.
             </p>
             <div className="flex gap-6">
               <button className="text-white/50 hover:text-white text-sm transition-colors">
-                Privacy Policy
+                Politique de confidentialité
               </button>
               <button className="text-white/50 hover:text-white text-sm transition-colors">
-                Terms of Service
+                Conditions d'utilisation
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, CheckCircle } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
@@ -9,6 +9,17 @@ import { useTheme } from "../../context/theme-context";
 import { ThemeToggle } from "./theme-toggle";
 import { useNotifications } from "../../hooks/useNotifications";
 
+const CATEGORIES = [
+  { icon: Home, label: "Immobilier", slug: "immobilier" },
+  { icon: Car, label: "Véhicules", slug: "vehicules" },
+  { icon: Laptop, label: "Électronique", slug: "electronique" },
+  { icon: Wrench, label: "Outillage", slug: "outillage" },
+  { icon: Armchair, label: "Mobilier", slug: "mobilier" },
+  { icon: Camera, label: "Photo & Vidéo", slug: "photo-video" },
+  { icon: Dumbbell, label: "Sport", slug: "sport" },
+  { icon: PartyPopper, label: "Événementiel", slug: "evenementiel" },
+];
+
 export function Navigation({ variant = "default" }: { variant?: "default" | "transparent" }) {
   const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuthStore();
@@ -16,14 +27,16 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
   
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  
+  const isTransparent = false;
 
-  const isTransparent = variant === "transparent";
-
-  // Close user menu on outside click
+  // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -31,6 +44,9 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
       }
       if (notifMenuRef.current && !notifMenuRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
+      }
+      if (categoriesRef.current && !categoriesRef.current.contains(e.target as Node)) {
+        setShowCategories(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -52,14 +68,11 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
       .slice(0, 2)
     : "U";
 
-  const logoVariant = isTransparent ? "white" : isDark ? "white" : "default";
+  const logoVariant = isDark ? "white" : "default";
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200 ${isTransparent
-        ? "bg-transparent"
-        : "bg-background/90 backdrop-blur-xl border-b border-border shadow-sm"
-        }`}
+      className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-md transition-all duration-300 dark:shadow-none"
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-20">
@@ -79,19 +92,64 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
               onClick={() => navigate('/explore')}
               className={`text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
                 ? "text-white/90 hover:text-white"
-                : "text-foreground/85 hover:text-foreground"
+                : "text-[#0F2A2E] hover:text-[#FF4F5A]"
                 }`}
             >
               Explorer
             </button>
-            <div className="relative group">
-              <button className={`flex items-center gap-1 text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
-                ? "text-white/90 hover:text-white"
-                : "text-foreground/85 hover:text-foreground"
-                }`}>
+            <div className="relative" ref={categoriesRef}>
+              <button
+                onClick={() => setShowCategories(!showCategories)}
+                className={`flex items-center gap-1 text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
+                  ? "text-white/90 hover:text-white"
+                  : "text-[#0F2A2E] hover:text-[#FF4F5A]"
+                  }`}
+              >
                 Catégories
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showCategories ? "rotate-180" : ""}`} />
               </button>
+              
+              {/* Categories Dropdown */}
+              <AnimatePresence>
+                {showCategories && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-1/2 -translate-x-1/2 top-12 w-[320px] bg-card rounded-2xl shadow-xl border border-border overflow-hidden"
+                  >
+                    <div className="p-2">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat.slug}
+                          onClick={() => {
+                            navigate(`/explore?category=${cat.slug}`);
+                            setShowCategories(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                            <cat.icon className="w-4.5 h-4.5 text-[#FF4F5A]" />
+                          </div>
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-border p-2">
+                      <button
+                        onClick={() => {
+                          navigate('/explore');
+                          setShowCategories(false);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#FF4F5A] hover:bg-[#FF4F5A]/5 transition-colors"
+                      >
+                        Voir toutes les catégories
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <button className={`text-[15px] font-medium transition-all hover:scale-105 ${isTransparent
               ? "text-white/90 hover:text-white"
@@ -254,7 +312,7 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                         <div className="border-t border-border py-2">
                           <button
                             onClick={handleSignOut}
-                            className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                            className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors"
                           >
                             <LogOut className="w-4 h-4" /> Déconnexion
                           </button>
@@ -269,8 +327,9 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                 <Button
                   onClick={() => navigate('/login')}
                   variant="ghost"
-                  className={`hidden lg:flex h-10 px-5 rounded-full font-medium ${isTransparent ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
-                    }`}
+                  className={`hidden lg:flex h-10 px-5 rounded-full font-medium transition-colors ${
+                    isTransparent ? "text-white hover:bg-white/10" : "text-[#0F2A2E] hover:bg-[#0F2A2E]/5"
+                  }`}
                 >
                   Connexion
                 </Button>
@@ -310,12 +369,29 @@ export function Navigation({ variant = "default" }: { variant?: "default" | "tra
                 <ThemeToggle transparent={false} />
               </div>
               <button onClick={() => { navigate('/explore'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Explorer</button>
-              <button onClick={() => { navigate('/category/all'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Catégories</button>
+              
+              {/* Mobile Categories */}
+              <div className="border-b border-border pb-3">
+                <p className="text-sm font-semibold text-muted-foreground mb-2">Catégories</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.slug}
+                      onClick={() => { navigate(`/explore?category=${cat.slug}`); setShowMobileMenu(false); }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <cat.icon className="w-4 h-4 text-[#FF4F5A]" />
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {isAuthenticated ? (
                 <>
                   <button onClick={() => { navigate('/dashboard'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Mon profil</button>
                   <button onClick={() => { navigate('/lender'); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-foreground font-medium">Publier une annonce</button>
-                  <button onClick={() => { handleSignOut(); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-red-600 font-medium">Déconnexion</button>
+                  <button onClick={() => { handleSignOut(); setShowMobileMenu(false); }} className="block w-full text-left py-2 text-red-500 font-medium">Déconnexion</button>
                 </>
               ) : (
                 <div className="flex gap-3 pt-2">

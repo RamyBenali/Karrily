@@ -23,102 +23,102 @@ const categoryData: Record<string, {
   }>;
 }> = {
   "vehicles": {
-    title: "Vehicles",
-    description: "Premium cars, motorcycles, and more for every journey",
+    title: "Véhicules",
+    description: "Voitures, motos et bien plus pour chaque trajet",
     gradient: "from-[#FF4F5A] to-[#FF6B74]",
     items: [
       {
         id: 2,
-        title: "Premium Sports Car",
+        title: "Voiture de Sport Premium",
         price: 299,
-        period: "day",
+        period: "jour",
         rating: 5.0,
         reviews: 89,
-        location: "Los Angeles, CA",
+        location: "Alger",
         image: "https://images.unsplash.com/photo-1762026846208-946fe48e96e1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVtaXVtJTIwc3BvcnRzJTIwY2FyJTIwc2lkZSUyMHZpZXd8ZW58MXx8fHwxNzcxNTA1MjI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
       },
       {
         id: 5,
-        title: "Vintage Motorcycle",
+        title: "Moto Vintage",
         price: 180,
-        period: "day",
+        period: "jour",
         rating: 4.9,
         reviews: 142,
-        location: "Portland, OR",
+        location: "Oran",
         image: "https://images.unsplash.com/photo-1770316937353-6671d7f6323c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwbW90b3JjeWNsZSUyMHJldHJvJTIwYmlrZXxlbnwxfHx8fDE3NzE1MDUzMDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
       },
       {
         id: 8,
-        title: "Electric Bike",
+        title: "Vélo Électrique",
         price: 45,
-        period: "day",
+        period: "jour",
         rating: 4.6,
         reviews: 231,
-        location: "Miami, FL",
+        location: "Constantine",
         image: "https://images.unsplash.com/photo-1758764032776-08f6930a9146?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMGJpa2UlMjBiaWN5Y2xlJTIwbW9kZXJufGVufDF8fHx8MTc3MTUwNTMxMHww&ixlib=rb-4.1.0&q=80&w=1080",
       }
     ]
   },
   "electronics": {
-    title: "Electronics",
-    description: "Latest tech, cameras, laptops, and professional equipment",
+    title: "Électronique",
+    description: "Appareils photo, ordinateurs portables et équipement professionnel",
     gradient: "from-[#0F2A2E] to-[#1A4851]",
     items: [
       {
         id: 3,
-        title: "Professional Camera Kit",
+        title: "Kit Caméra Professionnelle",
         price: 85,
-        period: "day",
+        period: "jour",
         rating: 4.8,
         reviews: 203,
-        location: "New York, NY",
+        location: "Sétif",
         image: "https://images.unsplash.com/photo-1769699167687-540cce99f744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjYW1lcmElMjBlcXVpcG1lbnR8ZW58MXx8fHwxNzcxNDg2NjExfDA&ixlib=rb-4.1.0&q=80&w=1080",
       },
       {
         id: 9,
         title: "MacBook Pro 16\"",
         price: 65,
-        period: "day",
+        period: "jour",
         rating: 4.9,
         reviews: 312,
-        location: "Boston, MA",
+        location: "Annaba",
         image: "https://images.unsplash.com/photo-1658124975408-490b400810a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYWNib29rJTIwcHJvJTIwbGFwdG9wJTIwd29ya3NwYWNlfGVufDF8fHx8MTc3MTUwNTMxMHww&ixlib=rb-4.1.0&q=80&w=1080",
       },
       {
         id: 12,
-        title: "Gaming Laptop",
+        title: "PC Portable Gaming",
         price: 75,
-        period: "day",
+        period: "jour",
         rating: 4.9,
         reviews: 267,
-        location: "Las Vegas, NV",
+        location: "Blida",
         image: "https://images.unsplash.com/photo-1632603093711-0d93a0bcc6cc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1pbmclMjBsYXB0b3AlMjBzZXR1cCUyMHJnYnxlbnwxfHx8fDE3NzE1MDUyMjd8MA&ixlib=rb-4.1.0&q=80&w=1080",
       }
     ]
   },
   "real-estate": {
-    title: "Real Estate",
-    description: "Beautiful apartments, homes, and unique spaces",
+    title: "Immobilier",
+    description: "Appartements, maisons et espaces uniques",
     gradient: "from-[#0F2A2E] to-[#1A4851]",
     items: [
       {
         id: 1,
-        title: "Modern Downtown Loft",
+        title: "Loft Moderne Centre-Ville",
         price: 450,
-        period: "night",
+        period: "nuit",
         rating: 4.9,
         reviews: 127,
-        location: "San Francisco, CA",
+        location: "Alger Centre",
         image: "https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzE0MzkzODh8MA&ixlib=rb-4.1.0&q=80&w=1080",
       },
       {
         id: 7,
-        title: "Modern Loft Apartment",
+        title: "Appartement Loft Moderne",
         price: 380,
-        period: "night",
+        period: "nuit",
         rating: 4.9,
         reviews: 94,
-        location: "Chicago, IL",
+        location: "Tizi Ouzou",
         image: "https://images.unsplash.com/photo-1767706508383-097054618007?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsb2Z0JTIwYXBhcnRtZW50JTIwaW50ZXJpb3J8ZW58MXx8fHwxNzcxNTA1MzA5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       }
     ]
@@ -175,13 +175,13 @@ export function CategoryPage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-white">{category.items.length}+</div>
-                  <div className="text-sm text-white/70">Available</div>
+                  <div className="text-sm text-white/70">Disponibles</div>
                 </div>
               </div>
               <div className="w-px h-12 bg-white/20" />
               <div>
                 <div className="text-2xl font-bold text-white">4.8★</div>
-                <div className="text-sm text-white/70">Avg Rating</div>
+                <div className="text-sm text-white/70">Note Moy.</div>
               </div>
             </div>
           </motion.div>
@@ -197,7 +197,7 @@ export function CategoryPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer"
+              className="group bg-card rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-border cursor-pointer"
               onClick={() => navigate(`/item/${item.id}`)}
             >
               <div className="relative h-72 overflow-hidden">
@@ -213,13 +213,13 @@ export function CategoryPage() {
                     e.stopPropagation();
                     toggleLike(item.id);
                   }}
-                  className="absolute top-4 right-4 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all"
+                  className="absolute top-4 right-4 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-card transition-all"
                 >
                   <Heart 
                     className={`w-5 h-5 transition-all ${
                       likedItems.includes(item.id)
                         ? "fill-[#FF4F5A] text-[#FF4F5A]"
-                        : "text-gray-700"
+                        : "text-foreground/80"
                     }`}
                   />
                 </button>
@@ -228,23 +228,23 @@ export function CategoryPage() {
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-3">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold text-gray-900">{item.rating}</span>
-                  <span className="text-sm text-gray-500">({item.reviews} reviews)</span>
+                  <span className="font-semibold text-foreground">{item.rating}</span>
+                  <span className="text-sm text-muted-foreground">({item.reviews} avis)</span>
                 </div>
 
-                <h3 className="text-xl font-bold text-[#0F2A2E] mb-2 group-hover:text-[#FF4F5A] transition-colors">
+                <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-[#FF4F5A] transition-colors">
                   {item.title}
                 </h3>
 
-                <p className="text-sm text-gray-500 mb-4 flex items-center gap-1">
+                <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
                   {item.location}
                 </p>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div>
-                    <span className="text-3xl font-bold text-[#0F2A2E]">${item.price}</span>
-                    <span className="text-gray-500 ml-1">/ {item.period}</span>
+                    <span className="text-3xl font-bold text-foreground">${item.price}</span>
+                    <span className="text-muted-foreground ml-1">/ {item.period}</span>
                   </div>
                   <Button
                     onClick={(e) => {
@@ -270,16 +270,16 @@ export function CategoryPage() {
           className="mt-16 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-3xl p-12 text-center"
         >
           <h2 className="text-4xl font-bold text-white mb-4">
-            Can't find what you're looking for?
+            Vous ne trouvez pas ce que vous cherchez ?
           </h2>
           <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-            We're constantly adding new items. Check back soon or browse all categories.
+            Nous ajoutons constamment de nouveaux articles. Revenez bientôt ou parcourez toutes les catégories.
           </p>
           <Button
             onClick={() => navigate('/explore')}
-            className="bg-white hover:bg-white/90 text-[#0F2A2E] px-8 h-12 rounded-full text-lg font-medium"
+            className="bg-card hover:bg-white/90 text-foreground px-8 h-12 rounded-full text-lg font-medium"
           >
-            Browse All Categories
+            Parcourir toutes les catégories
           </Button>
         </motion.div>
       </div>

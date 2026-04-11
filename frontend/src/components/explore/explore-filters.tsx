@@ -88,7 +88,7 @@ export function ExploreFilterSidebar({
     >
       {onCloseMobile ? (
         <div className="mb-4 flex items-center justify-between lg:hidden">
-          <span className="text-sm font-semibold" style={{ color: "var(--ex-title)" }}>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Filtres
           </span>
           <button
@@ -97,55 +97,73 @@ export function ExploreFilterSidebar({
             onClick={onCloseMobile}
             aria-label="Fermer"
           >
-            <X className="h-5 w-5" style={{ color: "var(--ex-muted)" }} />
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
       ) : null}
 
-      <p className="mb-3 text-xs font-medium" style={{ color: "var(--ex-muted)" }}>
-        {totalCount} annonce{totalCount !== 1 ? "s" : ""} correspondant aux critères
-      </p>
+      <div className="mb-8">
+        <p className="mb-6 text-[11px] font-medium tracking-wide opacity-70" style={{ color: "var(--ex-muted)" }}>
+          {totalCount} unité{totalCount !== 1 ? "s" : ""} identifiée{totalCount !== 1 ? "s" : ""} dans le secteur
+        </p>
 
-      <div className="mb-6 flex items-start justify-between gap-2">
-        <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--ex-title)" }}>
-          Filtres
-        </h2>
-        <button
-          type="button"
-          onClick={resetFilters}
-          className="shrink-0 pt-1 text-xs font-bold uppercase tracking-wider transition-opacity hover:opacity-80"
-          style={{ color: "var(--ex-reset)" }}
-        >
-          Réinitialiser
-        </button>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--ex-title)" }}>
+            Filtres
+          </h2>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] transition-opacity hover:opacity-80"
+            style={{ color: "var(--ex-reset)" }}
+          >
+            RESET
+          </button>
+        </div>
       </div>
 
       <section className="mb-8">
         <h3
-          className="mb-3 text-[11px] font-semibold uppercase tracking-widest"
+          className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em]"
           style={{ color: "var(--ex-muted)" }}
         >
           Secteurs
         </h3>
-        <ul className="flex flex-col gap-0.5">
+        <ul className="grid grid-cols-1 gap-1">
           {categories.map((cat) => {
             const checked = selectedCategorySlugs.includes(cat.slug);
             return (
               <li key={cat.id}>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pr-1 transition-colors hover:bg-white/5">
-                  <input
-                    type="checkbox"
-                    className="explore-sector-checkbox mt-0.5 h-4 w-4 shrink-0 rounded border"
-                    checked={checked}
-                    onChange={() => {
-                      setSelectedCategorySlugs((prev) => toggleSlug(prev, cat.slug));
-                      setCategoryFilters({});
-                    }}
-                  />
-                  <span className="min-w-0 flex-1 text-sm leading-snug" style={{ color: "var(--ex-label)" }}>
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl py-2 transition-all hover:bg-white/5 group">
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-border bg-transparent transition-all checked:border-[#FF4F5A] checked:bg-[#FF4F5A]"
+                      checked={checked}
+                      onChange={() => {
+                        setSelectedCategorySlugs((prev) => toggleSlug(prev, cat.slug));
+                        setCategoryFilters({});
+                      }}
+                    />
+                    <svg
+                      className="absolute h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <span className={cn(
+                    "min-w-0 flex-1 text-[13.5px] font-medium transition-colors group-hover:text-[#FF4F5A]",
+                    checked ? "text-[#FF4F5A]" : "text-foreground/80"
+                  )}>
                     {cat.name}
                   </span>
-                  <span className="shrink-0 tabular-nums text-xs" style={{ color: "var(--ex-muted)" }}>
+                  <span className="shrink-0 tabular-nums text-[11px] font-medium opacity-40">
                     {cat.item_count}
                   </span>
                 </label>
@@ -157,10 +175,10 @@ export function ExploreFilterSidebar({
 
       <section className="mb-8">
         <h3
-          className="mb-3 text-[11px] font-semibold uppercase tracking-widest"
+          className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em]"
           style={{ color: "var(--ex-muted)" }}
         >
-          Budget (DA)
+          BUDGET (EUR)
         </h3>
         <div className="explore-budget-slider px-0.5 pt-1">
           <Slider
@@ -185,59 +203,55 @@ export function ExploreFilterSidebar({
         </div>
       </section>
 
-      <section className="mb-6">
+      <section className="mb-8">
         <label
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-widest"
+          className="mb-4 block text-[10px] font-bold uppercase tracking-[0.1em]"
           style={{ color: "var(--ex-muted)" }}
           htmlFor="sidebar-rating"
         >
           Note minimum
         </label>
-        <select
-          id="sidebar-rating"
-          className="explore-select w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-[#7b1fa2]/40"
-          style={{
-            background: "var(--ex-input-bg)",
-            borderColor: "var(--ex-border)",
-            color: "var(--ex-label)",
-          }}
-          value={minRating}
-          onChange={(e) => setMinRating(e.target.value)}
-        >
-          {RATING_FILTER_OPTIONS.map((o) => (
-            <option key={o.value || "all"} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div className="relative group">
+          <select
+            id="sidebar-rating"
+            className="w-full appearance-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] font-medium text-foreground outline-none transition-all focus:border-[#FF4F5A]/50 group-hover:border-border/80"
+            value={minRating}
+            onChange={(e) => setMinRating(e.target.value)}
+          >
+            {RATING_FILTER_OPTIONS.map((o) => (
+              <option key={o.value || "all"} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+        </div>
       </section>
 
-      <section className="mb-6">
+      <section className="mb-8">
         <label
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-widest"
+          className="mb-4 block text-[10px] font-bold uppercase tracking-[0.1em]"
           style={{ color: "var(--ex-muted)" }}
           htmlFor="sidebar-wilaya"
         >
           Wilaya
         </label>
-        <select
-          id="sidebar-wilaya"
-          className="explore-select w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#7b1fa2]/40"
-          style={{
-            background: "var(--ex-input-bg)",
-            borderColor: "var(--ex-border)",
-            color: "var(--ex-label)",
-          }}
-          value={selectedWilaya}
-          onChange={(e) => setSelectedWilaya(e.target.value)}
-        >
-          <option value="">Toute l&apos;Algérie</option>
-          {WILAYAS.map((w) => (
-            <option key={w.code} value={w.code}>
-              {w.code} — {w.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative group">
+          <select
+            id="sidebar-wilaya"
+            className="w-full appearance-none rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] font-medium text-foreground outline-none transition-all focus:border-[#FF4F5A]/50 group-hover:border-border/80"
+            value={selectedWilaya}
+            onChange={(e) => setSelectedWilaya(e.target.value)}
+          >
+            <option value="">Toute l&apos;Algérie</option>
+            {WILAYAS.map((w) => (
+              <option key={w.code} value={w.code}>
+                {w.code} — {w.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+        </div>
       </section>
 
       <section className="mb-4">
@@ -252,8 +266,10 @@ export function ExploreFilterSidebar({
             type="button"
             onClick={() => setSelectedListingType("")}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              !selectedListingType ? "bg-[#FF4F5A] text-white" : "bg-white/5 text-[var(--ex-label)] hover:bg-white/10",
+              "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
+              !selectedListingType 
+                ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20" 
+                : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
             )}
           >
             Tous
@@ -264,10 +280,10 @@ export function ExploreFilterSidebar({
               type="button"
               onClick={() => setSelectedListingType(val)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
                 selectedListingType === val
-                  ? "bg-[#FF4F5A] text-white"
-                  : "bg-white/5 text-[var(--ex-label)] hover:bg-white/10",
+                  ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20"
+                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
               )}
             >
               {label}
@@ -296,10 +312,10 @@ export function ExploreFilterSidebar({
               type="button"
               onClick={() => setSelectedCondition(c.v)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm",
                 selectedCondition === c.v
-                  ? "bg-[#0F2A2E] text-white dark:bg-white/90 dark:text-[#0F2A2E]"
-                  : "bg-white/5 text-[var(--ex-label)] hover:bg-white/10",
+                  ? "bg-[#FF4F5A] text-white shadow-[#FF4F5A]/20"
+                  : "bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground",
               )}
             >
               {c.l}

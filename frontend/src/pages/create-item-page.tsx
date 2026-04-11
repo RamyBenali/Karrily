@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
     ArrowLeft, ArrowRight, Upload, X, MapPin, Tag, DollarSign,
     Image as ImageIcon, Loader2, CheckCircle2, Camera, Plus,
+    Home, ShoppingCart, RefreshCw, HandCoins,
 } from "lucide-react";
 import { Navigation } from "../components/layout/navigation";
 import { Button } from "../components/ui/button";
@@ -38,10 +39,10 @@ const WILAYAS = [
 ];
 
 const LISTING_TYPES = [
-    { value: "rent", label: "Location", emoji: "🏠", desc: "Louer votre bien temporairement" },
-    { value: "sell", label: "Vente", emoji: "🛒", desc: "Vendre votre bien définitivement" },
-    { value: "troc", label: "Troc", emoji: "🔄", desc: "Échanger contre un autre objet" },
-    { value: "rent_sell", label: "Location & Vente", emoji: "🏷️", desc: "Proposer les deux options" },
+    { value: "rent", label: "Location", icon: Home, desc: "Louer votre bien temporairement" },
+    { value: "sell", label: "Vente", icon: ShoppingCart, desc: "Vendre votre bien définitivement" },
+    { value: "troc", label: "Troc", icon: RefreshCw, desc: "Échanger contre un autre objet" },
+    { value: "rent_sell", label: "Location & Vente", icon: HandCoins, desc: "Proposer les deux options" },
 ];
 
 const CONDITIONS = [
@@ -253,13 +254,13 @@ export function CreateItemPage() {
                     >
                         <button
                             onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
-                            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 transition-colors"
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground/80 mb-4 transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             {step > 0 ? "Étape précédente" : "Retour"}
                         </button>
-                        <h1 className="text-4xl font-bold text-[#0F2A2E] mb-2">Publier une annonce</h1>
-                        <p className="text-gray-500">Étape {step + 1} sur {STEPS.length}</p>
+                        <h1 className="text-4xl font-bold text-foreground mb-2">Publier une annonce</h1>
+                        <p className="text-muted-foreground">Étape {step + 1} sur {STEPS.length}</p>
                     </motion.div>
 
                     {/* Progress Bar */}
@@ -268,7 +269,7 @@ export function CreateItemPage() {
                             <div key={s} className="flex-1 flex flex-col items-center gap-1">
                                 <div className={`h-1.5 w-full rounded-full transition-all duration-500 ${i <= step ? "bg-[#FF4F5A]" : "bg-gray-200"
                                     }`} />
-                                <span className={`text-xs font-medium ${i <= step ? "text-[#FF4F5A]" : "text-gray-400"}`}>
+                                <span className={`text-xs font-medium ${i <= step ? "text-[#FF4F5A]" : "text-muted-foreground/70"}`}>
                                     {s}
                                 </span>
                             </div>
@@ -294,10 +295,10 @@ export function CreateItemPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100"
+                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                             >
-                                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-2">Que souhaitez-vous faire ?</h2>
-                                <p className="text-gray-500 mb-6">Choisissez le type d'annonce</p>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">Que souhaitez-vous faire ?</h2>
+                                <p className="text-muted-foreground mb-6">Choisissez le type d'annonce</p>
 
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     {LISTING_TYPES.map(type => (
@@ -306,12 +307,14 @@ export function CreateItemPage() {
                                             onClick={() => updateForm({ listing_type: type.value })}
                                             className={`p-6 rounded-2xl border-2 text-left transition-all hover:shadow-md ${form.listing_type === type.value
                                                     ? "border-[#FF4F5A] bg-[#FF4F5A]/5 shadow-md"
-                                                    : "border-gray-200 hover:border-gray-300"
+                                                    : "border-border hover:border-gray-300"
                                                 }`}
                                         >
-                                            <span className="text-3xl">{type.emoji}</span>
-                                            <h3 className="text-lg font-bold text-[#0F2A2E] mt-3">{type.label}</h3>
-                                            <p className="text-sm text-gray-500 mt-1">{type.desc}</p>
+                                            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                                                <type.icon className="w-6 h-6 text-foreground" />
+                                            </div>
+                                            <h3 className="text-lg font-bold text-foreground mt-3">{type.label}</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">{type.desc}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -325,31 +328,31 @@ export function CreateItemPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 space-y-6"
+                                className="bg-card rounded-3xl p-8 shadow-lg border border-border space-y-6"
                             >
                                 <div>
-                                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-2">Décrivez votre bien</h2>
-                                    <p className="text-gray-500">Plus votre annonce est détaillée, plus elle attirera de monde</p>
+                                    <h2 className="text-2xl font-bold text-foreground mb-2">Décrivez votre bien</h2>
+                                    <p className="text-muted-foreground">Plus votre annonce est détaillée, plus elle attirera de monde</p>
                                 </div>
 
                                 {/* Title */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">
                                         Titre de l'annonce *
                                     </label>
                                     <Input
                                         value={form.title}
                                         onChange={e => updateForm({ title: e.target.value })}
                                         placeholder="Ex: Appartement F3 meublé centre-ville"
-                                        className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                        className="h-12 rounded-2xl bg-muted/50 border-border"
                                         maxLength={100}
                                     />
-                                    <p className="text-xs text-gray-400 mt-1 text-right">{form.title.length}/100</p>
+                                    <p className="text-xs text-muted-foreground/70 mt-1 text-right">{form.title.length}/100</p>
                                 </div>
 
                                 {/* Category */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Catégorie *</label>
+                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">Catégorie *</label>
                                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                                         {categories.map(cat => (
                                             <button
@@ -357,7 +360,7 @@ export function CreateItemPage() {
                                                 onClick={() => updateForm({ category_id: cat.id })}
                                                 className={`p-3 rounded-xl border text-center text-sm font-medium transition-all ${form.category_id === cat.id
                                                         ? "border-[#FF4F5A] bg-[#FF4F5A]/5 text-[#FF4F5A]"
-                                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                                        : "border-border text-muted-foreground hover:border-gray-300"
                                                     }`}
                                             >
                                                 {cat.name}
@@ -368,21 +371,21 @@ export function CreateItemPage() {
 
                                 {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">Description *</label>
                                     <textarea
                                         value={form.description}
                                         onChange={e => updateForm({ description: e.target.value })}
                                         rows={5}
                                         placeholder="Décrivez votre bien en détail : caractéristiques, état, ce qui est inclus..."
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
+                                        className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
                                         maxLength={2000}
                                     />
-                                    <p className="text-xs text-gray-400 mt-1 text-right">{form.description.length}/2000</p>
+                                    <p className="text-xs text-muted-foreground/70 mt-1 text-right">{form.description.length}/2000</p>
                                 </div>
 
                                 {/* Condition */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">État</label>
+                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">État</label>
                                     <div className="flex flex-wrap gap-2">
                                         {CONDITIONS.map(c => (
                                             <button
@@ -390,7 +393,7 @@ export function CreateItemPage() {
                                                 onClick={() => updateForm({ condition: c.value })}
                                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${form.condition === c.value
                                                         ? c.color + " ring-2 ring-offset-1 ring-current"
-                                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                        : "bg-muted text-muted-foreground hover:bg-muted"
                                                     }`}
                                             >
                                                 {c.label}
@@ -401,14 +404,14 @@ export function CreateItemPage() {
 
                                 {/* Tags */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Tags <span className="font-normal text-gray-400">(séparés par des virgules)</span>
+                                    <label className="block text-sm font-semibold text-foreground/80 mb-2">
+                                        Tags <span className="font-normal text-muted-foreground/70">(séparés par des virgules)</span>
                                     </label>
                                     <Input
                                         value={form.tags}
                                         onChange={e => updateForm({ tags: e.target.value })}
                                         placeholder="Ex: meublé, wifi, parking"
-                                        className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                        className="h-12 rounded-2xl bg-muted/50 border-border"
                                     />
                                 </div>
 
@@ -420,19 +423,19 @@ export function CreateItemPage() {
                                     if (filters.length === 0) return null;
 
                                     return (
-                                        <div className="pt-4 border-t border-gray-100 space-y-6">
-                                            <h3 className="font-bold text-[#0F2A2E]">Caractéristiques spécifiques ({selectedCat.name})</h3>
+                                        <div className="pt-4 border-t border-border space-y-6">
+                                            <h3 className="font-bold text-foreground">Caractéristiques spécifiques ({selectedCat.name})</h3>
                                             <div className="grid sm:grid-cols-2 gap-6">
                                                 {filters.map(f => (
                                                     <div key={f.key}>
-                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                        <label className="block text-sm font-semibold text-foreground/80 mb-2">
                                                             {f.label} *
                                                         </label>
                                                         {f.type === "select" && (
                                                             <select
                                                                 value={form.metadata[f.key] || ""}
                                                                 onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
-                                                                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
+                                                                className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                                                             >
                                                                 <option value="">Sélectionner...</option>
                                                                 {f.options?.map(opt => (
@@ -446,7 +449,7 @@ export function CreateItemPage() {
                                                                 value={form.metadata[f.key] || ""}
                                                                 onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.value } })}
                                                                 placeholder={f.unit ? `Ex: 100 ${f.unit}` : "Ex: 2023"}
-                                                                className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                                                className="h-12 rounded-2xl bg-muted/50 border-border"
                                                                 min={f.min}
                                                                 max={f.max}
                                                             />
@@ -459,7 +462,7 @@ export function CreateItemPage() {
                                                                     onChange={e => updateForm({ metadata: { ...form.metadata, [f.key]: e.target.checked } })}
                                                                     className="w-5 h-5 rounded accent-[#FF4F5A]"
                                                                 />
-                                                                <span className="text-sm text-gray-700">{f.label}</span>
+                                                                <span className="text-sm text-foreground/80">{f.label}</span>
                                                             </label>
                                                         )}
                                                     </div>
@@ -478,10 +481,10 @@ export function CreateItemPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100"
+                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                             >
-                                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-2">Ajoutez des photos</h2>
-                                <p className="text-gray-500 mb-6">Minimum 1 photo, maximum 8. La première sera la couverture.</p>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">Ajoutez des photos</h2>
+                                <p className="text-muted-foreground mb-6">Minimum 1 photo, maximum 8. La première sera la couverture.</p>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                     {/* Existing previews */}
@@ -505,8 +508,8 @@ export function CreateItemPage() {
                                     {/* Add button */}
                                     {form.images.length < 8 && (
                                         <label className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#FF4F5A] flex flex-col items-center justify-center cursor-pointer transition-colors group">
-                                            <Plus className="w-8 h-8 text-gray-400 group-hover:text-[#FF4F5A] transition-colors" />
-                                            <span className="text-sm text-gray-400 group-hover:text-[#FF4F5A] mt-1">Ajouter</span>
+                                            <Plus className="w-8 h-8 text-muted-foreground/70 group-hover:text-[#FF4F5A] transition-colors" />
+                                            <span className="text-sm text-muted-foreground/70 group-hover:text-[#FF4F5A] mt-1">Ajouter</span>
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -518,7 +521,7 @@ export function CreateItemPage() {
                                     )}
                                 </div>
 
-                                <p className="text-xs text-gray-400 mt-4">{form.images.length}/8 photos</p>
+                                <p className="text-xs text-muted-foreground/70 mt-4">{form.images.length}/8 photos</p>
                             </motion.div>
                         )}
 
@@ -529,57 +532,57 @@ export function CreateItemPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 space-y-6"
+                                className="bg-card rounded-3xl p-8 shadow-lg border border-border space-y-6"
                             >
                                 <div>
-                                    <h2 className="text-2xl font-bold text-[#0F2A2E] mb-2">Prix & Localisation</h2>
-                                    <p className="text-gray-500">Définissez vos tarifs et votre emplacement</p>
+                                    <h2 className="text-2xl font-bold text-foreground mb-2">Prix & Localisation</h2>
+                                    <p className="text-muted-foreground">Définissez vos tarifs et votre emplacement</p>
                                 </div>
 
                                 {/* Rental prices */}
                                 {(form.listing_type === "rent" || form.listing_type === "rent_sell") && (
                                     <div className="space-y-4">
-                                        <h3 className="font-semibold text-gray-700">Tarifs de location (DA)</h3>
+                                        <h3 className="font-semibold text-foreground/80">Tarifs de location (DA)</h3>
                                         <div className="grid sm:grid-cols-3 gap-4">
                                             <div>
-                                                <label className="text-sm text-gray-500 mb-1 block">Par jour *</label>
+                                                <label className="text-sm text-muted-foreground mb-1 block">Par jour *</label>
                                                 <Input
                                                     type="number"
                                                     value={form.price_per_day}
                                                     onChange={e => updateForm({ price_per_day: e.target.value })}
                                                     placeholder="5000"
-                                                    className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-sm text-gray-500 mb-1 block">Par semaine</label>
+                                                <label className="text-sm text-muted-foreground mb-1 block">Par semaine</label>
                                                 <Input
                                                     type="number"
                                                     value={form.price_per_week}
                                                     onChange={e => updateForm({ price_per_week: e.target.value })}
                                                     placeholder="25000"
-                                                    className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-sm text-gray-500 mb-1 block">Par mois</label>
+                                                <label className="text-sm text-muted-foreground mb-1 block">Par mois</label>
                                                 <Input
                                                     type="number"
                                                     value={form.price_per_month}
                                                     onChange={e => updateForm({ price_per_month: e.target.value })}
                                                     placeholder="80000"
-                                                    className="h-12 rounded-2xl bg-gray-50 border-gray-200"
+                                                    className="h-12 rounded-2xl bg-muted/50 border-border"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-sm text-gray-500 mb-1 block">Caution (DA)</label>
+                                            <label className="text-sm text-muted-foreground mb-1 block">Caution (DA)</label>
                                             <Input
                                                 type="number"
                                                 value={form.deposit_amount}
                                                 onChange={e => updateForm({ deposit_amount: e.target.value })}
                                                 placeholder="10000"
-                                                className="h-12 rounded-2xl bg-gray-50 border-gray-200 max-w-xs"
+                                                className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
                                             />
                                         </div>
                                     </div>
@@ -588,13 +591,13 @@ export function CreateItemPage() {
                                 {/* Sale price */}
                                 {(form.listing_type === "sell" || form.listing_type === "rent_sell") && (
                                     <div className="space-y-4">
-                                        <h3 className="font-semibold text-gray-700">Prix de vente (DA)</h3>
+                                        <h3 className="font-semibold text-foreground/80">Prix de vente (DA)</h3>
                                         <Input
                                             type="number"
                                             value={form.sale_price}
                                             onChange={e => updateForm({ sale_price: e.target.value })}
                                             placeholder="150000"
-                                            className="h-12 rounded-2xl bg-gray-50 border-gray-200 max-w-xs"
+                                            className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
                                         />
                                         <label className="flex items-center gap-3 cursor-pointer">
                                             <input
@@ -603,7 +606,7 @@ export function CreateItemPage() {
                                                 onChange={e => updateForm({ is_negotiable: e.target.checked })}
                                                 className="w-5 h-5 rounded accent-[#FF4F5A]"
                                             />
-                                            <span className="text-sm text-gray-700">Prix négociable</span>
+                                            <span className="text-sm text-foreground/80">Prix négociable</span>
                                         </label>
                                     </div>
                                 )}
@@ -611,25 +614,25 @@ export function CreateItemPage() {
                                 {/* Troc */}
                                 {(form.listing_type === "troc") && (
                                     <div className="space-y-4">
-                                        <h3 className="font-semibold text-gray-700">Détails du troc</h3>
+                                        <h3 className="font-semibold text-foreground/80">Détails du troc</h3>
                                         <div>
-                                            <label className="text-sm text-gray-500 mb-1 block">Qu'acceptez-vous en échange ?</label>
+                                            <label className="text-sm text-muted-foreground mb-1 block">Qu'acceptez-vous en échange ?</label>
                                             <textarea
                                                 value={form.troc_description}
                                                 onChange={e => updateForm({ troc_description: e.target.value })}
                                                 rows={3}
                                                 placeholder="Ex: J'accepte un smartphone ou une tablette en bon état"
-                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
+                                                className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-sm text-gray-500 mb-1 block">Valeur estimée (DA)</label>
+                                            <label className="text-sm text-muted-foreground mb-1 block">Valeur estimée (DA)</label>
                                             <Input
                                                 type="number"
                                                 value={form.troc_estimated_value}
                                                 onChange={e => updateForm({ troc_estimated_value: e.target.value })}
                                                 placeholder="50000"
-                                                className="h-12 rounded-2xl bg-gray-50 border-gray-200 max-w-xs"
+                                                className="h-12 rounded-2xl bg-muted/50 border-border max-w-xs"
                                             />
                                         </div>
                                     </div>
@@ -637,11 +640,11 @@ export function CreateItemPage() {
 
                                 {/* Wilaya */}
                                 <div>
-                                    <h3 className="font-semibold text-gray-700 mb-3">Localisation *</h3>
+                                    <h3 className="font-semibold text-foreground/80 mb-3">Localisation *</h3>
                                     <select
                                         value={form.wilaya_code}
                                         onChange={e => updateForm({ wilaya_code: e.target.value })}
-                                        className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] max-w-md"
+                                        className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] max-w-md"
                                     >
                                         <option value="">Sélectionnez votre wilaya</option>
                                         {WILAYAS.map(w => (
@@ -659,9 +662,9 @@ export function CreateItemPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100"
+                                className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                             >
-                                <h2 className="text-2xl font-bold text-[#0F2A2E] mb-6">Récapitulatif</h2>
+                                <h2 className="text-2xl font-bold text-foreground mb-6">Récapitulatif</h2>
 
                                 {/* Preview */}
                                 <div className="space-y-4">
@@ -673,53 +676,53 @@ export function CreateItemPage() {
                                     )}
 
                                     <div className="grid sm:grid-cols-2 gap-4">
-                                        <div className="p-4 bg-gray-50 rounded-xl">
-                                            <p className="text-xs text-gray-400 mb-1">Type</p>
-                                            <p className="font-semibold text-gray-900">
+                                        <div className="p-4 bg-muted/50 rounded-xl">
+                                            <p className="text-xs text-muted-foreground/70 mb-1">Type</p>
+                                            <p className="font-semibold text-foreground">
                                                 {LISTING_TYPES.find(t => t.value === form.listing_type)?.label}
                                             </p>
                                         </div>
-                                        <div className="p-4 bg-gray-50 rounded-xl">
-                                            <p className="text-xs text-gray-400 mb-1">État</p>
-                                            <p className="font-semibold text-gray-900">
+                                        <div className="p-4 bg-muted/50 rounded-xl">
+                                            <p className="text-xs text-muted-foreground/70 mb-1">État</p>
+                                            <p className="font-semibold text-foreground">
                                                 {CONDITIONS.find(c => c.value === form.condition)?.label}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <p className="text-xs text-gray-400 mb-1">Titre</p>
-                                        <p className="font-semibold text-gray-900 text-lg">{form.title}</p>
+                                    <div className="p-4 bg-muted/50 rounded-xl">
+                                        <p className="text-xs text-muted-foreground/70 mb-1">Titre</p>
+                                        <p className="font-semibold text-foreground text-lg">{form.title}</p>
                                     </div>
 
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <p className="text-xs text-gray-400 mb-1">Description</p>
-                                        <p className="text-gray-700 text-sm">{form.description}</p>
+                                    <div className="p-4 bg-muted/50 rounded-xl">
+                                        <p className="text-xs text-muted-foreground/70 mb-1">Description</p>
+                                        <p className="text-foreground/80 text-sm">{form.description}</p>
                                     </div>
 
                                     <div className="grid sm:grid-cols-2 gap-4">
                                         {form.price_per_day && (
-                                            <div className="p-4 bg-gray-50 rounded-xl">
-                                                <p className="text-xs text-gray-400 mb-1">Prix / jour</p>
-                                                <p className="font-bold text-[#0F2A2E] text-lg">{Number(form.price_per_day).toLocaleString()} DA</p>
+                                            <div className="p-4 bg-muted/50 rounded-xl">
+                                                <p className="text-xs text-muted-foreground/70 mb-1">Prix / jour</p>
+                                                <p className="font-bold text-foreground text-lg">{Number(form.price_per_day).toLocaleString()} DA</p>
                                             </div>
                                         )}
                                         {form.sale_price && (
-                                            <div className="p-4 bg-gray-50 rounded-xl">
-                                                <p className="text-xs text-gray-400 mb-1">Prix de vente</p>
-                                                <p className="font-bold text-[#0F2A2E] text-lg">{Number(form.sale_price).toLocaleString()} DA</p>
+                                            <div className="p-4 bg-muted/50 rounded-xl">
+                                                <p className="text-xs text-muted-foreground/70 mb-1">Prix de vente</p>
+                                                <p className="font-bold text-foreground text-lg">{Number(form.sale_price).toLocaleString()} DA</p>
                                             </div>
                                         )}
-                                        <div className="p-4 bg-gray-50 rounded-xl">
-                                            <p className="text-xs text-gray-400 mb-1">Localisation</p>
-                                            <p className="font-semibold text-gray-900 flex items-center gap-1">
+                                        <div className="p-4 bg-muted/50 rounded-xl">
+                                            <p className="text-xs text-muted-foreground/70 mb-1">Localisation</p>
+                                            <p className="font-semibold text-foreground flex items-center gap-1">
                                                 <MapPin className="w-4 h-4" />
                                                 {WILAYAS.find(w => w.code === Number(form.wilaya_code))?.name}
                                             </p>
                                         </div>
-                                        <div className="p-4 bg-gray-50 rounded-xl">
-                                            <p className="text-xs text-gray-400 mb-1">Photos</p>
-                                            <p className="font-semibold text-gray-900">{form.images.length} photo(s)</p>
+                                        <div className="p-4 bg-muted/50 rounded-xl">
+                                            <p className="text-xs text-muted-foreground/70 mb-1">Photos</p>
+                                            <p className="font-semibold text-foreground">{form.images.length} photo(s)</p>
                                         </div>
                                     </div>
                                 </div>
