@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { supabaseAdmin } from "../config/supabase.js";
 import { ApiError } from "../middleware/error.middleware.js";
+import { createNotification } from "../config/notifications.js";
 
 export class BookingsController {
     /**
@@ -92,6 +93,7 @@ export class BookingsController {
                 throw new ApiError(400, "End date must be after start date");
             }
 
+
             const total_price = days * item.price_per_day;
 
             const { data, error } = await supabaseAdmin
@@ -111,6 +113,15 @@ export class BookingsController {
                 .single();
 
             if (error) throw error;
+
+            // Notify owner
+            await createNotification(
+                item.owner_id,
+                "Nouvelle demande de location",
+                `Vous avez reçu une demande pour "${item.title}" par ${req.user!.full_name}.`,
+                "booking",
+                "/user-dashboard"
+            );
 
             res.status(201).json({ success: true, data });
         } catch (error) {
@@ -155,6 +166,25 @@ export class BookingsController {
                 .single();
 
             if (error) throw error;
+
+            // Notify renter of status change
+            if (status !== "pending") {
+                const statusLabels: Record<string, string> = {
+                    confirmed: "confirmée",
+                    active: "en cours (remise effectuée)",
+                    completed: "terminée",
+                    cancelled: "annulée",
+                    rejected: "refusée"
+                };
+                
+                await createNotification(
+                    booking.renter_id,
+                    `Réservation ${statusLabels[status] || status}`,
+                    `Le statut de votre réservation a été mis à jour : ${statusLabels[status] || status}.`,
+                    "booking",
+                    "/user-dashboard"
+                );
+            }
 
             res.json({ success: true, data });
         } catch (error) {

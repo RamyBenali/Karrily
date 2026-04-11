@@ -1,6 +1,6 @@
 # Guide Complet : Étapes de Finalisation et Publication de Karrily
 
-Ce document détaille toutes les étapes nécessaires pour passer de l'état actuel de **Karrily** à une plateforme **100% complète, sécurisée et prête à être lancée au grand public**. Il couvre l'architecture, la sécurité, l'expérience utilisateur, et les prérequis de type "business/légal".
+Ce document détaille toutes les étapes nécessaires pour passer de l'état actuel de **Karrily** à une plateforme **100% complète, sécurisée et prête à être lancée au grand public**.
 
 ---
 
@@ -23,18 +23,16 @@ Avant toute publication, la sécurité des données et des transactions est prim
 ---
 
 ## 2. 🗺️ Pages Essentielles (Frontend)
-Voici la liste de **toutes les pages** dont une marketplace complète a besoin.
+Voici la liste des pages et fonctionnalités restantes pour compléter la marketplace.
 
 ### A. Pages Publiques (Accessibles à tous)
 - [ ] **Accueil (Landing Page)** : Barre de recherche centrale, Catégories populaires, "Nos sélections", Comment ça marche, Preuve sociale (Avis).
-- [ ] **Recherche / Explorer** : Vue liste et carte (Google Maps / Leaflet pour l'Algérie). Filtres avancés (Prix, Etat, Notation, Wilaya).
+- [ ] **Recherche / Explorer** : Vue liste et carte (Google Maps / Leaflet pour l'Algérie).
 - [ ] **Détail de l'annonce** :
   - Galerie d'images (carrousel).
   - Détails (Prix jour/semaine/mois, caution, règles).
-  - Calendrier des dates indisponibles.
   - Carte (zone approximative).
   - Profil du loueur/vendeur avec sa note.
-  - Bouton "Réserver" ou "Acheter" ou "Proposer un échange".
 - [ ] **Profil Public Utilisateur** : Ses annonces actives, ses badges (Vérifié), les avis laissés par d'autres.
 - [ ] **Pages d'Information (Crucial pour la confiance) :**
   - À propos de nous (Notre mission)
@@ -44,7 +42,6 @@ Voici la liste de **toutes les pages** dont une marketplace complète a besoin.
 ### B. Pages Authentification & Compte
 - [ ] **Authentification** : Login, Inscription, Confirmation d'email obligatoire, Mot de passe oublié/Réinitialisation.
 - [ ] **Dashboard Utilisateur (Client)** :
-  - Mes demandes de location / Mes achats.
   - Modale de paiement (même si "Payez sur place", l'utilisateur confirme l'action).
   - Mes messages.
   - Mes annonces favorites.
@@ -53,7 +50,6 @@ Voici la liste de **toutes les pages** dont une marketplace complète a besoin.
 ### C. Pages Prêteur / Vendeur
 - [ ] **Dashboard Prêteur** :
   - Création/Édition d'annonce (Formulaire multi-étapes optimisé).
-  - Gestion des réservations (Accepter / Refuser une demande).
   - Calendrier partagé (Bloquer des dates manuellement).
   - Statistiques (Vues des annonces, revenus générés).
 
@@ -67,15 +63,7 @@ Voici la liste de **toutes les pages** dont une marketplace complète a besoin.
 ## 3. 🔄 Flux Logiques (Flows) à Parfaire
 Ces flux doivent être infaillibles pour une bonne expérience.
 
-### A. Le Flux de Location (Location parfaite)
-1. **Demande** : L'emprunteur sélectionne les dates, voit le prix Total (+ caution éventuelle) et "Demande". *Les dates passent en statut "pending".*
-2. **Validation** : Le prêteur reçoit une notification/email. Il accepte. *Les dates se bloquent (booked).*
-3. **Paiement (Optionnel/Plus tard)** : Intégration future d'Edahabia, ou validation "Remise en main propre".
-4. **Remise** : L'app génère un QR code pour la remise de l'objet, ce qui certifie le début de location.
-5. **Retour** : QR code scanné au retour → Fin de location sécurisée.
-6. **Avis** : Notification "Comment c'était ?". Les deux se notent.
-
-### B. Le Flux de Notification
+### A. Le Flux de Notification
 - [ ] **Notifications In-App** via la table `notifications` + Realtime.
 - [ ] **Emails transactionnels** (ex: SendGrid/Resend) : Confirmation de demande, message non lu, compte créé, annulation. *Vital pour ramener l'utilisateur sur l'app.*
 
@@ -97,10 +85,16 @@ Si le site ne sort pas dans Google, vous n'aurez pas de trafic gratuit.
 - [ ] **Déploiement Backend** : Render, Railway ou VPS.
 - [ ] **Test "Monkey Testing"** : Essayer de casser le site -> Mettre des dates absurdes (fin avant début), uploader des images de 50 Mo, créer un compte sans arrobase, etc.
 
-## Conclusion / Plan d'Attaque
-La maquette actuelle se concentre sur les **Fondations**.
-**La prochaine étape réelle la plus importante pour vous** est :
-1. Régler les variables d'environnement (`npm run dev` reboot).
-2. Compléter le **CRUD des annonces** (un utilisateur peut créer, voir, éditer, supprimer son annonce sans bug).
-3. Faire marcher de bout en bout le **Flux de Réservation**.
-4. Ajouter les pages légales et sécuriser la base.
+---
+
+## 6. 📱 Application Mobile (Capacitor)
+- [ ] **Optimisation UI Mobile** : S'assurer que tous les composants sont "Touch Friendly" et n'ont pas de débordement horizontal.
+- [ ] **Génération d'Assets** : Créer l'icône de l'app et l'écran de splash (Splash Screen) aux bonnes dimensions.
+- [ ] **Build & Test Final** : Valider les derniers correctifs de build et de dépendances.
+- [ ] **Publication stores** : Préparer les comptes Google Play Console et Apple Developer.
+
+---
+
+La prochaine étape réelle la plus importante pour vous est :
+1. **Notifications In-App & Emails** : Vital pour ramener l'utilisateur sur l'app.
+2. **Finalisation des Assets Mobiles** (Icônes, Splash) pour une apparence professionnelle.

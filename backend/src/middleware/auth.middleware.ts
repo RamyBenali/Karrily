@@ -9,6 +9,7 @@ declare global {
             user?: {
                 id: string;
                 email: string;
+                full_name: string;
                 role?: string;
             };
             supabaseClient?: ReturnType<typeof createUserClient>;
@@ -51,6 +52,7 @@ export async function authMiddleware(
         req.user = {
             id: user.id,
             email: user.email || "",
+            full_name: user.user_metadata?.full_name || "Utilisateur",
             role: user.user_metadata?.role || "user",
         };
         req.supabaseClient = userClient;
