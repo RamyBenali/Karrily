@@ -5,6 +5,8 @@ import { RefreshCw, Loader2, CheckCircle2, Box, PlusCircle, MapPin, HandCoins, I
 import { trocService, usersService } from "../../services/api.service";
 import { useAuthStore } from "../../store/auth.store";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router";
+import { Input } from "../../components/ui/input";
 
 const WILAYAS = [
     { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
@@ -35,6 +37,7 @@ interface TrocProposalModalProps {
 
 export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }: TrocProposalModalProps) {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"existing" | "new">("existing");
   const [myItems, setMyItems] = useState<any[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);

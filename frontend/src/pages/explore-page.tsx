@@ -64,7 +64,7 @@ export function ExplorePage() {
     initialCategory ? [initialCategory] : [],
   );
   const [selectedWilaya, setSelectedWilaya] = useState("");
-  const [selectedListingType, setSelectedListingType] = useState("");
+  const [selectedListingType, setSelectedListingType] = useState(searchParams.get("type") || "");
   const [selectedCondition, setSelectedCondition] = useState("");
   const [sortBy, setSortBy] = useState("recent");
   const [showSort, setShowSort] = useState(false);
@@ -77,6 +77,7 @@ export function ExplorePage() {
   const [minRating, setMinRating] = useState("");
 
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
 
   const activeCategoryFilters = useMemo(() => {
     if (selectedCategorySlugs.length !== 1) return [];

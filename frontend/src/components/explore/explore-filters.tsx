@@ -14,6 +14,9 @@ import {
   Tag,
   Box,
   Coins,
+  ShoppingCart,
+  Home,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Slider } from "../ui/slider";
@@ -214,53 +217,87 @@ export function ExploreFilterSidebar({
           </div>
         </section>
 
-         {/* Type & État */}
-         <section className="space-y-10">
-            <div>
-              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-5">Modalité</h3>
-              <div className="flex flex-wrap gap-2.5">
-                {["", ...Object.keys(LISTING_TYPE_LABELS)].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setSelectedListingType(val)}
-                    className={cn(
-                      "px-6 py-3 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all border-2",
-                      selectedListingType === val 
-                        ? "bg-[#FF4F5A] border-[#FF4F5A] text-white shadow-xl shadow-[#FF4F5A]/25" 
-                        : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    {val === "" ? "Tous" : LISTING_TYPE_LABELS[val]}
-                  </button>
-                ))}
-              </div>
+        {/* Type & État */}
+        <section className="space-y-8">
+          <div>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-4 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-[#FF4F5A]" /> Modalité
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { val: "", label: "Tous", icon: null },
+                { val: "rent", label: "Location", icon: Home },
+                { val: "sell", label: "Vente", icon: ShoppingCart },
+                { val: "troc", label: "Troc", icon: RefreshCw },
+              ].map(({ val, label, icon: Icon }) => (
+                <button
+                  key={val}
+                  onClick={() => setSelectedListingType(val)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all duration-150 active:scale-95",
+                    selectedListingType === val
+                      ? "bg-[#FF4F5A] text-white shadow-lg shadow-[#FF4F5A]/25"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+                  {label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div>
-              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-5">Condition</h3>
-              <div className="flex flex-wrap gap-2.5">
-                 {[
-                  { v: "", l: "Tous" },
-                  { v: "new", l: "Neuf" },
-                  { v: "like_new", l: "Élite" },
-                  { v: "good", l: "Bon" },
-                ].map((c) => (
-                  <button
-                    key={c.v}
-                    onClick={() => setSelectedCondition(c.v)}
-                    className={cn(
-                      "px-6 py-3 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all border-2",
-                      selectedCondition === c.v 
-                        ? "bg-foreground border-foreground text-background shadow-xl shadow-foreground/15" 
-                        : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    {c.l}
-                  </button>
-                ))}
-              </div>
+          <div>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-4 flex items-center gap-2">
+              <Box className="w-4 h-4 text-[#FF4F5A]" /> Condition
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { v: "", l: "Tous" },
+                { v: "new", l: "Neuf" },
+                { v: "like_new", l: "Comme neuf" },
+                { v: "good", l: "Bon état" },
+              ].map((c) => (
+                <button
+                  key={c.v}
+                  onClick={() => setSelectedCondition(c.v)}
+                  className={cn(
+                    "px-4 py-3 rounded-2xl text-[13px] font-bold transition-all duration-150 active:scale-95",
+                    selectedCondition === c.v
+                      ? "bg-foreground text-background shadow-lg shadow-foreground/15"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {c.l}
+                </button>
+              ))}
             </div>
-         </section>
+          </div>
+
+          {/* Rating filter — was missing from UI */}
+          <div>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-4 flex items-center gap-2">
+              <Star className="w-4 h-4 text-[#FF4F5A]" /> Note minimale
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {RATING_FILTER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setMinRating(opt.value)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all duration-150 active:scale-95",
+                    minRating === opt.value
+                      ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-400/50 shadow-sm"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {opt.value !== "" && <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Dynamic Filters */}
         {activeCategoryFilters.length > 0 && singleSlug && (
