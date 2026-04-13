@@ -15,17 +15,12 @@ import { Footer } from "../components/layout/footer";
 import { supabase } from "../lib/supabase";
 import { CATEGORY_FILTERS, LISTING_TYPE_LABELS } from "../components/explore/explore-constants";
 import {
+  ExploreHeader,
   ExploreFilterSidebar,
-  ExploreToolbar,
+  ExploreFiltersMobileSheet,
   EXPLORE_BUDGET_MAX,
+  type ExploreCategoryLite
 } from "../components/explore/explore-filters";
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  item_count: number;
-}
 
 interface Item {
   id: string;
@@ -52,12 +47,12 @@ export function ExplorePage() {
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category");
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ExploreCategoryLite[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 24; 
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>(
@@ -67,17 +62,15 @@ export function ExplorePage() {
   const [selectedListingType, setSelectedListingType] = useState(searchParams.get("type") || "");
   const [selectedCondition, setSelectedCondition] = useState("");
   const [sortBy, setSortBy] = useState("recent");
-  const [showSort, setShowSort] = useState(false);
   const [categoryFilters, setCategoryFilters] = useState<Record<string, string>>({});
-  const [layout, setLayout] = useState<"grid" | "large">("grid");
   const [likedItems, setLikedItems] = useState<string[]>([]);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, EXPLORE_BUDGET_MAX]);
   const [minRating, setMinRating] = useState("");
 
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
-
 
   const activeCategoryFilters = useMemo(() => {
     if (selectedCategorySlugs.length !== 1) return [];
@@ -86,33 +79,17 @@ export function ExplorePage() {
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (selectedCategorySlugs.length > 0) count++;
     if (budgetRange[0] > 0 || budgetRange[1] < EXPLORE_BUDGET_MAX) count++;
-    if (selectedWilaya) count++;
-    if (selectedListingType) count++;
     if (selectedCondition) count++;
     if (minRating) count++;
     count += Object.keys(categoryFilters).filter((k) => categoryFilters[k]).length;
     return count;
   }, [
-    selectedCategorySlugs,
     budgetRange,
-    selectedWilaya,
-    selectedListingType,
     selectedCondition,
     minRating,
     categoryFilters,
   ]);
-
-  useEffect(() => {
-    if (mobileFiltersOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
-  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -173,11 +150,25 @@ export function ExplorePage() {
       }
 
       const [bMin, bMax] = budgetRange;
-      if (bMin > 0) {
-        query = query.gte("price_per_day", bMin);
-      }
-      if (bMax < EXPLORE_BUDGET_MAX) {
-        query = query.lte("price_per_day", bMax);
+      if (bMin > 0 || bMax < EXPLORE_BUDGET_MAX) {
+        const rentCond = `price_per_day.gte.${bMin}` + (bMax < EXPLORE_BUDGET_MAX ? `,price_per_day.lte.${bMax}` : "");
+        const sellCond = `sale_price.gte.${bMin}` + (bMax < EXPLORE_BUDGET_MAX ? `,sale_price.lte.${bMax}` : "");
+
+        if (selectedListingType === "rent") {
+          query = query.gte("price_per_day", bMin);
+          if (bMax < EXPLORE_BUDGET_MAX) query = query.lte("price_per_day", bMax);
+        } else if (selectedListingType === "sell") {
+          query = query.gte("sale_price", bMin);
+          if (bMax < EXPLORE_BUDGET_MAX) query = query.lte("sale_price", bMax);
+        } else if (selectedListingType === "rent_sell") {
+            query = query.or(`${rentCond},${sellCond}`);
+        } else if (selectedListingType !== "troc") {
+            query = query.or(
+              `and(listing_type.eq.rent,${rentCond}),` +
+              `and(listing_type.eq.sell,${sellCond}),` +
+              `and(listing_type.eq.rent_sell,or(${rentCond},${sellCond}))`
+            );
+        }
       }
 
       const ratingMin = minRating.trim() !== "" ? Number(minRating) : null;
@@ -193,10 +184,12 @@ export function ExplorePage() {
 
       switch (sortBy) {
         case "price_asc":
-          query = query.order("price_per_day", { ascending: true, nullsFirst: false });
+          if (selectedListingType === "sell") query = query.order("sale_price", { ascending: true, nullsFirst: false });
+          else query = query.order("price_per_day", { ascending: true, nullsFirst: false });
           break;
         case "price_desc":
-          query = query.order("price_per_day", { ascending: false });
+          if (selectedListingType === "sell") query = query.order("sale_price", { ascending: false, nullsFirst: false });
+          else query = query.order("price_per_day", { ascending: false, nullsFirst: false });
           break;
         case "rating":
           query = query.order("rating", { ascending: false });
@@ -250,6 +243,10 @@ export function ExplorePage() {
     minRating,
   ]);
 
+  useEffect(() => {
+    setBudgetRange([0, EXPLORE_BUDGET_MAX]);
+  }, [selectedListingType]);
+
   const resetFilters = () => {
     setDebouncedSearch("");
     setSearchQuery("");
@@ -270,208 +267,173 @@ export function ExplorePage() {
   };
 
   const getItemPrice = (item: Item) => {
-    if (item.price_per_day) return `${Number(item.price_per_day).toLocaleString()} DA/jour`;
-    if (item.sale_price) return `${Number(item.sale_price).toLocaleString()} DA`;
+    if (item.listing_type === 'sell' && item.sale_price) {
+        return `${Number(item.sale_price).toLocaleString()} DA`;
+    }
+    if (item.price_per_day) {
+        return `${Number(item.price_per_day).toLocaleString()} DA/jour`;
+    }
+    if (item.sale_price) {
+        return `${Number(item.sale_price).toLocaleString()} DA`; 
+    }
     return "Prix sur demande";
   };
 
-  const sidebarProps = {
-    totalCount,
-    categories,
-    selectedCategorySlugs,
-    setSelectedCategorySlugs,
-    setCategoryFilters,
-    budgetRange,
-    setBudgetRange,
-    minRating,
-    setMinRating,
-    selectedWilaya,
-    setSelectedWilaya,
-    selectedListingType,
-    setSelectedListingType,
-    selectedCondition,
-    setSelectedCondition,
-    activeCategoryFilters,
-    categoryFilters,
+  const filterProps = {
+    budgetRange, setBudgetRange,
+    minRating, setMinRating,
+    selectedCondition, setSelectedCondition,
+    activeCategoryFilters, categoryFilters, setCategoryFilters,
     resetFilters,
+    selectedListingType
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navigation />
 
-      <div className="pt-24 pb-16">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8">
-            <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2">Explorer</h1>
-            <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">
-              Découvrez des milliers d&apos;annonces près de chez vous
-            </p>
-          </motion.div>
+      <ExploreHeader
+        debouncedSearch={debouncedSearch}
+        setDebouncedSearch={setDebouncedSearch}
+        selectedWilaya={selectedWilaya}
+        setSelectedWilaya={setSelectedWilaya}
+        selectedListingType={selectedListingType}
+        setSelectedListingType={setSelectedListingType}
+        selectedCategorySlugs={selectedCategorySlugs}
+        setSelectedCategorySlugs={setSelectedCategorySlugs}
+        categories={categories}
+        activeFilterCount={activeFilterCount}
+        openMobileFilters={() => setIsMobileFiltersOpen(true)}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
 
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-            <aside className="hidden w-full shrink-0 lg:block lg:w-[300px] lg:sticky lg:top-24 lg:self-start">
-              <ExploreFilterSidebar {...sidebarProps} />
-            </aside>
+      <ExploreFiltersMobileSheet
+        {...filterProps}
+        isOpen={isMobileFiltersOpen}
+        onOpenChange={setIsMobileFiltersOpen}
+      />
 
-            <div className="min-w-0 flex-1">
-              <ExploreToolbar
-                debouncedSearch={debouncedSearch}
-                setDebouncedSearch={setDebouncedSearch}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                showSort={showSort}
-                setShowSort={setShowSort}
-                layout={layout}
-                setLayout={setLayout}
-                totalCount={totalCount}
-                activeFilterCount={activeFilterCount}
-                onOpenMobileFilters={() => setMobileFiltersOpen(true)}
-              />
+      {/* Disposition avec Sidebar (30%) + Grille (70%) */}
+      <div className="flex flex-col lg:flex-row gap-8 max-w-[1400px] mx-auto px-6 lg:px-12 w-full pb-20 items-start">
+        
+        {/* Sidebar Desktop */}
+        <ExploreFilterSidebar {...filterProps} />
 
-              <AnimatePresence>
-                {mobileFiltersOpen ? (
-                  <motion.div
-                    className="fixed inset-0 z-[60] flex lg:hidden"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
+        <main className="flex-1 min-w-0">
+          <div className="mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                  {totalCount} {totalCount === 1 ? 'Annonce trouvée' : 'Annonces trouvées'}
+              </h2>
+          </div>
+
+          {isLoading && page === 0 ? (
+            <div className="flex items-center justify-center py-32">
+              <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A]" />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="rounded-[2.5rem] border border-border bg-card py-24 text-center shadow-sm">
+              <Search className="mx-auto mb-6 h-20 w-20 text-muted-foreground/30" />
+              <h3 className="mb-2 text-2xl font-bold text-foreground">Aucune annonce trouvée</h3>
+              <p className="mb-8 text-muted-foreground max-w-md mx-auto">
+                Essayez de modifier (ou réinitialiser) vos filtres pour voir plus de résultats.
+              </p>
+              <Button
+                onClick={resetFilters}
+                className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-12 px-8 font-bold text-base"
+              >
+                Réinitialiser les filtres
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {items.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.02, 0.4) }}
+                  className="group cursor-pointer overflow-hidden rounded-[2rem] border border-border/60 bg-card transition-all duration-300 hover:border-foreground/30 hover:shadow-xl hover:-translate-y-1 flex flex-col"
+                  onClick={() => navigate(`/item/${item.id}`)}
+                >
+                  <div className="relative h-52 overflow-hidden bg-muted">
+                    <ImageWithFallback
+                      src={item.thumbnail_url || item.images?.[0] || ""}
+                      alt={item.title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+
+                    <div className="absolute left-3 top-3 flex flex-col gap-1.5">
+                      <span className="rounded-full bg-background/95 px-3 py-1 text-[11px] font-bold tracking-wide backdrop-blur-md shadow-sm border border-border/50">
+                        {LISTING_TYPE_LABELS[item.listing_type] || item.listing_type}
+                      </span>
+                    </div>
+
                     <button
                       type="button"
-                      className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
-                      aria-label="Fermer les filtres"
-                      onClick={() => setMobileFiltersOpen(false)}
-                    />
-                    <motion.aside
-                      initial={{ x: "-105%" }}
-                      animate={{ x: 0 }}
-                      exit={{ x: "-105%" }}
-                      transition={{ type: "spring", damping: 28, stiffness: 320 }}
-                      className="relative z-10 h-full w-[min(100vw,320px)] max-w-[90vw] overflow-y-auto shadow-2xl"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(item.id);
+                      }}
+                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/95 backdrop-blur-md transition-all hover:scale-110 shadow-sm border border-border/50"
                     >
-                      <ExploreFilterSidebar
-                        {...sidebarProps}
-                        onCloseMobile={() => setMobileFiltersOpen(false)}
-                        className="min-h-full rounded-none border-0"
+                      <Heart
+                        className={`h-4 w-4 ${likedItems.includes(item.id) ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-foreground"}`}
                       />
-                    </motion.aside>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
+                    </button>
+                  </div>
 
-              {isLoading && page === 0 ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A]" />
-                </div>
-              ) : items.length === 0 ? (
-                <div className="rounded-3xl border border-border bg-card py-20 text-center shadow-sm">
-                  <Search className="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50" />
-                  <h3 className="mb-2 text-xl font-bold text-foreground">Aucune annonce trouvée</h3>
-                  <p className="mb-6 text-muted-foreground">Essayez de modifier vos filtres ou votre recherche</p>
-                  <Button
-                    onClick={resetFilters}
-                    className="rounded-full bg-[#FF4F5A] text-white hover:bg-[#FF4F5A]/90"
-                  >
-                    Réinitialiser les filtres
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  className={`grid ${layout === "grid"
-                    ? "grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
-                    : "grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
-                    } gap-3 md:gap-6`}
-                >
-                  {items.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(index * 0.03, 0.5) }}
-                      className="group cursor-pointer overflow-hidden rounded-3xl border border-border bg-card transition-all duration-300 hover:border-[#FF4F5A]/30 hover:shadow-xl"
-                      onClick={() => navigate(`/item/${item.id}`)}
-                    >
-                      <div className={`relative ${layout === "large" ? "h-80" : "h-56"} overflow-hidden`}>
-                        <ImageWithFallback
-                          src={item.thumbnail_url || item.images?.[0] || ""}
-                          alt={item.title}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-
-                        <div className="absolute left-3 top-3 flex flex-col gap-1.5">
-                          <span className="rounded-lg bg-card/90 px-2.5 py-1 text-xs font-medium text-card-foreground backdrop-blur-sm">
-                            {LISTING_TYPE_LABELS[item.listing_type] || item.listing_type}
-                          </span>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="mb-2.5 flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">
+                        {categories.find((c) => c.id === item.category_id)?.name || "Non classé"}
+                      </span>
+                      {item.rating > 0 ? (
+                        <div className="flex items-center gap-1 shrink-0 bg-yellow-400/10 px-1.5 py-0.5 rounded-md">
+                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                          <span className="text-[10px] font-extrabold text-yellow-700 dark:text-yellow-400">{Number(item.rating).toFixed(1)}</span>
                         </div>
+                      ) : null}
+                    </div>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleLike(item.id);
-                          }}
-                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-card/90 backdrop-blur-sm transition-all hover:bg-card"
-                        >
-                          <Heart
-                            className={`h-4 w-4 ${likedItems.includes(item.id) ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-foreground"}`}
-                          />
-                        </button>
+                    <h3 className="mb-2 line-clamp-2 text-base font-bold text-foreground leading-snug group-hover:text-[#FF4F5A] transition-colors">
+                      {item.title}
+                    </h3>
+
+                    <p className="mb-4 flex items-center gap-1.5 text-xs font-medium text-muted-foreground mt-auto">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{item.location || "Non spécifié"}</span>
+                    </p>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span className="text-lg font-black text-foreground tracking-tight">{getItemPrice(item)}</span>
+                        {item.is_negotiable && (
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">Nég.</span>
+                        )}
                       </div>
-
-                      <div className="p-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            {categories.find((c) => c.id === item.category_id)?.name || "Non classé"}
-                          </span>
-                          {item.rating > 0 ? (
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-semibold">{Number(item.rating).toFixed(1)}</span>
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <h3 className="mb-1.5 line-clamp-2 text-base font-bold text-foreground transition-colors group-hover:text-[#FF4F5A]">
-                          {item.title}
-                        </h3>
-
-                        <p className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{item.location || "Non spécifié"}</span>
-                        </p>
-
-                        <div className="flex items-center justify-between border-t border-border pt-3">
-                          <div>
-                            <span className="text-lg font-bold text-foreground">{getItemPrice(item)}</span>
-                            {item.is_negotiable ? (
-                              <span className="ml-2 text-xs font-medium text-emerald-600">Négociable</span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              {items.length < totalCount ? (
-                <div className="mt-12 flex justify-center">
-                  <Button
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="h-12 rounded-full border-border px-8 text-foreground hover:bg-muted"
-                  >
-                    {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    Charger plus d&apos;annonces ({items.length}/{totalCount})
-                  </Button>
-                </div>
-              ) : null}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
-        </div>
+          )}
+
+          {items.length < totalCount ? (
+            <div className="mt-16 flex justify-center">
+              <Button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={isLoading}
+                variant="outline"
+                className="h-14 rounded-full border-border/60 px-10 text-foreground hover:bg-muted font-bold shadow-sm"
+              >
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                Afficher plus de résultats ({items.length} sur {totalCount})
+              </Button>
+            </div>
+          ) : null}
+        </main>
       </div>
       <Footer />
     </div>

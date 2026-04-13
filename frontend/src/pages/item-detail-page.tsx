@@ -13,7 +13,7 @@ import { Footer } from "../components/layout/footer";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth.store";
-import { bookingsService, trocService } from "../services/api.service";
+import { bookingsService, trocService, favoritesService } from "../services/api.service";
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
 
@@ -107,6 +107,24 @@ export function ItemDetailPage() {
   const [bookingError, setBookingError] = useState("");
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [datesOverlapping, setDatesOverlapping] = useState(false);
+
+  useEffect(() => {
+    if (!startDate || !endDate) {
+        setDatesOverlapping(false);
+        return;
+    }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const overlap = existingBookings.some(b => {
+        const bStart = new Date(b.start_date);
+        const bEnd = new Date(b.end_date);
+        return (start <= bEnd && end >= bStart);
+    });
+    setDatesOverlapping(overlap);
+  }, [startDate, endDate, existingBookings]);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -154,8 +172,16 @@ export function ItemDetailPage() {
         .in("status", ["confirmed", "active"]);
       if (data) setExistingBookings(data);
     };
+    
+    const checkFavoriteStatus = async () => {
+        if (!user || !itemId) return;
+        const { isFavorite } = await favoritesService.checkFavorite(itemId);
+        setIsLiked(isFavorite);
+    };
+
     fetchBookings();
-  }, [itemId]);
+    checkFavoriteStatus();
+  }, [itemId, user]);
 
   const nextImage = () => {
     if (!item) return;
@@ -172,13 +198,7 @@ export function ItemDetailPage() {
     const end = new Date(endDate);
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     
-    const hasOverlap = existingBookings.some(b => {
-        const bStart = new Date(b.start_date);
-        const bEnd = new Date(b.end_date);
-        return (start <= bEnd && end >= bStart);
-    });
-
-    if (days <= 0 || hasOverlap) return null;
+    if (days <= 0 || datesOverlapping) return null;
 
     let total = 0;
     if (days >= 30 && item.price_per_month) {
@@ -194,6 +214,23 @@ export function ItemDetailPage() {
     }
 
     return { days, total, deposit: Number(item.deposit_amount || 0) };
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+        navigate("/login");
+        return;
+    }
+    if (!item) return;
+    setIsTogglingFavorite(true);
+    try {
+        const { isFavorite } = await favoritesService.toggleFavorite(item.id);
+        setIsLiked(isFavorite);
+    } catch (err: any) {
+        alert(err.message);
+    } finally {
+        setIsTogglingFavorite(false);
+    }
   };
 
   const bookingCalc = calculateBooking();
@@ -484,8 +521,9 @@ export function ItemDetailPage() {
                     </span>
                     <div className="flex gap-2">
                        <button
-                        onClick={() => setIsLiked(!isLiked)}
-                        className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-muted"
+                        onClick={handleToggleFavorite}
+                        disabled={isTogglingFavorite}
+                        className={`w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all ${isTogglingFavorite ? "animate-pulse" : "hover:bg-muted"}`}
                       >
                         <Heart className={`w-5 h-5 ${isLiked ? "fill-[#FF4F5A] text-[#FF4F5A] border-[#FF4F5A]" : "text-foreground"}`} />
                       </button>
@@ -560,7 +598,19 @@ export function ItemDetailPage() {
 
                       {/* Recap Prix */}
                       <AnimatePresence>
-                        {bookingCalc && (
+                        {datesOverlapping ? (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 flex items-start gap-3"
+                          >
+                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div className="text-sm font-medium">
+                              Ces dates sont indisponibles. Elles chevauchent une réservation existante. Veuillez sélectionner d'autres dates.
+                            </div>
+                          </motion.div>
+                        ) : bookingCalc && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
@@ -584,6 +634,11 @@ export function ItemDetailPage() {
                           </motion.div>
                         )}
                       </AnimatePresence>
+                      {bookingError && (
+                          <div className="text-sm text-red-500 font-medium px-2 flex items-center gap-2">
+                             <AlertCircle className="w-4 h-4" /> {bookingError}
+                          </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -93,6 +93,20 @@ export class BookingsController {
                 throw new ApiError(400, "End date must be after start date");
             }
 
+            // Backend Check: Overlapping Bookings
+            const { data: overlappingBookings, error: overlapError } = await supabaseAdmin
+                .from("bookings")
+                .select("id")
+                .eq("item_id", item_id)
+                .in("status", ["confirmed", "active"])
+                .lte("start_date", end_date)
+                .gte("end_date", start_date);
+
+            if (overlapError) throw overlapError;
+            if (overlappingBookings && overlappingBookings.length > 0) {
+                throw new ApiError(409, "These dates are already booked for this item");
+            }
+
 
             const total_price = days * item.price_per_day;
 
@@ -108,6 +122,7 @@ export class BookingsController {
                     message,
                     status: "pending",
                     payment_status: "pending",
+                    price_per_day: item.price_per_day,
                 })
                 .select()
                 .single();

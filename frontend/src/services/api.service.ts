@@ -344,3 +344,52 @@ export const trocService = {
     },
 };
 
+// ─── Favorites Service ───────────────────────────────
+
+export const favoritesService = {
+    checkFavorite: async (item_id: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { isFavorite: false };
+
+        const { data, error } = await supabase
+            .from("favorites")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("item_id", item_id)
+            .single();
+
+        if (error && error.code !== "PGRST116") {
+            // Log real errors except not found
+            console.error("Error checking favorite status", error);
+        }
+
+        return { isFavorite: !!data };
+    },
+
+    toggleFavorite: async (item_id: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Vous devez être connecté pour ajouter aux favoris.");
+
+        // Check if exists
+        const { data: existing } = await supabase
+            .from("favorites")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("item_id", item_id)
+            .single();
+
+        if (existing) {
+            // Remove favorite
+            await supabase.from("favorites").delete().eq("id", existing.id);
+            // Decrement item favorite_count (using direct RPC is better but let's do simple read-update for now or trigger handles it)
+            // Karrily has a trigger in migrations handles favorite_count sync, so we just return state.
+            return { isFavorite: false, success: true };
+        } else {
+            // Add favorite
+            await supabase.from("favorites").insert({ user_id: user.id, item_id });
+            return { isFavorite: true, success: true };
+        }
+    }
+};
+
+
