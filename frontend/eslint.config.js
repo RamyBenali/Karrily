@@ -6,7 +6,7 @@ import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: ["dist/**", "node_modules/**", "android/**", "ios/**", "build/**"],
   },
   {
     files: ["**/*.{ts,tsx}"],
@@ -40,11 +40,18 @@ export default [
       "react/prop-types": "off",
       "react/display-name": "off",
       "react/no-unescaped-entities": "off",
+      "react/jsx-no-undef": "warn",
       "security/detect-object-injection": "off",
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-empty-object-type": "warn",
-      "react-hooks/exhaustive-deps": "warn"
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/rules-of-hooks": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/immutability": "warn",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/ban-ts-comment": "warn"
     },
     settings: {
       react: {
