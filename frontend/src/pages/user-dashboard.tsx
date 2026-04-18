@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon, DollarSign, Menu, X, BarChart3 } from "lucide-react";
+import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon, DollarSign, Menu, X, BarChart3, XCircle, CheckCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate, useLocation } from "react-router";
