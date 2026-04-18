@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
-import { motion } from "motion/react";
-import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon, DollarSign } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Package, Heart, MessageSquare, Settings, Calendar, MapPin, Star, Clock, ChevronRight, Camera, Loader2, Check, User as UserIcon, DollarSign, Menu, X, BarChart3 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate, useLocation } from "react-router";
@@ -9,8 +9,10 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { bookingsService, salesService, trocService, itemsService, usersService } from "../services/api.service";
+import { api } from "../lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw } from "lucide-react";
+import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 
 // Wilayas d'Algérie
 const WILAYAS = [
@@ -47,6 +49,7 @@ interface Profile {
 }
 
 const sidebarItems = [
+  { icon: BarChart3, label: "Vue d'ensemble" },
   { icon: Package, label: "Locations actives" },
   { icon: ShoppingCart, label: "Mes achats" },
   { icon: RefreshCw, label: "Mes échanges" },
@@ -102,11 +105,23 @@ interface Message {
   created_at: string;
 }
 
+interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  type: 'booking' | 'sale' | 'troc' | 'message' | 'system';
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 export function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || "Locations actives");
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "Vue d'ensemble");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle incoming routing state
   useEffect(() => {
@@ -134,10 +149,14 @@ export function UserDashboard() {
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [historyBookings, setHistoryBookings] = useState<Booking[]>([]);
+  const [favorites, setFavorites] = useState<any[]>([]);
   const [mySales, setMySales] = useState<any[]>([]);
   const [myTroc, setMyTroc] = useState<any[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const [bookingTab, setBookingTab] = useState<"renter" | "owner">("renter");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Fetch bookings and subscribe to Realtime
   useEffect(() => {
@@ -180,19 +199,66 @@ export function UserDashboard() {
     // Fetch My Sales
     const fetchSales = async () => {
       const res = await salesService.getMySales({ role: 'buyer' });
-      setMySales(res.data);
+      setMySales(res.data || []);
     };
 
     // Fetch My Troc
     const fetchTroc = async () => {
       const res = await trocService.getMyProposals({ role: 'proposer' });
-      setMyTroc(res.data);
+      setMyTroc(res.data || []);
+    };
+
+    // Fetch Favorites
+    const fetchFavorites = async () => {
+      if (!user) return;
+      try {
+        const res = await supabase.from("favorites").select("*, item:items(*)").eq("user_id", user.id).order("created_at", { ascending: false });
+        setFavorites(res.data || []);
+      } catch (err) { console.error(err); }
+    };
+    
+    // Fetch History
+    const fetchHistory = async () => {
+       try {
+         const res = await api.get('/bookings');
+         // Filter history on client side for all roles
+         setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
+       } catch (err) { console.error(err); }
+    }
+
+    // Fetch Notifications
+    const fetchNotifications = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      setNotifications(data || []);
+      
+      // Count unread messages (placeholder logic, should check messages table)
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+      setUnreadCount(count || 0);
     };
 
     fetchSales();
     fetchTroc();
+    fetchFavorites();
+    fetchHistory();
+    fetchNotifications();
 
      if (user) {
+       // Realtime for Notifications
+       const notifChannel = supabase
+         .channel(`user_notifs:${user.id}`)
+         .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
+         .subscribe();
+
        // Realtime for Sales
        const salesChannel = supabase
          .channel(`user_sales:${user.id}`)
@@ -209,6 +275,7 @@ export function UserDashboard() {
          if (channel) supabase.removeChannel(channel);
          supabase.removeChannel(salesChannel);
          supabase.removeChannel(trocChannel);
+         supabase.removeChannel(notifChannel);
        };
      }
   }, [user, bookingTab]);
@@ -420,98 +487,112 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+      
 
-      <div className="pt-24 pb-16">
+      <div className="py-8 lg:py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 lg:mb-8"
+            className="mb-6 lg:mb-10"
           >
-            <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2 leading-tight">Mon compte</h1>
-            <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">Gérez vos locations et votre compte</p>
+            <h1 className="text-4xl lg:text-6xl font-black text-foreground mb-3 leading-tight tracking-tight">
+              Mon <span className="text-[#FF4F5A]">Compte</span>
+            </h1>
+            <p className="text-lg lg:text-xl text-muted-foreground font-medium max-w-2xl">
+              Gérez vos locations, suivez vos échanges et personnalisez votre expérience Karrily.
+            </p>
           </motion.div>
 
-          {/* Mobile Tabs - Horizontal Scroll */}
-          <div className="lg:hidden -mx-6 px-6 mb-6 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 pb-2">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => setActiveTab(item.label)}
-                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                  activeTab === item.label
-                    ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
-                    : "bg-card text-muted-foreground border border-border"
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
             {/* Sidebar */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden lg:block lg:col-span-3"
-            >
-              <div className="bg-card rounded-3xl p-6 shadow-lg border border-border sticky top-28">
-                {/* User Info */}
-                <div className="flex items-center gap-4 pb-6 mb-6 border-b border-border">
-                  <div className="relative group">
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={profile.full_name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        {userInitials}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-foreground truncate">
-                      {profile.full_name || "Utilisateur"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
-                  </div>
-                </div>
-
-                {/* Navigation */}
-                <nav className="space-y-2">
-                  {sidebarItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => setActiveTab(item.label)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === item.label
-                        ? "bg-[#0F2A2E] text-white shadow-lg"
-                        : "text-foreground hover:bg-muted"
-                        }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </nav>
-
-                <div className="mt-6 pt-6 border-t border-border">
-                  <Button
-                    onClick={() => navigate('/lender')}
-                    className="w-full h-11 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-2xl"
-                  >
-                    Devenir loueur
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
+            <DashboardSidebar
+              items={sidebarItems}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              userInitials={userInitials}
+              userFullName={profile.full_name}
+              userEmail={profile.email}
+              userAvatar={profile.avatar_url}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              extraAction={{
+                label: "Devenir loueur",
+                onClick: () => navigate('/lender'),
+                variant: "premium"
+              }}
+            />
 
             {/* Main Content */}
-            <div className="lg:col-span-9">
+            <div className="lg:col-span-9 min-h-[60vh]">
+              {/* ─── Vue d'ensemble ─── */}
+              {activeTab === "Vue d'ensemble" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-8"
+                >
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                          <Package className="w-12 h-12 text-[#FF4F5A]" />
+                       </div>
+                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Locations</p>
+                       <h3 className="text-xl font-bold leading-none">{bookings.filter(b => b.status === 'active').length}</h3>
+                       <p className="text-[10px] text-muted-foreground mt-2">En cours actuellement</p>
+                    </div>
+                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                          <MessageSquare className="w-12 h-12 text-[#FF4F5A]" />
+                       </div>
+                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Messages</p>
+                       <h3 className="text-xl font-bold leading-none">{unreadCount}</h3>
+                       <p className="text-[10px] text-muted-foreground mt-2">Non lus</p>
+                    </div>
+                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                          <Heart className="w-12 h-12 text-[#FF4F5A]" />
+                       </div>
+                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Favoris</p>
+                       <h3 className="text-xl font-bold leading-none">{favorites.length}</h3>
+                       <p className="text-[10px] text-muted-foreground mt-2">Objets épinglés</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
+                    <div className="flex items-center justify-between mb-8">
+                       <h2 className="text-2xl font-black">Activité <span className="text-[#FF4F5A]">récente</span></h2>
+                       <Button variant="ghost" className="text-xs uppercase font-black tracking-widest" onClick={() => setActiveTab("Messages")}>Voir tout</Button>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      {notifications.length === 0 ? (
+                        <div className="py-12 text-center">
+                           <Clock className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                           <p className="text-muted-foreground">Aucune activité récente pour le moment.</p>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 5).map((notif) => (
+                           <div key={notif.id} className="flex gap-6 items-start p-4 hover:bg-muted/50 rounded-2xl transition-colors border border-transparent hover:border-border">
+                              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+                                 {notif.type === 'booking' ? <Calendar className="w-6 h-6 text-[#FF4F5A]" /> : 
+                                  notif.type === 'message' ? <MessageSquare className="w-6 h-6 text-[#FF4F5A]" /> :
+                                  <Package className="w-6 h-6 text-[#FF4F5A]" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <h4 className="font-bold text-foreground text-base mb-1">{notif.title}</h4>
+                                 <p className="text-sm text-muted-foreground line-clamp-1">{notif.content}</p>
+                                 <p className="text-[10px] uppercase font-black tracking-tighter text-muted-foreground/50 mt-2">Il y a quelques instants</p>
+                              </div>
+                              <Button size="sm" variant="outline" className="rounded-full h-8 px-4 text-[10px] font-black uppercase" onClick={() => navigate(notif.link || '/dashboard')}>Gérer</Button>
+                           </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* ─── Locations Actives ─── */}
               {activeTab === "Locations actives" && (
                 <motion.div
@@ -834,17 +915,49 @@ export function UserDashboard() {
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
                   <h2 className="text-2xl font-bold text-foreground mb-6">Mes favoris</h2>
-                  <div className="text-center py-12">
-                    <Heart className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-2">Aucun favori pour le moment</p>
-                    <p className="text-sm text-muted-foreground/70">Explorez les annonces et ajoutez vos favoris !</p>
-                    <Button
-                      onClick={() => navigate('/explore')}
-                      className="mt-6 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full"
-                    >
-                      Explorer les annonces
-                    </Button>
-                  </div>
+                  
+                  {favorites.length === 0 ? (
+                    <div className="text-center py-16 rounded-[2rem] bg-gradient-to-b from-muted to-transparent border border-dashed border-border/60">
+                      <Heart className="w-16 h-16 text-[#FF4F5A]/40 mx-auto mb-4 animate-pulse" />
+                      <p className="text-muted-foreground mb-2 text-lg font-semibold">Aucun favori pour le moment</p>
+                      <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto">Explorez les annonces et cliquez sur le cœur pour les garder à portée de clic !</p>
+                      <Button
+                        onClick={() => navigate('/explore')}
+                        className="mt-6 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full font-bold px-8 shadow-lg shadow-[#FF4F5A]/20 transition-all hover:scale-105"
+                      >
+                        Explorer les annonces
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                       {favorites.map((fav) => (
+                          <div key={fav.id} className="flex gap-5 p-4 rounded-[1.5rem] border border-border/50 bg-card hover:bg-muted/30 shadow-sm hover:shadow-[0_10px_30px_-10px_rgba(255,79,90,0.15)] group hover:border-[#FF4F5A]/30 transition-all duration-300">
+                             <div className="w-28 h-28 rounded-2xl flex-shrink-0 overflow-hidden cursor-pointer relative shadow-inner" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                                <ImageWithFallback src={fav.item?.thumbnail_url} alt={fav.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
+                             </div>
+                             <div className="flex flex-col justify-between py-1.5 flex-1 min-w-0">
+                                <div>
+                                   <div className="flex justify-between items-start mb-1">
+                                      <h3 className="font-bold text-foreground hover:text-[#FF4F5A] cursor-pointer line-clamp-2 transition-colors text-base pr-2" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                                         {fav.item?.title}
+                                      </h3>
+                                   </div>
+                                   <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
+                                      <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" /> 
+                                      <span className="truncate max-w-[120px]">{fav.item?.location || "Non spécifié"}</span>
+                                   </p>
+                                </div>
+                                <div className="flex items-end justify-between mt-3">
+                                   <p className="font-black text-lg text-foreground tracking-tight">
+                                      {fav.item?.price_per_day} DA <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
+                                   </p>
+                                </div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -938,12 +1051,12 @@ export function UserDashboard() {
                         })()}
 
                         {/* Chat Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 flex flex-col-reverse">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 flex flex-col">
                           {isLoadingMsgs ? (
                             <div className="flex justify-center my-auto"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground/70" /></div>
                           ) : (
-                            // Render messages in reverse order (assuming CSS flex-col-reverse)
-                            [...messages].reverse().map(msg => {
+                            // Render messages exactly in order of array (since oldest is first via ascending order)
+                            messages.map(msg => {
                               const isMe = msg.sender_id === user?.id;
                               return (
                                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
@@ -992,10 +1105,36 @@ export function UserDashboard() {
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
                   <h2 className="text-2xl font-bold text-foreground mb-6">Historique des locations</h2>
-                  <div className="text-center py-12">
-                    <Clock className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-                    <p className="text-muted-foreground">Aucune location passée</p>
-                  </div>
+                  {historyBookings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Clock className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-2">Aucune location passée</p>
+                      <Button variant="outline" className="mt-4 rounded-full" onClick={() => navigate('/explore')}>Explorer le catalogue</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {historyBookings.map((booking) => (
+                        <div key={booking.id} className="flex flex-col md:flex-row gap-4 p-4 border border-border bg-muted/20 rounded-2xl items-center">
+                          <div className="w-full md:w-24 h-16 rounded-xl flex-shrink-0 overflow-hidden" onClick={() => navigate(`/item/${booking.item_id}`)}>
+                            <ImageWithFallback src={(booking.items as any)?.thumbnail_url} alt="" className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-bold text-foreground">{(booking.items as any)?.title}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                               <span>Du {new Date(booking.start_date).toLocaleDateString()}</span>
+                               <span>au {new Date(booking.end_date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${BOOKING_STATUS[booking.status]?.color}`}>
+                               {BOOKING_STATUS[booking.status]?.label || booking.status}
+                             </span>
+                             <div className="font-bold text-lg">{booking.total_price} DA</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -1004,162 +1143,158 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
+                  className="space-y-8"
                 >
-                  {/* Avatar Section */}
-                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
-                    <h2 className="text-2xl font-bold text-foreground mb-6">Photo de profil</h2>
-                    <div className="flex items-center gap-6">
-                      <div className="relative group">
-                        {profile.avatar_url ? (
-                          <img
-                            src={profile.avatar_url}
-                            alt={profile.full_name}
-                            className="w-24 h-24 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-24 h-24 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                            {userInitials}
+                  <div className="grid lg:grid-cols-3 gap-8">
+                    {/* Left: Avatar & Identity */}
+                    <div className="lg:col-span-1 space-y-8">
+                      <div className="bg-card rounded-[2.5rem] p-8 shadow-xl border border-border text-center relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851]" />
+                        <div className="relative mt-4 mb-6">
+                          <div className="relative inline-block group/avatar">
+                            {profile.avatar_url ? (
+                              <img
+                                src={profile.avatar_url}
+                                alt={profile.full_name}
+                                className="w-32 h-32 rounded-full object-cover border-4 border-card shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105"
+                              />
+                            ) : (
+                              <div className="w-32 h-32 bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74] rounded-full flex items-center justify-center text-white text-5xl font-black border-4 border-card shadow-2xl">
+                                {userInitials}
+                              </div>
+                            )}
+                            <label className="absolute bottom-0 right-0 w-10 h-10 bg-[#0F2A2E] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#1A4851] transition-colors border-2 border-card">
+                              <Camera className="w-5 h-5" />
+                              <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                            </label>
                           </div>
-                        )}
-                        <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                          <Camera className="w-6 h-6 text-white" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarUpload}
-                            className="hidden"
-                          />
-                        </label>
+                        </div>
+                        <h3 className="text-xl font-black text-foreground truncate px-2">{profile.full_name || "Utilisateur"}</h3>
+                        <p className="text-sm text-muted-foreground truncate px-2 mb-4 opacity-70">{profile.email}</p>
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-muted rounded-full text-[10px] font-black uppercase tracking-widest text-[#FF4F5A] border border-border">
+                           <Check className="w-3 h-3" /> Membre vérifié
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground">Changer votre photo</p>
-                        <p className="text-sm text-muted-foreground">JPG, PNG ou WebP. Max 2 Mo.</p>
+
+                      <div className="bg-card rounded-[2rem] p-8 shadow-lg border border-border">
+                         <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Statistiques</h4>
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                               <span className="text-sm font-bold text-foreground/70">Ancienneté</span>
+                               <span className="text-sm font-black">2 ans</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                               <span className="text-sm font-bold text-foreground/70">Locations</span>
+                               <span className="text-sm font-black">14</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                               <span className="text-sm font-bold text-foreground/70">Note moyenne</span>
+                               <div className="flex items-center gap-1 text-[#FF4F5A]">
+                                  <Star className="w-4 h-4 fill-current" />
+                                  <span className="text-sm font-black">4.9</span>
+                               </div>
+                            </div>
+                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Profile Form */}
-                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
-                    <h2 className="text-2xl font-bold text-foreground mb-6">Informations personnelles</h2>
+                    {/* Right: Personal Info Form */}
+                    <div className="lg:col-span-2">
+                       <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
+                          <div className="flex items-center justify-between mb-10">
+                             <h2 className="text-2xl font-black">Informations <span className="text-[#FF4F5A]">personnelles</span></h2>
+                             <div className="h-px flex-1 bg-border mx-8 hidden sm:block" />
+                          </div>
 
-                    {profileError && (
-                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">
-                        {profileError}
-                      </div>
-                    )}
-
-                    {saveSuccess && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2"
-                      >
-                        <Check className="w-4 h-4" /> Profil mis à jour avec succès !
-                      </motion.div>
-                    )}
-
-                    {isLoadingProfile ? (
-                      <div className="text-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto" />
-                      </div>
-                    ) : (
-                      <div className="space-y-5">
-                        {/* Full Name */}
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                            Nom complet
-                          </label>
-                          <Input
-                            type="text"
-                            value={profile.full_name}
-                            onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
-                            className="h-12 bg-muted/50 border-border rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
-                            placeholder="Votre nom complet"
-                          />
-                        </div>
-
-                        {/* Email (read-only) */}
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                            Email <span className="text-muted-foreground/70 font-normal">(non modifiable)</span>
-                          </label>
-                          <Input
-                            type="email"
-                            value={profile.email}
-                            disabled
-                            className="h-12 bg-muted border-border rounded-2xl text-muted-foreground cursor-not-allowed"
-                          />
-                        </div>
-
-                        {/* Phone */}
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                            Téléphone
-                          </label>
-                          <Input
-                            type="tel"
-                            value={profile.phone}
-                            onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
-                            className="h-12 bg-muted/50 border-border rounded-2xl focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A]"
-                            placeholder="+213 5XX XX XX XX"
-                          />
-                        </div>
-
-                        {/* Wilaya */}
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                            Wilaya
-                          </label>
-                          <select
-                            value={profile.wilaya_code || ""}
-                            onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
-                            className="w-full h-12 px-4 bg-muted/50 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] appearance-none"
-                          >
-                            <option value="">Sélectionnez votre wilaya</option>
-                            {WILAYAS.map(w => (
-                              <option key={w.code} value={w.code}>
-                                {w.code} - {w.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Bio */}
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground/80 mb-2">
-                            Bio
-                          </label>
-                          <textarea
-                            value={profile.bio}
-                            onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
-                            rows={4}
-                            className="w-full px-4 py-3 bg-muted/50 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/50 focus:border-[#FF4F5A] resize-none"
-                            placeholder="Décrivez-vous en quelques mots..."
-                            maxLength={500}
-                          />
-                          <p className="text-xs text-muted-foreground/70 mt-1 text-right">
-                            {profile.bio.length}/500
-                          </p>
-                        </div>
-
-                        {/* Save Button */}
-                        <Button
-                          onClick={handleSaveProfile}
-                          disabled={isSaving}
-                          className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white h-12 px-8 rounded-2xl flex items-center gap-2"
-                        >
-                          {isSaving ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <>
-                              <Check className="w-5 h-5" />
-                              Sauvegarder
-                            </>
+                          {profileError && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3">
+                              <XCircle className="w-5 h-5 flex-shrink-0" /> {profileError}
+                            </div>
                           )}
-                        </Button>
-                      </div>
-                    )}
+
+                          {saveSuccess && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3"
+                            >
+                              <CheckCircle className="w-5 h-5 flex-shrink-0" /> Profil mis à jour avec succès !
+                            </motion.div>
+                          )}
+
+                          {isLoadingProfile ? (
+                            <div className="py-20 text-center">
+                              <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mx-auto" />
+                            </div>
+                          ) : (
+                            <div className="space-y-8">
+                               <div className="grid sm:grid-cols-2 gap-8">
+                                  <div className="space-y-2">
+                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nom complet</label>
+                                     <Input
+                                       value={profile.full_name}
+                                       onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
+                                       className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
+                                       placeholder="Votre nom complet"
+                                     />
+                                  </div>
+                                  <div className="space-y-2">
+                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Télephone</label>
+                                     <Input
+                                       value={profile.phone}
+                                       onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
+                                       className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
+                                       placeholder="+213 5XX XX XX XX"
+                                     />
+                                  </div>
+                               </div>
+
+                               <div className="grid sm:grid-cols-2 gap-8">
+                                  <div className="space-y-2">
+                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Email <span className="opacity-50">(Lectue seule)</span></label>
+                                     <Input value={profile.email} disabled className="h-14 bg-muted border-border rounded-2xl font-bold opacity-60" />
+                                  </div>
+                                  <div className="space-y-2 font-bold">
+                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Wilaya</label>
+                                     <select
+                                       value={profile.wilaya_code || ""}
+                                       onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
+                                       className="w-full h-14 px-4 bg-muted/30 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 appearance-none font-bold transition-all"
+                                     >
+                                       <option value="">Sélectionnez votre wilaya</option>
+                                       {WILAYAS.map(w => <option key={w.code} value={w.code}>{w.code} - {w.name}</option>)}
+                                     </select>
+                                  </div>
+                               </div>
+
+                               <div className="space-y-2">
+                                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Bio</label>
+                                  <textarea
+                                    value={profile.bio}
+                                    onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
+                                    rows={5}
+                                    className="w-full px-5 py-4 bg-muted/30 border border-border rounded-[2rem] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold transition-all"
+                                    placeholder="Décrivez-vous en quelques mots..."
+                                    maxLength={500}
+                                  />
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mt-2 text-right">
+                                    {profile.bio.length} / 500 caractères
+                                  </p>
+                               </div>
+
+                               <div className="pt-4 border-t border-border flex justify-end">
+                                  <Button
+                                    onClick={handleSaveProfile}
+                                    disabled={isSaving}
+                                    className="bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0F2A2E]/20 transition-all hover:-translate-y-1 active:translate-y-0"
+                                  >
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sauvegarder les modifications"}
+                                  </Button>
+                               </div>
+                            </div>
+                          )}
+                       </div>
+                    </div>
                   </div>
                 </motion.div>
               )}

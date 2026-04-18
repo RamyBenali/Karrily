@@ -71,8 +71,7 @@ export class SalesController {
                 item.owner_id,
                 "Nouvelle demande d'achat",
                 `L'utilisateur ${req.user!.full_name} souhaite acheter "${item.title}".`,
-                "sale",
-                "/user-dashboard"
+                "sale"
             );
 
             res.status(201).json({ success: true, data });
@@ -134,8 +133,7 @@ export class SalesController {
                 sale.buyer_id,
                 `Vente ${statusLabels[status] || status}`,
                 `Votre demande d'achat pour l'objet a été mise à jour : ${statusLabels[status] || status}.`,
-                "sale",
-                "/user-dashboard"
+                "sale"
             );
 
             // If completed, mark item as sold

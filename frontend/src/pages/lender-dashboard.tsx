@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin } from "lucide-react";
+import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin, Star } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -11,6 +11,16 @@ import { usersService, bookingsService, itemsService, salesService, trocService 
 import { supabase } from "../lib/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw } from "lucide-react";
+import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
+
+const sidebarItems = [
+  { icon: BarChart3, label: "Vue d'ensemble" },
+  { icon: Package, label: "Mes annonces" },
+  { icon: Calendar, label: "Locations" },
+  { icon: ShoppingCart, label: "Ventes" },
+  { icon: RefreshCw, label: "Troc" },
+  { icon: DollarSign, label: "Revenus" },
+];
 
 const earningsData = [
   { month: "Jan", earnings: 1200 },
@@ -37,6 +47,7 @@ export function LenderDashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [activeView, setActiveView] = useState<"overview" | "listings" | "bookings" | "sales" | "troc" | "earnings">("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [myListings, setMyListings] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
@@ -164,178 +175,234 @@ export function LenderDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+      
 
-      <div className="pt-24 pb-16">
+      <div className="py-8 lg:py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 lg:mb-8 gap-4"
+            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 lg:mb-10 gap-4"
           >
             <div>
-              <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-2 leading-tight">Propriétaire</h1>
-              <p className="text-lg lg:text-xl text-muted-foreground hidden lg:block">Gérez vos annonces et suivez vos revenus</p>
+              <h1 className="text-4xl lg:text-6xl font-black text-foreground mb-3 leading-tight tracking-tight">
+                Propriétaire <span className="text-[#FF4F5A]">Center</span>
+              </h1>
+              <p className="text-lg lg:text-xl text-muted-foreground font-medium max-w-2xl">
+                Gérez votre inventaire, suivez vos revenus et monitorez vos transactions en temps réel.
+              </p>
             </div>
-            <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-6 h-12 rounded-full shadow-xl shadow-[#FF4F5A]/30 group">
+            <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-gradient-to-r from-[#FF4F5A] to-[#FF6B74] hover:shadow-xl shadow-[#FF4F5A]/20 text-white px-8 h-12 rounded-2xl font-black text-xs uppercase tracking-widest group">
               <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
               Publier une annonce
             </Button>
           </motion.div>
 
-          {/* Mobile Tab Navigation - Horizontal Scroll */}
-          <div className="lg:hidden -mx-6 px-6 mb-6 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 pb-2">
-            {[
-              { id: "overview", label: "Aperçu", icon: BarChart3 },
-              { id: "listings", label: "Annonces", icon: Package },
-              { id: "bookings", label: "Locations", icon: Calendar },
-              { id: "sales", label: "Ventes", icon: ShoppingCart },
-              { id: "troc", label: "Troc", icon: RefreshCw },
-              { id: "earnings", label: "Revenus", icon: DollarSign }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveView(tab.id as any)}
-                className={`flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                  activeView === tab.id
-                    ? "bg-[#0F2A2E] text-white shadow-lg shadow-[#0F2A2E]/20"
-                    : "bg-card text-muted-foreground border border-border"
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+            {/* Sidebar */}
+            <DashboardSidebar
+              items={sidebarItems}
+              activeTab={activeView === "overview" ? "Vue d'ensemble" : 
+                         activeView === "listings" ? "Mes annonces" :
+                         activeView === "bookings" ? "Locations" :
+                         activeView === "sales" ? "Ventes" :
+                         activeView === "troc" ? "Troc" : "Revenus"}
+              setActiveTab={(label) => {
+                const map: Record<string, any> = {
+                  "Vue d'ensemble": "overview",
+                  "Mes annonces": "listings",
+                  "Locations": "bookings",
+                  "Ventes": "sales",
+                  "Troc": "troc",
+                  "Revenus": "earnings"
+                };
+                setActiveView(map[label]);
+                setIsMobileMenuOpen(false);
+              }}
+              userInitials={user?.user_metadata?.full_name?.split(" ").map((n:any) => n[0]).join("").toUpperCase().slice(0, 2) || "U"}
+              userFullName={user?.user_metadata?.full_name || "Utilisateur"}
+              userEmail={user?.email || ""}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              extraAction={{
+                label: "Passer en mode client",
+                onClick: () => navigate('/dashboard'),
+                variant: "default"
+              }}
+            />
 
-          {/* Desktop Tab Navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="hidden lg:inline-flex bg-card rounded-3xl p-2 shadow-lg border border-border mb-8 gap-2 flex-wrap"
-          >
-            {[
-              { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
-              { id: "listings", label: "Mes annonces", icon: Package },
-              { id: "bookings", label: "Locations", icon: Calendar },
-              { id: "sales", label: "Ventes", icon: ShoppingCart },
-              { id: "troc", label: "Troc", icon: RefreshCw },
-              { id: "earnings", label: "Revenus", icon: DollarSign }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveView(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all ${
-                  activeView === tab.id
-                    ? "bg-[#0F2A2E] text-white shadow-lg"
-                    : "text-foreground/80 hover:bg-muted"
-                }`}
-              >
-                <tab.icon className="w-5 h-5" />
-                {tab.label}
-              </button>
-            ))}
-          </motion.div>
-
-          {/* Overview */}
+            {/* Main Content */}
+            <div className="lg:col-span-9">
+          {/* Overview / Merchant Center */}
           {activeView === "overview" && (
-            <div className="space-y-8">
-              {/* Stats Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-10">
+              {/* Main KPI Grid */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
                   { 
-                    label: "Revenus Totaux", 
-                    value: "0 DZD", 
-                    change: "-", 
+                    label: "Chiffre d'Affaire", 
+                    value: stats.totalEarnings > 0 ? `${stats.totalEarnings} DA` : "0 DA", 
+                    trend: "+12.5%",
                     icon: DollarSign, 
-                    color: "#FF4F5A",
-                    bgGradient: "from-[#FF4F5A] to-[#FF6B74]"
+                    color: "text-emerald-500",
+                    bg: "bg-emerald-500/10",
+                    shadow: "shadow-emerald-500/10"
                   },
                   { 
-                    label: "Annonces Actives", 
+                    label: "Inventaire Actif", 
                     value: stats.activeListings, 
-                    change: "Aujourd'hui", 
+                    trend: "Stable", 
                     icon: Package, 
-                    color: "#0F2A2E",
-                    bgGradient: "from-[#0F2A2E] to-[#1A4851]"
+                    color: "text-[#FF4F5A]",
+                    bg: "bg-[#FF4F5A]/10",
+                    shadow: "shadow-[#FF4F5A]/10"
                   },
                   { 
-                    label: "Réservations", 
+                    label: "Performance Location", 
                     value: stats.totalBookings, 
-                    change: "Toutes", 
-                    icon: Calendar, 
-                    color: "#0F2A2E",
-                    bgGradient: "from-[#0F2A2E] to-[#1A4851]"
+                    trend: "+3 ce mois", 
+                    icon: TrendingUp, 
+                    color: "text-blue-500",
+                    bg: "bg-blue-500/10",
+                    shadow: "shadow-blue-500/10"
                   },
                   { 
-                    label: "Note Moyenne", 
-                    value: "N/A", 
-                    change: "-", 
-                    icon: TrendingUp, 
-                    color: "#FF4F5A",
-                    bgGradient: "from-[#FF4F5A] to-[#FF6B74]"
+                    label: "Satisfaction", 
+                    value: "4.8", 
+                    trend: "Optimale", 
+                    icon: Star, 
+                    color: "text-amber-500",
+                    bg: "bg-amber-500/10",
+                    shadow: "shadow-amber-500/10"
                   }
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className={`bg-gradient-to-br ${stat.bgGradient} rounded-3xl p-6 text-white shadow-xl`}
+                    transition={{ delay: index * 0.1 }}
+                    className={`bg-card rounded-3xl p-5 shadow-lg border border-border group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl ${stat.shadow}`}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
-                        <stat.icon className="w-6 h-6" />
+                      <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center transition-transform group-hover:rotate-6`}>
+                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
                       </div>
-                      <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium">
-                        {stat.change}
+                      <span className="text-xs font-medium px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
+                        {stat.trend}
                       </span>
                     </div>
-                    <div className="text-4xl font-bold mb-1">{stat.value}</div>
-                    <div className="text-white/80">{stat.label}</div>
+                     <div className="relative z-10">
+                        <p className="text-[11px] font-medium text-muted-foreground/70 mb-1 leading-none">{stat.label}</p>
+                       <div className="text-xl font-bold text-foreground tracking-tight leading-none">{stat.value}</div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Earnings Chart */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-card rounded-3xl p-8 shadow-xl border border-border"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground mb-1">Aperçu des revenus</h2>
-                    <p className="text-muted-foreground">Vos tendances de gains mensuels</p>
+              <div className="grid lg:grid-cols-3 gap-10">
+                {/* Advanced Analytics Chart */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="lg:col-span-2 bg-card rounded-[3rem] p-10 shadow-2xl border border-border relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-5">
+                     <TrendingUp className="w-40 h-40 text-[#FF4F5A]" />
                   </div>
-                </div>
-                <div className="h-80 opacity-50">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={earningsData}>
-                      <defs>
-                        <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF4F5A" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#FF4F5A" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="month" stroke="#9ca3af" />
-                      <YAxis stroke="#9ca3af" />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '12px'
-                        }} 
-                      />
-                      <Area type="monotone" dataKey="earnings" stroke="#FF4F5A" strokeWidth={3} fillOpacity={1} fill="url(#colorEarnings)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
+                  <div className="flex items-center justify-between mb-10 relative z-10">
+                    <div>
+                      <h2 className="text-2xl font-black text-foreground mb-2">Performance <span className="text-[#FF4F5A]">Analytique</span></h2>
+                      <p className="text-sm text-muted-foreground font-medium">Évolution de vos revenus sur les 6 derniers mois</p>
+                    </div>
+                    <div className="flex gap-2">
+                       <button className="px-5 py-2 bg-[#0F2A2E] text-white rounded-full text-[10px] font-black uppercase tracking-widest">Revenus</button>
+                       <button className="px-5 py-2 bg-muted text-muted-foreground rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-border transition-colors">Vues</button>
+                    </div>
+                  </div>
+                  
+                  <div className="h-80 w-full relative z-10">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={earningsData}>
+                        <defs>
+                          <linearGradient id="lenderEarnings" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#FF4F5A" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#FF4F5A" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
+                        <XAxis 
+                          dataKey="month" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} 
+                          dy={15}
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} 
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#0F2A2E', 
+                            border: 'none',
+                            borderRadius: '16px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                          }}
+                          itemStyle={{ color: 'white', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }}
+                          labelStyle={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '4px' }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="earnings" 
+                          stroke="#FF4F5A" 
+                          strokeWidth={4} 
+                          fillOpacity={1} 
+                          fill="url(#lenderEarnings)" 
+                          animationDuration={2000}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </motion.div>
+
+                {/* Merchant Activity Feed */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-card rounded-[3rem] p-10 shadow-2xl border border-border flex flex-col"
+                >
+                  <h2 className="text-xl font-black mb-8">Flux <span className="text-[#FF4F5A]">Marchand</span></h2>
+                  <div className="flex-1 space-y-6 overflow-y-auto pr-2 no-scrollbar">
+                    {trocProposals.slice(0, 3).map((p, idx) => (
+                       <div key={idx} className="flex gap-4 items-start p-4 hover:bg-muted/50 rounded-2xl transition-all border border-transparent hover:border-border group">
+                          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                             <RefreshCw className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div className="min-w-0">
+                             <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Proposition de Troc</p>
+                             <p className="text-sm font-bold text-foreground line-clamp-1">{p.items?.title || "Annonce"}</p>
+                             <p className="text-[10px] text-muted-foreground mt-1">À l'instant</p>
+                          </div>
+                       </div>
+                    ))}
+                    {upcomingBookings.slice(0, 3).map((b, idx) => (
+                       <div key={idx} className="flex gap-4 items-start p-4 hover:bg-muted/50 rounded-2xl transition-all border border-transparent hover:border-border group">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                             <Calendar className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="min-w-0">
+                             <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Location</p>
+                             <p className="text-sm font-bold text-foreground line-clamp-1">{b.items?.title || "Objet"}</p>
+                             <p className="text-[10px] text-muted-foreground mt-1">Aujourd'hui, 14:00</p>
+                          </div>
+                       </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" className="mt-8 rounded-2xl h-12 font-black text-[10px] uppercase tracking-widest border-border hover:bg-[#0F2A2E] hover:text-white transition-all">Consulter toutes les activités</Button>
+                </motion.div>
+              </div>
             </div>
           )}
 
@@ -351,61 +418,65 @@ export function LenderDashboard() {
                 {myListings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
+                    className="flex flex-col md:flex-row gap-8 p-6 bg-card border border-border/40 rounded-[2.5rem] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-500 group relative"
                   >
-                    <div className="w-full md:w-56 h-40 rounded-2xl overflow-hidden flex-shrink-0">
+                    <div className="w-full md:w-64 h-44 rounded-[1.5rem] overflow-hidden flex-shrink-0 relative shadow-inner">
                       <ImageWithFallback
                         src={listing.thumbnail_url || "https://placehold.co/400x300"}
                         alt={listing.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-black/5" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <span className="inline-block px-3 py-1 bg-card text-foreground/80 text-xs font-medium rounded-full mb-2">
-                            {listing.category?.name || "Général"}
-                          </span>
-                          <h3 className="text-xl font-bold text-foreground">{listing.title}</h3>
-                          <div className="flex items-baseline gap-2 mt-2">
-                            {listing.price_per_day && (
-                                <>
-                                  <span className="text-2xl font-bold text-foreground">{listing.price_per_day} DZD</span>
-                                  <span className="text-muted-foreground">/ jour</span>
-                                </>
-                            )}
-                            {!listing.price_per_day && listing.sale_price && (
-                                 <span className="text-2xl font-bold text-foreground">{listing.sale_price} DZD</span>
-                            )}
+                    <div className="flex-1 flex flex-col justify-between py-2">
+                      <div>
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <span className="inline-block px-3 py-1 bg-muted/60 text-[#FF4F5A] text-[10px] font-black uppercase tracking-widest rounded-full mb-3">
+                              {listing.category?.name || "Général"}
+                            </span>
+                            <h3 className="text-2xl font-black text-foreground tracking-tight group-hover:text-[#FF4F5A] transition-colors">{listing.title}</h3>
                           </div>
+                          <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${listing.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-muted text-muted-foreground border border-border/40'}`}>
+                            {listing.status === 'active' ? "En ligne" : "Brouillon"}
+                          </span>
                         </div>
-                        <span className={`px-4 py-2 rounded-full text-sm font-medium ${listing.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-muted text-foreground/80'}`}>
-                          {listing.status === 'active' ? "Actif" : "Brouillon"}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">Vues</div>
-                          <div className="text-lg font-bold text-foreground">{listing.view_count || 0}</div>
+                        
+                        <div className="flex items-center gap-6 mb-6">
+                           <div className="flex flex-col">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Vues</span>
+                             <span className="text-lg font-black text-foreground">{listing.view_count || 0}</span>
+                           </div>
+                           <div className="w-[1px] h-8 bg-border/40" />
+                           <div className="flex flex-col">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50 text-right md:text-left">Tarif</span>
+                             <div className="flex items-baseline gap-1">
+                                {listing.price_per_day && (
+                                    <span className="text-lg font-black text-foreground">{listing.price_per_day} DA <span className="text-xs text-muted-foreground">/jour</span></span>
+                                )}
+                                {!listing.price_per_day && listing.sale_price && (
+                                     <span className="text-lg font-black text-foreground">{listing.sale_price} DA</span>
+                                )}
+                             </div>
+                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-3 mt-4">
+                      <div className="flex flex-wrap gap-3 mt-auto">
                         <Button 
                           size="sm" 
                           onClick={() => navigate(`/item/${listing.id}`)}
-                          className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
+                          className="bg-[#0F2A2E] hover:bg-foreground text-white rounded-full h-11 px-8 font-bold shadow-xl shadow-[#0F2A2E]/10"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Voir
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/edit-item/${listing.id}`)} className="rounded-full">
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/edit-item/${listing.id}`)} className="rounded-full h-11 px-8 font-bold border-border/60 hover:bg-muted">
                           <Edit2 className="w-4 h-4 mr-2" />
                           Modifier
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDeleteItem(listing.id)} className="rounded-full text-red-600 border-red-200 hover:bg-red-50">
-                          <Trash2 className="w-4 h-4 mr-2" />
+                        <Button size="sm" variant="outline" onClick={() => handleDeleteItem(listing.id)} className="rounded-full h-11 px-8 font-bold text-red-500 border-red-100 hover:bg-red-50 hover:border-red-200 ml-auto md:ml-0">
+                          <Trash2 className="w-4 h-4 mr-2 text-red-400" />
                           Supprimer
                         </Button>
                       </div>
@@ -691,9 +762,9 @@ export function LenderDashboard() {
                     { label: "Total", value: "0 DZD", change: "" }
                   ].map((stat) => (
                     <div key={stat.label} className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl">
-                      <div className="text-sm text-muted-foreground mb-1">{stat.label}</div>
+                      <div className="text-[11px] font-medium text-muted-foreground mb-1">{stat.label}</div>
                       <div className="flex items-baseline gap-2">
-                        <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+                        <div className="text-xl font-bold text-foreground">{stat.value}</div>
                       </div>
                     </div>
                   ))}
@@ -704,5 +775,7 @@ export function LenderDashboard() {
         </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }

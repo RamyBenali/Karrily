@@ -74,8 +74,7 @@ export class TrocController {
                 requestedItem.owner_id,
                 "Nouvelle proposition de troc",
                 `L'utilisateur ${req.user!.full_name} vous propose un échange pour "${requestedItem.title}".`,
-                "troc",
-                "/user-dashboard"
+                "troc_proposal"
             );
 
             res.status(201).json({ success: true, data });
@@ -130,12 +129,18 @@ export class TrocController {
                 counter: "avec une contre-proposition"
             };
             
+            let notificationType: 'troc_accepted' | 'troc_rejected' | 'troc_proposal' = 'troc_proposal';
+            if (status === 'accepted' || status === 'completed') {
+                notificationType = 'troc_accepted';
+            } else if (status === 'rejected' || status === 'cancelled') {
+                notificationType = 'troc_rejected';
+            }
+
             await createNotification(
                 proposal.proposer_id,
                 `Proposition de troc ${statusLabels[status] || status}`,
                 `Votre offre d'échange pour l'objet a été mise à jour : ${statusLabels[status] || status}.`,
-                "troc",
-                "/user-dashboard"
+                notificationType
             );
 
             // If completed, mark items as traded

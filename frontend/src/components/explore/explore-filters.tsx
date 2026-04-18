@@ -79,13 +79,15 @@ export function ExploreHeader({
           <div className="hidden lg:block w-[100px] shrink-0" />
 
           {/* Search Pill */}
-          <div className="flex-1 max-w-3xl flex items-center bg-card rounded-full border border-border/60 shadow-sm hover:shadow-md transition-shadow h-16 px-2 w-full">
-            <div className="flex-1 flex items-center px-4">
-              <Search className="w-5 h-5 text-muted-foreground mr-3 shrink-0" />
+          <div className="flex-1 max-w-3xl flex items-center bg-card rounded-full border border-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 h-16 px-2 w-full group focus-within:ring-2 focus-within:ring-[#FF4F5A]/20">
+            <div className="flex-[1.5] flex items-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3 shrink-0 group-focus-within:bg-[#FF4F5A]/5 transition-colors">
+                <Search className="w-4 h-4 text-muted-foreground group-focus-within:text-[#FF4F5A]" />
+              </div>
               <input
                 type="text"
                 placeholder="Que recherchez-vous ?"
-                className="w-full bg-transparent border-none outline-none text-sm font-medium placeholder:text-muted-foreground/70"
+                className="w-full bg-transparent border-none outline-none text-sm font-bold placeholder:text-muted-foreground/50"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearchCommit()}
@@ -93,25 +95,28 @@ export function ExploreHeader({
               />
             </div>
             
-            <div className="w-[1px] h-8 bg-border/60 mx-2 shrink-0" />
+            <div className="w-[1px] h-8 bg-border/40 mx-2 shrink-0" />
             
-            <div className="flex-1 flex items-center px-4 relative max-w-[200px] shrink-0">
-              <MapPin className="w-5 h-5 text-muted-foreground mr-3 shrink-0" />
-              <select
-                className="w-full bg-transparent border-none outline-none text-sm font-medium appearance-none cursor-pointer truncate"
-                value={selectedWilaya}
-                onChange={(e) => setSelectedWilaya(e.target.value)}
-              >
-                <option value="">Toute l'Algérie</option>
-                {WILAYAS.map((w) => (
-                  <option key={w.code} value={w.code}>{w.name}</option>
-                ))}
-              </select>
+            <div className="flex-1 flex items-center px-4 relative max-w-[220px] shrink-0">
+              <MapPin className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]/60 -mb-0.5">Wilaya</span>
+                <select
+                  className="w-full bg-transparent border-none outline-none text-xs font-black appearance-none cursor-pointer truncate"
+                  value={selectedWilaya}
+                  onChange={(e) => setSelectedWilaya(e.target.value)}
+                >
+                  <option value="">Toute l'Algérie</option>
+                  {WILAYAS.map((w) => (
+                    <option key={w.code} value={w.code}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             <button 
               onClick={handleSearchCommit}
-              className="w-12 h-12 bg-[#FF4F5A] rounded-full flex items-center justify-center text-white hover:bg-[#FF4F5A]/90 transition-colors shrink-0"
+              className="w-12 h-12 bg-[#FF4F5A] rounded-full flex items-center justify-center text-white hover:bg-[#FF4F5A]/90 transition-all hover:scale-105 active:scale-95 shrink-0 shadow-lg shadow-[#FF4F5A]/20"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -148,25 +153,25 @@ export function ExploreHeader({
         </div>
 
         <div className="flex flex-col lg:flex-row items-center gap-6">
-          <div className="flex p-1 bg-muted/60 rounded-full border border-border/40 shrink-0 overflow-x-auto max-w-full no-scrollbar">
+          <div className="flex p-1 bg-muted/40 rounded-full border border-border/20 shrink-0 overflow-x-auto max-w-full custom-scrollbar pb-1">
             {modalities.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setSelectedListingType(m.id)}
                 className={cn(
-                  "flex items-center gap-2 px-5 h-10 rounded-full text-sm font-bold transition-all whitespace-nowrap",
+                  "flex items-center gap-2 px-6 h-10 rounded-full text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap",
                   selectedListingType === m.id
-                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                    ? "bg-foreground text-background shadow-lg shadow-foreground/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                {m.icon && <m.icon className="w-4 h-4 shrink-0" />}
+                {m.icon && <m.icon className="w-3.5 h-3.5 shrink-0" />}
                 {m.label}
               </button>
             ))}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 flex-1 mask-linear-fade">
+          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-3 pt-1 flex-1 mask-linear-fade">
              <button
                 onClick={() => setSelectedCategorySlugs([])}
                 className={cn(
@@ -238,24 +243,29 @@ export function ExploreFiltersContent({
     <div className={cn("space-y-8 pb-10", className)}>
       
       {/* En-tête des filtres + Reset */}
-      <div className="flex items-center justify-between pb-4 border-b border-border/40">
-         <h2 className="text-xl font-bold flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-[#FF4F5A]" /> Filtres Avancés
-         </h2>
+      <div className="flex items-center justify-between pb-6 border-b border-border/20">
+         <div className="space-y-1">
+           <h2 className="text-xl font-black tracking-tight flex items-center gap-2 text-foreground">
+             <SlidersHorizontal className="w-5 h-5 text-[#FF4F5A]" /> Filtres
+           </h2>
+           <p className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground/60 px-1">Personnalisez</p>
+         </div>
          <button 
            onClick={resetFilters}
-           className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+           className="h-8 px-4 rounded-full bg-muted/60 hover:bg-muted text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 border border-border/20"
          >
-            Réinitialiser
+            <RotateCcw className="w-3 h-3" /> Reset
          </button>
       </div>
 
       {selectedListingType !== "troc" && (
-        <section>
-          <h3 className="text-sm font-bold flex items-center gap-2 mb-6">
-            <Coins className="w-4 h-4 text-[#FF4F5A]" /> {budgetLabel}
-          </h3>
-          <div className="px-2">
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
+              <Coins className="w-3.5 h-3.5" /> {budgetLabel}
+            </h3>
+          </div>
+          <div className="px-1">
             <Slider
               min={0}
               max={EXPLORE_BUDGET_MAX}
@@ -281,25 +291,25 @@ export function ExploreFiltersContent({
         </section>
       )}
 
-      <section>
-        <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-          <Box className="w-4 h-4 text-[#FF4F5A]" /> État de l'objet
+      <section className="space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
+          <Box className="w-3.5 h-3.5" /> État de l'objet
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {[
             { v: "", l: "Tous" },
             { v: "new", l: "Neuf" },
             { v: "like_new", l: "Comme neuf" },
-            { v: "good", l: "Bon état" },
+            { v: "good", l: "Occasion" },
           ].map((c) => (
             <button
               key={c.v}
               onClick={() => setSelectedCondition(c.v)}
               className={cn(
-                "px-2 lg:px-4 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-semibold transition-all duration-150 border",
+                "px-2 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 border",
                 selectedCondition === c.v
-                  ? "bg-foreground text-background border-foreground shadow-md"
-                  : "bg-card border-border hover:border-foreground/30 text-foreground"
+                  ? "bg-foreground text-background border-foreground shadow-[0_8px_20px_rgb(0,0,0,0.1)] active:scale-95"
+                  : "bg-muted/30 border-transparent hover:border-border/60 text-muted-foreground hover:text-foreground"
               )}
             >
               {c.l}
@@ -308,23 +318,23 @@ export function ExploreFiltersContent({
         </div>
       </section>
 
-      <section>
-        <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-          <Star className="w-4 h-4 text-[#FF4F5A]" /> Note Proprio.
+      <section className="space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
+          <Star className="w-3.5 h-3.5" /> Note Propriétaire
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {RATING_FILTER_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => setMinRating(opt.value)}
               className={cn(
-                "flex items-center justify-center gap-2 px-2 lg:px-4 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-semibold transition-all duration-150 border",
+                "flex items-center justify-center gap-2 px-2 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 border",
                 minRating === opt.value
-                  ? "bg-yellow-400/10 text-yellow-700 dark:text-yellow-300 border-yellow-400/50 shadow-sm"
-                  : "bg-card border-border hover:border-foreground/30 text-foreground"
+                  ? "bg-yellow-400 text-yellow-900 border-yellow-400 shadow-[0_8px_20px_rgba(250,204,21,0.3)] active:scale-95"
+                  : "bg-muted/30 border-transparent hover:border-border/60 text-muted-foreground hover:text-foreground"
               )}
             >
-              {opt.value !== "" && <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+              {opt.value !== "" && <Star className={cn("w-3 h-3 shrink-0", minRating === opt.value ? "fill-yellow-900" : "fill-yellow-400")} />}
               {opt.label}
             </button>
           ))}
@@ -417,7 +427,7 @@ export function ExploreFiltersMobileSheet(props: ExploreFiltersContentProps & { 
 
 export function ExploreFilterSidebar(props: ExploreFiltersContentProps) {
     return (
-        <aside className="hidden lg:block w-[320px] shrink-0 sticky top-48 self-start bg-card border border-border/60 rounded-[2rem] p-6 shadow-xl h-[calc(100vh-14rem)] overflow-y-auto no-scrollbar">
+        <aside className="hidden lg:block w-[340px] shrink-0 sticky top-52 self-start glass border border-white/20 dark:border-white/5 rounded-[2.5rem] p-8 shadow-2xl shadow-black/5 h-[calc(100vh-16rem)] overflow-y-auto custom-scrollbar">
             <ExploreFiltersContent {...props} />
         </aside>
     )

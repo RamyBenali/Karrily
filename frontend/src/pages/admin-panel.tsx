@@ -16,13 +16,24 @@ import {
   Calendar,
   Layers,
   UserX,
-  UserCheck
+  UserCheck,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
+import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
+import { cn } from "../components/ui/utils";
+
+
+const sidebarItems = [
+  { icon: BarChart3, label: "Vue d'ensemble" },
+  { icon: Users, label: "Utilisateurs" },
+  { icon: Package, label: "Annonces" },
+  { icon: Calendar, label: "Réservations" },
+];
 
 // Interfaces
 interface UserProfile {
@@ -63,6 +74,7 @@ export function AdminPanel() {
 
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "bookings">("overview");
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -82,26 +94,9 @@ export function AdminPanel() {
 
   // Check admin rights
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (!data || data.role !== "admin") {
-        navigate("/dashboard");
-      } else {
-        fetchDashboardData();
-      }
-    };
-
-    checkAdmin();
+    if (user) {
+      fetchDashboardData();
+    }
   }, [user]);
 
   const fetchDashboardData = async () => {
@@ -206,146 +201,232 @@ export function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-[#0A0F10]">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F1415]/80 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74] rounded-xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Karrily Admin</h1>
-                <p className="text-xs text-muted-foreground/70">Control Panel</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" className="text-muted-foreground/70 hover:text-white" onClick={() => navigate("/")}>
-                Quitter l'admin
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="pt-24 pb-16">
+      <div className="py-8 lg:py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold text-white mb-2">Vue d'ensemble du système</h2>
-            <p className="text-xl text-muted-foreground/70">Surveillez et gérez votre plateforme à 200%</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 lg:mb-10"
+          >
+            <h1 className="text-4xl lg:text-6xl font-black text-white mb-3 leading-tight tracking-tight">
+              Admin <span className="text-[#FF4F5A]">Command</span>
+            </h1>
+            <p className="text-lg lg:text-xl text-muted-foreground/70 font-medium max-w-2xl">
+              Surveillez la santé de votre plateforme et gérez les utilisateurs en toute sécurité.
+            </p>
+          </motion.div>
 
-          {/* Tab Navigation */}
-          <div className="bg-[#0F1415] border border-white/10 rounded-3xl p-2 shadow-2xl mb-8 flex flex-wrap gap-2">
-            {[
-              { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
-              { id: "users", label: "Utilisateurs", icon: Users },
-              { id: "items", label: "Annonces", icon: Package },
-              { id: "bookings", label: "Réservations", icon: Calendar }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all ${activeTab === tab.id
-                    ? "bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74] text-white shadow-xl shadow-[#FF4F5A]/30"
-                    : "text-muted-foreground/70 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                <tab.icon className="w-5 h-5" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+            {/* Sidebar */}
+            <DashboardSidebar
+              items={sidebarItems}
+              activeTab={activeTab === "overview" ? "Vue d'ensemble" : 
+                         activeTab === "users" ? "Utilisateurs" :
+                         activeTab === "items" ? "Annonces" : "Réservations"}
+              setActiveTab={(label) => {
+                const map: Record<string, any> = {
+                  "Vue d'ensemble": "overview",
+                  "Utilisateurs": "users",
+                  "Annonces": "items",
+                  "Réservations": "bookings"
+                };
+                setActiveTab(map[label]);
+                setIsMobileMenuOpen(false);
+              }}
+              userInitials="AD"
+              userFullName="Karrily Admin"
+              userEmail={user?.email || ""}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              extraAction={{
+                label: "Quitter l'admin",
+                onClick: () => navigate('/'),
+                variant: "destructive"
+              }}
+              className="dark"
+            />
 
-          {/* Overview Tab */}
+            {/* Main Content */}
+            <div className="lg:col-span-9 min-h-[60vh]">
+
+          {/* Overview / Command Center */}
           {activeTab === "overview" && (
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-10">
+              {/* Main KPI Grid */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  { label: "Utilisateurs Inscrits", value: stats.totalUsers, icon: Users, gradient: "from-[#1A4851] to-[#0F2A2E]" },
-                  { label: "Annonces Totales", value: stats.totalItems, icon: Package, gradient: "from-[#FF4F5A] to-[#FF6B74]" },
-                  { label: "Réservations", value: stats.totalBookings, icon: Calendar, gradient: "from-[#1A4851] to-[#0F2A2E]" },
-                  { label: "Chiffre d'Affaire", value: `${stats.totalRevenue.toLocaleString()} DA`, icon: DollarSign, gradient: "from-[#FF4F5A] to-[#FF6B74]" },
+                  { label: "Volume Utilisateurs", value: stats.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", shadow: "shadow-blue-500/10" },
+                  { label: "Catalogue Actif", value: stats.totalItems, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", shadow: "shadow-[#FF4F5A]/10" },
+                  { label: "Flux Transactions", value: stats.totalBookings, icon: Calendar, color: "text-purple-500", bg: "bg-purple-500/10", shadow: "shadow-purple-500/10" },
+                  { label: "Revenu Brut", value: stats.totalRevenue.toLocaleString() + " DA", icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", shadow: "shadow-emerald-500/10" },
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="bg-[#0F1415] border border-white/10 rounded-3xl p-6 relative overflow-hidden group"
+                    transition={{ delay: index * 0.1 }}
+                    className={`bg-[#0F1415] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 ${stat.shadow}`}
                   >
-                    <div className={`absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br ${stat.gradient} opacity-20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500`} />
                     <div className="flex items-center justify-between mb-4 relative z-10">
-                      <div className={`w-12 h-12 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center`}>
-                        <stat.icon className="w-6 h-6 text-white" />
+                      <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center transition-transform group-hover:rotate-6`}>
+                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                         <TrendingUp className="w-4 h-4 text-white/20" />
                       </div>
                     </div>
-                    <div className="text-4xl font-bold text-white mb-1 relative z-10">{stat.value}</div>
-                    <div className="text-muted-foreground/70 relative z-10">{stat.label}</div>
+                    <div className="relative z-10">
+                       <p className="text-[11px] font-medium text-white/50 mb-1 leading-none">{stat.label}</p>
+                       <div className="text-xl font-bold text-white tracking-tight leading-none">{stat.value}</div>
+                    </div>
+                    {/* Background Detail */}
+                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
                   </motion.div>
                 ))}
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-10">
+                {/* System Health / Stats Visualization Placeholder */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="lg:col-span-2 bg-[#0F1415] rounded-[3rem] p-10 shadow-2xl border border-white/5 relative overflow-hidden h-[450px]"
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-5">
+                     <Shield className="w-40 h-40 text-white" />
+                  </div>
+                  <div className="relative z-10 flex items-center justify-between mb-10">
+                     <div>
+                        <h2 className="text-2xl font-black text-white mb-2">Santé du <span className="text-[#FF4F5A]">Système</span></h2>
+                        <p className="text-sm text-white/40 font-medium">Monitoring des activités en temps réel</p>
+                     </div>
+                     <div className="px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Live Status
+                     </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Traffic Serveur</h4>
+                        <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                           <motion.div initial={{ width: 0 }} animate={{ width: "65%" }} className="h-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+                        </div>
+                        <p className="text-[10px] font-bold text-white/60">Load: 65% (Optimal)</p>
+                     </div>
+                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Taux de Conversion</h4>
+                        <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                           <motion.div initial={{ width: 0 }} animate={{ width: "42%" }} className="h-full bg-[#FF4F5A] shadow-[0_0_10px_#FF4F5A]" />
+                        </div>
+                        <p className="text-[10px] font-bold text-white/60">Rate: 4.2% (+0.8%)</p>
+                     </div>
+                  </div>
+
+                  <div className="mt-12 flex justify-center">
+                     <div className="inline-flex items-center gap-6 px-8 py-4 bg-white/5 rounded-2xl border border-white/5">
+                        <div className="text-center">
+                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">API Latency</p>
+                           <p className="text-xl font-black text-white font-mono">24ms</p>
+                        </div>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="text-center">
+                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">DB Connections</p>
+                           <p className="text-xl font-black text-white font-mono">152</p>
+                        </div>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="text-center">
+                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">Error Rate</p>
+                           <p className="text-xl font-black text-emerald-500 font-mono">0.02%</p>
+                        </div>
+                     </div>
+                  </div>
+                </motion.div>
+
+                {/* Command Center Activity Feed */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-[#0F1415] rounded-[3rem] p-10 shadow-2xl border border-white/5 flex flex-col h-[450px]"
+                >
+                  <h2 className="text-xl font-black text-white mb-8">Journal <span className="text-[#FF4F5A]">Système</span></h2>
+                  <div className="flex-1 space-y-6 overflow-y-auto pr-2 no-scrollbar">
+                     {usersList.slice(0, 4).map((u, idx) => (
+                        <div key={idx} className="flex gap-4 items-start p-4 hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5 group">
+                           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <UserCheck className="w-5 h-5 text-blue-400" />
+                           </div>
+                           <div className="min-w-0">
+                              <p className="text-xs font-black uppercase text-white/30 mb-1">Inscription</p>
+                              <p className="text-sm font-bold text-white line-clamp-1">{u.full_name}</p>
+                              <p className="text-[10px] text-white/40 mt-1">Nouveau compte créé</p>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+                  <Button variant="ghost" className="mt-8 rounded-2xl h-12 font-black text-[10px] uppercase tracking-widest text-[#FF4F5A] hover:bg-[#FF4F5A]/10 transition-all">Voir tout le log</Button>
+                </motion.div>
               </div>
             </div>
           )}
 
           {/* Users Tab */}
           {activeTab === "users" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0F1415] border border-white/10 rounded-3xl p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-white">Gestion des Utilisateurs</h3>
-                <div className="relative w-80">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/70" />
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0F1415] border border-white/5 rounded-[3rem] p-10 shadow-2xl">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
+                <h3 className="text-2xl font-black text-white">Gestion <span className="text-[#FF4F5A]">Utilisateurs</span></h3>
+                <div className="relative w-full md:w-96">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
                   <input
                     type="text"
-                    placeholder="Chercher un email..."
+                    placeholder="Filtrer par nom ou email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 h-11 bg-white/5 border border-white/10 rounded-2xl text-white focus:ring-2 focus:ring-[#FF4F5A]"
+                    className="w-full pl-14 pr-6 h-14 bg-white/5 border border-white/5 rounded-2xl text-white focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold placeholder:text-white/20"
                   />
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-y-3">
                   <thead>
-                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
-                      <th className="py-4 px-4 font-semibold">Utilisateur</th>
-                      <th className="py-4 px-4 font-semibold hidden md:table-cell">Email</th>
-                      <th className="py-4 px-4 font-semibold">Rôle</th>
-                      <th className="py-4 px-4 font-semibold text-center">Statut (Vérifié)</th>
-                      <th className="py-4 px-4 font-semibold text-right">Actions</th>
+                    <tr className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">
+                      <th className="py-4 px-6">Identité</th>
+                      <th className="py-4 px-6">Rôle</th>
+                      <th className="py-4 px-6 text-center">Vérif.</th>
+                      <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {usersList.filter(u => u.email.includes(searchQuery.toLowerCase()) || u.full_name.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
-                      <tr key={u.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="py-4 px-4">
-                          <div className="font-medium text-white">{u.full_name || "Sans nom"}</div>
-                          <div className="text-xs text-muted-foreground md:hidden">{u.email}</div>
+                      <tr key={u.id} className="group transition-all">
+                        <td className="py-5 px-6 bg-white/10 rounded-l-2xl border-y border-l border-white/5">
+                          <div className="font-bold text-white text-base">{u.full_name || "Sans nom"}</div>
+                          <div className="text-[10px] font-black uppercase text-white/30 mt-1">{u.email}</div>
                         </td>
-                        <td className="py-4 px-4 text-muted-foreground/70 hidden md:table-cell">{u.email}</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded text-xs ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                            {u.role.toUpperCase()}
-                          </span>
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5">
+                           <span className={cn(
+                             "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                             u.role === 'admin' ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                           )}>
+                             {u.role}
+                           </span>
                         </td>
-                        <td className="py-4 px-4 text-center">
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5 text-center">
                           <button
                             onClick={() => handleToggleVerification(u.id, u.is_verified)}
-                            title={u.is_verified ? "Révoquer la vérification" : "Vérifier l'utilisateur"}
+                            className={cn(
+                              "w-10 h-10 rounded-xl flex items-center justify-center mx-auto transition-all",
+                              u.is_verified ? "bg-emerald-500/10 text-emerald-500" : "bg-white/5 text-white/20 hover:text-white hover:bg-white/10"
+                            )}
                           >
-                            {u.is_verified
-                              ? <UserCheck className="w-5 h-5 text-green-500 mx-auto" />
-                              : <UserX className="w-5 h-5 text-muted-foreground mx-auto hover:text-white" />
-                            }
+                            {u.is_verified ? <UserCheck className="w-5 h-5" /> : <UserX className="w-5 h-5" />}
                           </button>
                         </td>
-                        <td className="py-4 px-4 text-right">
+                        <td className="py-5 px-6 bg-white/10 rounded-r-2xl border-y border-r border-white/5 text-right">
                           <Button
                             onClick={() => handleImpersonate(u.id, u.full_name, u.email)}
-                            variant="destructive"
-                            size="sm"
-                            className="bg-[#FF4F5A] hover:bg-red-600 text-white rounded-full text-xs"
+                            className="bg-[#FF4F5A] hover:bg-red-600 text-white rounded-xl h-10 px-6 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#FF4F5A]/20 transition-all active:scale-95 disabled:opacity-30"
                             disabled={u.id === user?.id}
                           >
                             Impersonifier
@@ -361,44 +442,46 @@ export function AdminPanel() {
 
           {/* Items Tab */}
           {activeTab === "items" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0F1415] border border-white/10 rounded-3xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6">Gestion des Annonces</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0F1415] border border-white/5 rounded-[3rem] p-10 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-10">Gestion <span className="text-[#FF4F5A]">Annonces</span></h3>
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-y-3">
                   <thead>
-                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
-                      <th className="py-4 px-4 font-semibold">Titre</th>
-                      <th className="py-4 px-4 font-semibold">Catégorie</th>
-                      <th className="py-4 px-4 font-semibold hidden lg:table-cell">Propriétaire</th>
-                      <th className="py-4 px-4 font-semibold">Prix</th>
-                      <th className="py-4 px-4 font-semibold">Statut</th>
-                      <th className="py-4 px-4 font-semibold text-right">Actions</th>
+                    <tr className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">
+                      <th className="py-4 px-6">Article</th>
+                      <th className="py-4 px-6">Prix / Jour</th>
+                      <th className="py-4 px-6">Statut</th>
+                      <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {itemsList.map((item) => (
-                      <tr key={item.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="py-4 px-4">
-                          <div className="font-medium text-white truncate max-w-[200px]" title={item.title}>{item.title}</div>
+                      <tr key={item.id} className="group transition-all">
+                        <td className="py-5 px-6 bg-white/10 rounded-l-2xl border-y border-l border-white/5">
+                          <div className="font-bold text-white text-base truncate max-w-[200px]" title={item.title}>{item.title}</div>
+                          <div className="text-[10px] font-black uppercase text-white/30 mt-1">{item.categories?.name} • par {item.profiles?.full_name}</div>
                         </td>
-                        <td className="py-4 px-4 text-muted-foreground/70">{item.categories?.name}</td>
-                        <td className="py-4 px-4 text-muted-foreground/70 hidden lg:table-cell truncate max-w-[200px]" title={item.profiles?.email}>
-                          {item.profiles?.full_name} <br /> <span className="text-xs opacity-50">{item.profiles?.email}</span>
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5 font-black text-white">
+                          {item.price_per_day?.toLocaleString() || 0} DA
                         </td>
-                        <td className="py-4 px-4 text-white">{item.price_per_day?.toLocaleString() || 0} DA/j</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${item.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'
-                            }`}>
-                            {item.status.toUpperCase()}
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5">
+                          <span className={cn(
+                            "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                            item.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                          )}>
+                            {item.status}
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-right flex justify-end gap-2">
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-full bg-transparent border-white/20 text-white" onClick={() => navigate(`/item/${item.id}`)}>
-                            <Eye className="w-4 h-4" />
+                        <td className="py-5 px-6 bg-white/10 rounded-r-2xl border-y border-r border-white/5 text-right flex justify-end gap-2">
+                          <Button size="sm" variant="ghost" className="h-10 w-10 p-0 rounded-xl bg-white/5 text-white/70 hover:text-white" onClick={() => navigate(`/item/${item.id}`)}>
+                            <Eye className="w-5 h-5" />
                           </Button>
                           <Button
                             size="sm"
-                            className={`h-8 px-3 rounded-full text-xs ${item.status === 'active' ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/40' : 'bg-green-500/20 text-green-400 hover:bg-green-500/40'}`}
+                            className={cn(
+                               "h-10 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                               item.status === 'active' ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30" : "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                            )}
                             onClick={() => handleToggleStatusItem(item.id, item.status)}
                           >
                             {item.status === 'active' ? 'Pauser' : 'Activer'}
@@ -414,52 +497,59 @@ export function AdminPanel() {
 
           {/* Bookings Tab */}
           {activeTab === "bookings" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0F1415] border border-white/10 rounded-3xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6">Gestion des Réservations</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0F1415] border border-white/5 rounded-[3rem] p-10 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-10">Gestion <span className="text-[#FF4F5A]">Réservations</span></h3>
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-y-3">
                   <thead>
-                    <tr className="border-b border-white/10 text-muted-foreground/70 text-sm">
-                      <th className="py-4 px-4 font-semibold">Annonce</th>
-                      <th className="py-4 px-4 font-semibold">Acteurs (Locataire ↔ Proprio)</th>
-                      <th className="py-4 px-4 font-semibold">Dates</th>
-                      <th className="py-4 px-4 font-semibold">Total</th>
-                      <th className="py-4 px-4 font-semibold">Statut</th>
-                      <th className="py-4 px-4 font-semibold text-right">Actions</th>
+                    <tr className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">
+                      <th className="py-4 px-6">Transaction</th>
+                      <th className="py-4 px-6">Flux</th>
+                      <th className="py-4 px-6 text-center">Statut</th>
+                      <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {bookingsList.map((booking) => (
-                      <tr key={booking.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="py-4 px-4 text-white font-medium truncate max-w-[150px]" title={booking.items?.title}>{booking.items?.title}</td>
-                        <td className="py-4 px-4 text-muted-foreground/70 text-sm">
-                          <span className="text-blue-400">{booking.renter?.full_name}</span>
-                          <span className="mx-2">→</span>
-                          <span className="text-purple-400">{booking.owner?.full_name}</span>
+                      <tr key={booking.id} className="group transition-all">
+                        <td className="py-5 px-6 bg-white/10 rounded-l-2xl border-y border-l border-white/5">
+                          <div className="font-bold text-white text-base truncate max-w-[200px]" title={booking.items?.title}>{booking.items?.title}</div>
+                          <div className="text-[10px] font-black uppercase text-white/30 mt-1">
+                             {new Date(booking.start_date).toLocaleDateString()} — {new Date(booking.end_date).toLocaleDateString()}
+                          </div>
                         </td>
-                        <td className="py-4 px-4 text-muted-foreground text-xs">
-                          {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5">
+                           <div className="flex flex-col gap-1">
+                              <span className="text-xs font-bold text-blue-400">{booking.renter?.full_name}</span>
+                              <div className="flex items-center gap-2">
+                                 <div className="flex-1 h-[2px] bg-white/5 relative">
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/20 rounded-full" />
+                                 </div>
+                              </div>
+                              <span className="text-xs font-bold text-purple-400">{booking.owner?.full_name}</span>
+                           </div>
                         </td>
-                        <td className="py-4 px-4 text-white font-bold">{booking.total_price.toLocaleString()} DA</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs truncate
-                            ${booking.status === 'completed' ? 'bg-green-500/20 text-green-400' : ''}
-                            ${booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : ''}
-                            ${booking.status === 'active' ? 'bg-blue-500/20 text-blue-400' : ''}
-                            ${booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-red-500/20 text-red-500' : ''}
-                          `}>
-                            {booking.status.toUpperCase()}
-                          </span>
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5 text-center font-black text-white">
+                           <div className="flex flex-col items-center gap-2">
+                              <div className="text-sm">{booking.total_price.toLocaleString()} DA</div>
+                              <span className={cn(
+                                "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                                booking.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                booking.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                booking.status === 'active' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                'bg-red-500/10 text-red-500 border-red-500/20'
+                              )}>
+                                {booking.status}
+                              </span>
+                           </div>
                         </td>
-                        <td className="py-4 px-4 text-right">
+                        <td className="py-5 px-6 bg-white/10 rounded-r-2xl border-y border-r border-white/5 text-right">
                           {booking.status !== "cancelled" && booking.status !== "rejected" && booking.status !== "completed" && (
                             <Button
                               onClick={() => handleCancelBooking(booking.id)}
-                              size="sm"
-                              variant="outline"
-                              className="border-red-500/50 text-red-400 hover:bg-red-500/20 h-7 text-xs rounded-full p-0 px-3"
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest transition-all"
                             >
-                              Forcer Annulation
+                              Interrompre
                             </Button>
                           )}
                         </td>
@@ -474,5 +564,7 @@ export function AdminPanel() {
         </div>
       </div>
     </div>
+  </div>
+</div>
   );
 }

@@ -7,7 +7,8 @@
         "dev": "tsx watch src/app.ts",
         "build": "tsc",
         "start": "node dist/app.js",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "test": "vitest run"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.49.1",
@@ -24,7 +25,12 @@
         "@types/express": "^5.0.0",
         "@types/morgan": "^1.9.9",
         "@types/node": "^22.10.2",
+        "@typescript-eslint/eslint-plugin": "^8.58.2",
+        "@typescript-eslint/parser": "^8.58.2",
+        "eslint": "^10.2.1",
+        "eslint-plugin-security": "^4.0.0",
         "tsx": "^4.19.2",
-        "typescript": "^5.7.2"
+        "typescript": "^5.7.2",
+        "vitest": "^4.1.4"
     }
 }

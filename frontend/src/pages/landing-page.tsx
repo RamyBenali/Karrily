@@ -15,6 +15,9 @@ const LISTING_TYPES = [
   { value: "troc", label: "Troquer", icon: "🔄" },
 ];
 
+import { useEffect } from "react";
+import { itemsService } from "../services/api.service";
+
 export function LandingPage() {
   const navigate = useNavigate();
 
@@ -49,52 +52,32 @@ export function LandingPage() {
     { icon: Camera, label: "Photo & Vidéo", count: "654", color: "#FF4F5A" },
   ];
 
-  const trendingItems = [
-    {
-      id: 1,
-      title: "Loft Moderne Centre-Ville",
-      category: "Immobilier",
-      price: 450,
-      period: "nuit",
-      rating: 4.9,
-      reviews: 127,
-      image: "https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwxfHx8fDE3NzE0MzkzODh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      featured: true
-    },
-    {
-      id: 2,
-      title: "Voiture de Sport Premium",
-      category: "Véhicules",
-      price: 299,
-      period: "jour",
-      rating: 5.0,
-      reviews: 89,
-      image: "https://images.unsplash.com/photo-1762026846208-946fe48e96e1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmVtaXVtJTIwc3BvcnRzJTIwY2FyJTIwc2lkZSUyMHZpZXd8ZW58MXx8fHwxNzcxNTA1MjI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      featured: true
-    },
-    {
-      id: 3,
-      title: "Kit Caméra Professionnelle",
-      category: "Photo & Vidéo",
-      price: 85,
-      period: "jour",
-      rating: 4.8,
-      reviews: 203,
-      image: "https://images.unsplash.com/photo-1769699167687-540cce99f744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjYW1lcmElMjBlcXVpcG1lbnR8ZW58MXx8fHwxNzcxNDg2NjExfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      featured: false
-    },
-    {
-      id: 4,
-      title: "Ensemble Mobilier Design",
-      category: "Mobilier",
-      price: 120,
-      period: "semaine",
-      rating: 4.7,
-      reviews: 56,
-      image: "https://images.unsplash.com/photo-1760716478137-d861d5b354e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZXNpZ25lciUyMGZ1cm5pdHVyZSUyMGNoYWlyJTIwbW9kZXJufGVufDF8fHx8MTc3MTUwNTIyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
-      featured: false
-    }
-  ];
+  const [trendingItems, setTrendingItems] = useState<any[]>([]);
+
+  useEffect(() => {
+     const fetchFeatured = async () => {
+        try {
+           const res = await itemsService.getFeatured();
+           if (res.data) {
+             const formatted = res.data.map((item: any, i: number) => ({
+                id: item.id,
+                title: item.title,
+                category: item.category?.name || "Non classé",
+                price: item.price_per_day || item.sale_price || 0,
+                period: item.listing_type === 'sell' ? 'achat' : 'jour',
+                rating: item.rating ? Number(item.rating).toFixed(1) : "Nouveau",
+                reviews: item.total_reviews || 0,
+                image: item.thumbnail_url || item.images?.[0] || "",
+                featured: i < 2
+             }));
+             setTrendingItems(formatted);
+           }
+        } catch (e) {
+           console.error("Failed to load featured items", e);
+        }
+     };
+     fetchFeatured();
+  }, []);
 
   const features = [
     {
@@ -130,7 +113,7 @@ export function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <div className="relative min-h-screen bg-gradient-to-br from-[#0F2A2E] via-[#1A4851] to-[#0F2A2E] overflow-hidden">
-        <Navigation />
+        
 
         {/* Floating Background Shapes */}
         <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
@@ -405,43 +388,45 @@ export function LandingPage() {
           </motion.div>
 
           <div className="grid lg:grid-cols-12 gap-6">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              onClick={() => navigate(`/item/${trendingItems[0].id}`)}
-              className="lg:col-span-7 group cursor-pointer"
-            >
-              <div className="relative h-[500px] rounded-3xl overflow-hidden">
-                <ImageWithFallback
-                  src={trendingItems[0].image}
-                  alt={trendingItems[0].title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute top-6 left-6">
-                  <span className="px-4 py-2 bg-[#FF4F5A] text-white text-sm font-bold rounded-full shadow-lg">
-                    En vedette
-                  </span>
-                </div>
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-sm rounded-full">
-                      {trendingItems[0].category}
+            {trendingItems.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                onClick={() => navigate(`/item/${trendingItems[0].id}`)}
+                className="lg:col-span-7 group cursor-pointer"
+              >
+                <div className="relative h-[500px] rounded-3xl overflow-hidden bg-muted">
+                  <ImageWithFallback
+                    src={trendingItems[0].image}
+                    alt={trendingItems[0].title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute top-6 left-6">
+                    <span className="px-4 py-2 bg-[#FF4F5A] text-white text-sm font-bold rounded-full shadow-lg">
+                      En vedette
                     </span>
-                    <div className="flex items-center gap-1 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full">
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-white text-sm font-medium">{trendingItems[0].rating}</span>
+                  </div>
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-sm rounded-full">
+                        {trendingItems[0].category}
+                      </span>
+                      <div className="flex items-center gap-1 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full">
+                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <span className="text-white text-sm font-medium">{trendingItems[0].rating}</span>
+                      </div>
+                    </div>
+                    <h3 className="text-3xl font-bold text-white mb-2">{trendingItems[0].title}</h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-white">{trendingItems[0].price} DA</span>
+                      <span className="text-white/70">/ {trendingItems[0].period}</span>
                     </div>
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-2">{trendingItems[0].title}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-white">{trendingItems[0].price} DA</span>
-                    <span className="text-white/70">/ {trendingItems[0].period}</span>
-                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
 
             <div className="lg:col-span-5 flex flex-col gap-6">
               {trendingItems.slice(1, 3).map((item, index) => (

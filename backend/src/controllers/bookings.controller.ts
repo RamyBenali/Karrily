@@ -134,8 +134,7 @@ export class BookingsController {
                 item.owner_id,
                 "Nouvelle demande de location",
                 `Vous avez reçu une demande pour "${item.title}" par ${req.user!.full_name}.`,
-                "booking",
-                "/user-dashboard"
+                "booking_request"
             );
 
             res.status(201).json({ success: true, data });
@@ -153,7 +152,7 @@ export class BookingsController {
             const { status } = req.body;
             const userId = req.user!.id;
 
-            const validStatuses = ["confirmed", "active", "completed", "cancelled"];
+            const validStatuses = ["confirmed", "active", "completed", "cancelled", "rejected"];
             if (!validStatuses.includes(status)) {
                 throw new ApiError(400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
             }
@@ -192,12 +191,16 @@ export class BookingsController {
                     rejected: "refusée"
                 };
                 
+                let notificationType: 'booking_confirmed' | 'booking_cancelled' = 'booking_confirmed';
+                if (status === 'cancelled' || status === 'rejected') {
+                    notificationType = 'booking_cancelled';
+                }
+
                 await createNotification(
                     booking.renter_id,
                     `Réservation ${statusLabels[status] || status}`,
                     `Le statut de votre réservation a été mis à jour : ${statusLabels[status] || status}.`,
-                    "booking",
-                    "/user-dashboard"
+                    notificationType
                 );
             }
 

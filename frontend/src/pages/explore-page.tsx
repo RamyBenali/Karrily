@@ -119,7 +119,6 @@ export function ExplorePage() {
           "id, title, listing_type, price_per_day, sale_price, location, wilaya_code, thumbnail_url, images, condition, rating, total_reviews, is_negotiable, created_at, favorite_count, metadata, category_id",
           { count: "exact" },
         )
-        .eq("status", "active")
         .eq("is_available", true);
 
       if (searchQuery.trim()) {
@@ -290,7 +289,7 @@ export function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Navigation />
+      
 
       <ExploreHeader
         debouncedSearch={debouncedSearch}
@@ -353,16 +352,16 @@ export function ExplorePage() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.02, 0.4) }}
-                  className="group cursor-pointer overflow-hidden rounded-[2rem] border border-border/60 bg-card transition-all duration-300 hover:border-foreground/30 hover:shadow-xl hover:-translate-y-1 flex flex-col"
+                  className="group cursor-pointer overflow-hidden rounded-[24px] border border-border/40 bg-card transition-all duration-500 ease-out hover:border-[#FF4F5A]/40 hover:shadow-[0_15px_40px_-15px_rgba(255,79,90,0.2)] hover:-translate-y-2 flex flex-col relative"
                   onClick={() => navigate(`/item/${item.id}`)}
                 >
-                  <div className="relative h-52 overflow-hidden bg-muted">
+                  <div className="relative h-60 overflow-hidden bg-muted">
                     <ImageWithFallback
                       src={item.thumbnail_url || item.images?.[0] || ""}
                       alt={item.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="absolute left-3 top-3 flex flex-col gap-1.5">
                       <span className="rounded-full bg-background/95 px-3 py-1 text-[11px] font-bold tracking-wide backdrop-blur-md shadow-sm border border-border/50">
@@ -386,15 +385,15 @@ export function ExplorePage() {
 
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="mb-2.5 flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-[#FF4F5A] truncate mr-2">
                         {categories.find((c) => c.id === item.category_id)?.name || "Non classé"}
                       </span>
-                      {item.rating > 0 ? (
-                        <div className="flex items-center gap-1 shrink-0 bg-yellow-400/10 px-1.5 py-0.5 rounded-md">
+                      {item.rating > 0 && (
+                        <div className="flex items-center gap-1 shrink-0 bg-yellow-400/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
                           <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          <span className="text-[10px] font-extrabold text-yellow-700 dark:text-yellow-400">{Number(item.rating).toFixed(1)}</span>
+                          <span className="text-[10px] font-black text-yellow-700 dark:text-yellow-400">{Number(item.rating).toFixed(1)}</span>
                         </div>
-                      ) : null}
+                      )}
                     </div>
 
                     <h3 className="mb-2 line-clamp-2 text-base font-bold text-foreground leading-snug group-hover:text-[#FF4F5A] transition-colors">

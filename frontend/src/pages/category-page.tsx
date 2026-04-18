@@ -140,7 +140,7 @@ export function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+      
 
       {/* Hero Section - Category Specific */}
       <div className={`relative bg-gradient-to-br ${category.gradient} pt-32 pb-24 overflow-hidden`}>

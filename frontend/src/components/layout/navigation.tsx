@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid, Shield, Package } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
@@ -20,7 +20,7 @@ interface Category {
 
 export function Navigation() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, signOut } = useAuthStore();
+  const { isAuthenticated, user, signOut, role, hasItems } = useAuthStore();
   const { isDark } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -125,9 +125,9 @@ export function Navigation() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute left-0 top-12 w-[300px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden p-3"
+                      className="absolute left-0 top-12 w-[300px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden max-h-[70vh] flex flex-col"
                     >
-                      <div className="grid grid-cols-1 gap-1">
+                      <div className="p-3 overflow-y-auto custom-scrollbar grid grid-cols-1 gap-1">
                         {categories.map((cat) => {
                           const Icon = getCategoryIcon(cat.slug);
                           return (
@@ -173,6 +173,19 @@ export function Navigation() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
+                {(role === 'admin' || hasItems) && (
+                  <button onClick={() => navigate('/lender')} className="hidden lg:flex items-center gap-2 text-sm font-bold text-foreground hover:text-[#FF4F5A] transition-colors bg-card border border-border px-4 h-10 rounded-2xl shadow-sm">
+                    <Package className="w-4 h-4" />
+                    Propriétaire
+                  </button>
+                )}
+                {role === 'admin' && (
+                  <button onClick={() => navigate('/admin')} className="hidden lg:flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-[#FF4F5A] to-[#FF6B74] hover:shadow-[0_0_20px_rgba(255,79,90,0.4)] transition-all px-4 h-10 rounded-2xl shadow-sm">
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </button>
+                )}
+
                 <button
                   onClick={() => navigate('/dashboard')}
                   className="w-10 h-10 rounded-2xl hover:bg-muted flex items-center justify-center text-foreground transition-all"
@@ -257,6 +270,17 @@ export function Navigation() {
                         </div>
                         <button onClick={() => { navigate('/dashboard'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
                         <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
+                        
+                        {/* Mobile view roles */}
+                        <div className="lg:hidden mt-1 mb-1 space-y-1">
+                          {(role === 'admin' || hasItems) && (
+                            <button onClick={() => { navigate('/lender'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><Package className="w-4 h-4" /> Propriétaire</button>
+                          )}
+                          {role === 'admin' && (
+                            <button onClick={() => { navigate('/admin'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-[#FF4F5A] transition-all"><Shield className="w-4 h-4" /> Admin</button>
+                          )}
+                        </div>
+
                         <div className="border-t border-border/50 mt-1 pt-1">
                            <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-red-500 transition-all"><LogOut className="w-4 h-4" /> Déconnexion</button>
                         </div>

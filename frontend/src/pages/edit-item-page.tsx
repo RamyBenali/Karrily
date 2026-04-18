@@ -286,7 +286,7 @@ export function EditItemPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <Navigation />
+            
 
             <main className="pt-24 pb-20">
                 <div className="max-w-4xl mx-auto px-6">

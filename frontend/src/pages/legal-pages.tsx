@@ -4,7 +4,7 @@ import { Navigation } from "../components/layout/navigation";
 function LegalLayout({ title, children }: { title: string, children: React.ReactNode }) {
     return (
         <div className="min-h-screen bg-[#F7F7F9]">
-            <Navigation />
+            
             <div className="pt-32 pb-16">
                 <main className="max-w-4xl mx-auto px-6 lg:px-12 bg-white rounded-3xl p-8 lg:p-12 shadow-xl border border-gray-100">
                     <motion.div

@@ -147,11 +147,9 @@ export function ItemDetailPage() {
         const itemData = data as any;
         setItem(itemData);
 
-        // Increment view count
+        // Increment view count via RPC to avoid race conditions
         supabase
-          .from("items")
-          .update({ view_count: (itemData.view_count || 0) + 1 })
-          .eq("id", itemId)
+          .rpc("increment_view_count", { item_id_param: itemId })
           .then(() => { });
 
         setIsLoading(false);
@@ -317,7 +315,7 @@ export function ItemDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <Navigation />
+        
         <div className="flex flex-col items-center justify-center pt-40">
           <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mb-4" />
           <p className="text-muted-foreground animate-pulse">Chargement de l'annonce...</p>
@@ -329,7 +327,7 @@ export function ItemDetailPage() {
   if (error || !item) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <Navigation />
+        
         <div className="flex flex-col items-center justify-center pt-40 px-6 text-center">
           <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
             <AlertCircle className="w-12 h-12 text-muted-foreground/40" />
@@ -353,7 +351,7 @@ export function ItemDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+      
 
       <main className="pt-24 pb-20">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">

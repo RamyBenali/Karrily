@@ -11,7 +11,7 @@ import { SignupPage } from "./pages/signup-page";
 import { CreateItemPage } from "./pages/create-item-page";
 import { EditItemPage } from "./pages/edit-item-page";
 import { CGUPage, PrivacyPolicyPage, LegalNoticePage } from "./pages/legal-pages";
-import { ProtectedRoute, GuestRoute } from "./components/shared/protected-route";
+import { ProtectedRoute, GuestRoute, AdminRoute } from "./components/shared/protected-route";
 import { MainLayout } from "./components/layout/main-layout";
 
 export const router = createBrowserRouter([
@@ -83,6 +83,13 @@ export const router = createBrowserRouter([
             path: "/lender",
             Component: LenderDashboard,
           },
+        ],
+      },
+
+      // ─── Admin Routes (require admin role) ────────────
+      {
+        Component: AdminRoute,
+        children: [
           {
             path: "/admin",
             Component: AdminPanel,
