@@ -26,6 +26,7 @@ import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { cn } from "../components/ui/utils";
+import { statsService } from "../services/api.service";
 
 
 const sidebarItems = [
@@ -82,6 +83,12 @@ export function AdminPanel() {
     totalItems: 0,
     totalBookings: 0,
     totalRevenue: 0,
+    system: {
+        totalMessages: 0,
+        unreadNotifications: 0,
+        dbConnections: 0,
+        apiLatency: "0ms"
+    }
   });
 
   // Data lists
@@ -103,22 +110,14 @@ export function AdminPanel() {
     setIsLoading(true);
 
     try {
-      // 1. Fetch Stats
-      const [{ count: userCount }, { count: itemCount }, { count: bookingCount }, { data: revenueData }] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("items").select("*", { count: "exact", head: true }),
-        supabase.from("bookings").select("*", { count: "exact", head: true }),
-        supabase.from("bookings").select("total_price").eq("status", "completed"),
-      ]);
-
-      const revenue = revenueData ? revenueData.reduce((acc, curr) => acc + (Number(curr.total_price) || 0), 0) : 0;
-
-      setStats({
-        totalUsers: userCount || 0,
-        totalItems: itemCount || 0,
-        totalBookings: bookingCount || 0,
-        totalRevenue: revenue,
-      });
+      // 1. Fetch Stats from Service
+      const res = await statsService.getAdminStats();
+      if (res.data) {
+          setStats({
+              ...res.data.kpis,
+              system: res.data.system
+          });
+      }
 
       // 2. Fetch Users
       const { data: usersData } = await supabase
@@ -306,39 +305,37 @@ export function AdminPanel() {
                         Live Status
                      </div>
                   </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-8 relative z-10">
-                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Traffic Serveur</h4>
-                        <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
-                           <motion.div initial={{ width: 0 }} animate={{ width: "65%" }} className="h-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-                        </div>
-                        <p className="text-[10px] font-bold text-white/60">Load: 65% (Optimal)</p>
-                     </div>
-                     <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Taux de Conversion</h4>
-                        <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
-                           <motion.div initial={{ width: 0 }} animate={{ width: "42%" }} className="h-full bg-[#FF4F5A] shadow-[0_0_10px_#FF4F5A]" />
-                        </div>
-                        <p className="text-[10px] font-bold text-white/60">Rate: 4.2% (+0.8%)</p>
-                     </div>
-                  </div>
-
+                         <div className="grid md:grid-cols-2 gap-8 relative z-10">
+                      <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                         <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Volume Messages</h4>
+                         <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.totalMessages / 10, 100)}%` }} className="h-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
+                         </div>
+                         <p className="text-[10px] font-bold text-white/60">Total: {stats.system.totalMessages}</p>
+                      </div>
+                      <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                         <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Alertes Non Lues</h4>
+                         <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.unreadNotifications * 10, 100)}%` }} className="h-full bg-[#FF4F5A] shadow-[0_0_10px_#FF4F5A]" />
+                         </div>
+                         <p className="text-[10px] font-bold text-white/60">Unread: {stats.system.unreadNotifications}</p>
+                      </div>
+                   </div>
                   <div className="mt-12 flex justify-center">
                      <div className="inline-flex items-center gap-6 px-8 py-4 bg-white/5 rounded-2xl border border-white/5">
                         <div className="text-center">
                            <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">API Latency</p>
-                           <p className="text-xl font-black text-white font-mono">24ms</p>
+                           <p className="text-xl font-black text-white font-mono">{stats.system.apiLatency}</p>
                         </div>
                         <div className="w-px h-8 bg-white/10" />
                         <div className="text-center">
                            <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">DB Connections</p>
-                           <p className="text-xl font-black text-white font-mono">152</p>
+                           <p className="text-xl font-black text-white font-mono">{stats.system.dbConnections}</p>
                         </div>
                         <div className="w-px h-8 bg-white/10" />
                         <div className="text-center">
-                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">Error Rate</p>
-                           <p className="text-xl font-black text-emerald-500 font-mono">0.02%</p>
+                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">Transactions</p>
+                           <p className="text-xl font-black text-emerald-500 font-mono">{stats.totalBookings}</p>
                         </div>
                      </div>
                   </div>

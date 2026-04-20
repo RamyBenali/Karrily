@@ -6,6 +6,7 @@ import { salesRoutes } from "./sales.routes.js";
 import { trocRoutes } from "./troc.routes.js";
 import { usersRoutes } from "./users.routes.js";
 import { categoriesRoutes } from "./categories.routes.js";
+import { statsRoutes } from "./stats.routes.js";
 
 export const apiRouter = Router();
 
@@ -17,3 +18,4 @@ apiRouter.use("/sales", salesRoutes);
 apiRouter.use("/troc", trocRoutes);
 apiRouter.use("/users", usersRoutes);
 apiRouter.use("/categories", categoriesRoutes);
+apiRouter.use("/stats", statsRoutes);

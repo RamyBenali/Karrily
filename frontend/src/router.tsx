@@ -11,7 +11,7 @@ import { SignupPage } from "./pages/signup-page";
 import { CreateItemPage } from "./pages/create-item-page";
 import { EditItemPage } from "./pages/edit-item-page";
 import { CGUPage, PrivacyPolicyPage, LegalNoticePage } from "./pages/legal-pages";
-import { ProtectedRoute, GuestRoute, AdminRoute } from "./components/shared/protected-route";
+import { ProtectedRoute, GuestRoute, AdminRoute, LenderRoute, ClientRoute } from "./components/shared/protected-route";
 import { MainLayout } from "./components/layout/main-layout";
 
 export const router = createBrowserRouter([
@@ -65,12 +65,17 @@ export const router = createBrowserRouter([
 
       // ─── Protected Routes (require auth) ──────────────
       {
-        Component: ProtectedRoute,
+        Component: ClientRoute,
         children: [
           {
             path: "/dashboard",
             Component: UserDashboard,
           },
+        ],
+      },
+      {
+        Component: ProtectedRoute,
+        children: [
           {
             path: "/create",
             Component: CreateItemPage,
@@ -79,6 +84,11 @@ export const router = createBrowserRouter([
             path: "/edit-item/:id",
             Component: EditItemPage,
           },
+        ],
+      },
+      {
+        Component: LenderRoute,
+        children: [
           {
             path: "/lender",
             Component: LenderDashboard,

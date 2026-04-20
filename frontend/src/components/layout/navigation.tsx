@@ -20,7 +20,7 @@ interface Category {
 
 export function Navigation() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, signOut, role, hasItems } = useAuthStore();
+  const { isAuthenticated, user, signOut, role, hasItems, getDashboardPath } = useAuthStore();
   const { isDark } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -173,7 +173,7 @@ export function Navigation() {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                {(role === 'admin' || hasItems) && (
+                {role !== 'admin' && hasItems && (
                   <button onClick={() => navigate('/lender')} className="hidden lg:flex items-center gap-2 text-sm font-bold text-foreground hover:text-[#FF4F5A] transition-colors bg-card border border-border px-4 h-10 rounded-2xl shadow-sm">
                     <Package className="w-4 h-4" />
                     Propriétaire
@@ -187,7 +187,7 @@ export function Navigation() {
                 )}
 
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(getDashboardPath())}
                   className="w-10 h-10 rounded-2xl hover:bg-muted flex items-center justify-center text-foreground transition-all"
                 >
                   <Heart className="w-5 h-5" />
@@ -227,7 +227,7 @@ export function Navigation() {
                             notifications.map(notif => (
                               <div 
                                 key={notif.id}
-                                onClick={() => { markAsRead(notif.id); navigate(notif.link || '/dashboard'); setShowNotifications(false); }}
+                                onClick={() => { markAsRead(notif.id); navigate(notif.link || getDashboardPath()); setShowNotifications(false); }}
                                 className={cn(
                                   "p-5 border-b border-border/30 hover:bg-muted/50 cursor-pointer transition-all relative",
                                   !notif.is_read && "bg-[#FF4F5A]/5"
@@ -268,12 +268,14 @@ export function Navigation() {
                           <p className="font-black text-xs truncate">{user?.user_metadata?.full_name || "Utilisateur"}</p>
                           <p className="text-[10px] text-muted-foreground truncate font-medium mt-0.5">{user?.email}</p>
                         </div>
-                        <button onClick={() => { navigate('/dashboard'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
-                        <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
+                        <button onClick={() => { navigate(getDashboardPath()); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
+                        {role !== 'admin' && (
+                          <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
+                        )}
                         
                         {/* Mobile view roles */}
                         <div className="lg:hidden mt-1 mb-1 space-y-1">
-                          {(role === 'admin' || hasItems) && (
+                          {role !== 'admin' && hasItems && (
                             <button onClick={() => { navigate('/lender'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><Package className="w-4 h-4" /> Propriétaire</button>
                           )}
                           {role === 'admin' && (

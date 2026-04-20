@@ -239,3 +239,22 @@ export const favoritesService = {
         return { data, success: true };
     }
 };
+
+// ─── Stats Service ───────────────────────────────────
+
+export const statsService = {
+    getLenderStats: async () => {
+        const response = await api.get('/stats/lender');
+        return { data: response.data.data, success: true };
+    },
+
+    getAdminStats: async () => {
+        const response = await api.get('/stats/admin');
+        return { data: response.data.data, success: true };
+    },
+
+    getGlobalStats: async () => {
+        const response = await api.get('/stats/global');
+        return { data: response.data.data, success: true };
+    }
+};

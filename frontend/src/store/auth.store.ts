@@ -28,6 +28,7 @@ interface AuthState {
     setImpersonation: (userId: string, userDetails: ImpersonatedUser) => void;
     clearImpersonation: () => void;
     getEffectiveUser: () => { id: string; email?: string } | null;
+    getDashboardPath: () => string;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -132,6 +133,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         impersonatedUserId: null,
         impersonatedUser: null
     }),
+
+    getDashboardPath: () => {
+        const state = get();
+        if (state.role === "admin") return "/admin";
+        if (state.role === "lender" || state.role === "vendeur" || state.hasItems) return "/lender";
+        return "/dashboard";
+    },
 
     getEffectiveUser: () => {
         const state = get();

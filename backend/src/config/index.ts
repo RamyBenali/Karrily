@@ -10,7 +10,7 @@ export const config = {
         serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     },
     cors: {
-        frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+        allowedOrigins: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177", "http://localhost:5178"],
     },
     jwt: {
         secret: process.env.JWT_SECRET || "fallback-secret-change-me",

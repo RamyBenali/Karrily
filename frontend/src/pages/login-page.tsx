@@ -24,7 +24,8 @@ export function LoginPage() {
 
         try {
             await signIn(email, password);
-            navigate("/explore");
+            const path = useAuthStore.getState().getDashboardPath();
+            navigate(path);
         } catch (err: any) {
             setError(err?.message || "Erreur de connexion. Vérifiez vos identifiants.");
         } finally {

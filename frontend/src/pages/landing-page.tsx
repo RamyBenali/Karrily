@@ -16,10 +16,12 @@ const LISTING_TYPES = [
 ];
 
 import { useEffect } from "react";
-import { itemsService } from "../services/api.service";
+import { itemsService, statsService } from "../services/api.service";
+import { useAuthStore } from "../store/auth.store";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { getDashboardPath, isAuthenticated } = useAuthStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
@@ -43,40 +45,66 @@ export function LandingPage() {
     navigate(`/explore?q=${encodeURIComponent(tag)}&type=${listingType}`);
   };
 
-  const categories = [
-    { icon: Home, label: "Immobilier", count: "2.4k", color: "#0F2A2E" },
-    { icon: Car, label: "Véhicules", count: "1.8k", color: "#FF4F5A" },
-    { icon: Laptop, label: "Électronique", count: "3.2k", color: "#0F2A2E" },
-    { icon: Wrench, label: "Outillage", count: "890", color: "#FF4F5A" },
-    { icon: Armchair, label: "Mobilier", count: "1.1k", color: "#0F2A2E" },
-    { icon: Camera, label: "Photo & Vidéo", count: "654", color: "#FF4F5A" },
-  ];
+  const [categories, setCategories] = useState([
+    { icon: Home, label: "Immobilier", count: "...", color: "#0F2A2E" },
+    { icon: Car, label: "Véhicules", count: "...", color: "#FF4F5A" },
+    { icon: Laptop, label: "Électronique", count: "...", color: "#0F2A2E" },
+    { icon: Wrench, label: "Outillage", count: "...", color: "#FF4F5A" },
+    { icon: Armchair, label: "Mobilier", count: "...", color: "#0F2A2E" },
+    { icon: Camera, label: "Photo & Vidéo", count: "...", color: "#FF4F5A" },
+  ]);
+
+  const [globalStats, setGlobalStats] = useState({ totalCities: 47, activeUsers: 1200 });
 
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
 
   useEffect(() => {
-     const fetchFeatured = async () => {
-        try {
-           const res = await itemsService.getFeatured();
-           if (res.data) {
-             const formatted = res.data.map((item: any, i: number) => ({
-                id: item.id,
-                title: item.title,
-                category: item.category?.name || "Non classé",
-                price: item.price_per_day || item.sale_price || 0,
-                period: item.listing_type === 'sell' ? 'achat' : 'jour',
-                rating: item.rating ? Number(item.rating).toFixed(1) : "Nouveau",
-                reviews: item.total_reviews || 0,
-                image: item.thumbnail_url || item.images?.[0] || "",
-                featured: i < 2
-             }));
-             setTrendingItems(formatted);
-           }
-        } catch (e) {
-           console.error("Failed to load featured items", e);
+    const fetchFeatured = async () => {
+      try {
+        const res = await itemsService.getFeatured();
+        if (res.data) {
+          const formatted = res.data.map((item: any, i: number) => ({
+            id: item.id,
+            title: item.title,
+            category: item.category?.name || "Non classé",
+            price: item.price_per_day || item.sale_price || 0,
+            period: item.listing_type === 'sell' ? 'achat' : 'jour',
+            rating: item.rating ? Number(item.rating).toFixed(1) : "Nouveau",
+            reviews: item.total_reviews || 0,
+            image: item.thumbnail_url || item.images?.[0] || "",
+            featured: i < 2
+          }));
+          setTrendingItems(formatted);
         }
-     };
-     fetchFeatured();
+      } catch (e) {
+        console.error("Failed to load featured items", e);
+      }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const res = await statsService.getGlobalStats();
+            if (res.data) {
+                setGlobalStats({
+                    totalCities: res.data.totalCities,
+                    activeUsers: res.data.activeUsers
+                });
+                
+                setCategories(prev => prev.map(cat => {
+                    const dbCat = res.data.categories.find((c: any) => c.name === cat.label);
+                    return {
+                        ...cat,
+                        count: dbCat ? (dbCat.count >= 1000 ? (dbCat.count/1000).toFixed(1) + 'k' : dbCat.count.toString()) : "0"
+                    };
+                }));
+            }
+        } catch (e) {
+            console.error("Failed to load global stats", e);
+        }
+    };
+
+    fetchFeatured();
+    fetchStats();
   }, []);
 
   const features = [
@@ -113,7 +141,7 @@ export function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <div className="relative min-h-screen bg-gradient-to-br from-[#0F2A2E] via-[#1A4851] to-[#0F2A2E] overflow-hidden">
-        
+
 
         {/* Floating Background Shapes */}
         <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
@@ -161,7 +189,7 @@ export function LandingPage() {
                 className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20 shadow-lg shadow-[#FF4F5A]/10"
               >
                 <span className="w-2 h-2 bg-[#FF4F5A] rounded-full animate-pulse shadow-[0_0_10px_rgba(255,79,90,0.8)]" />
-                <span className="text-white text-sm font-medium">Déjà actif dans 47 villes</span>
+                <span className="text-white text-sm font-medium">Déjà actif dans {globalStats.totalCities} villes</span>
                 <Sparkles className="w-4 h-4 text-[#FF4F5A]" />
               </motion.div>
 

@@ -14,7 +14,14 @@ app.use(helmet());
 // ─── CORS ────────────────────────────────────────────
 app.use(
     cors({
-        origin: config.cors.frontendUrl,
+        origin: (origin, callback) => {
+            const allowed = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : [...config.cors.allowedOrigins];
+            if (!origin || allowed.indexOf(origin) !== -1) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],

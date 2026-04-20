@@ -7,7 +7,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { useAuthStore } from "../store/auth.store";
-import { usersService, bookingsService, itemsService, salesService, trocService } from "../services/api.service";
+import { usersService, bookingsService, itemsService, salesService, trocService, statsService } from "../services/api.service";
 import { supabase } from "../lib/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw } from "lucide-react";
@@ -22,14 +22,7 @@ const sidebarItems = [
   { icon: DollarSign, label: "Revenus" },
 ];
 
-const earningsData = [
-  { month: "Jan", earnings: 1200 },
-  { month: "Feb", earnings: 1800 },
-  { month: "Mar", earnings: 2400 },
-  { month: "Apr", earnings: 2100 },
-  { month: "May", earnings: 2800 },
-  { month: "Jun", earnings: 3200 },
-];
+// Removed hardcoded earningsData
 
 const WILAYAS: Record<number, string> = {
   1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Béjaïa",
@@ -53,7 +46,13 @@ export function LenderDashboard() {
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [mySales, setMySales] = useState<any[]>([]);
   const [trocProposals, setTrocProposals] = useState<any[]>([]);
-  const [stats, setStats] = useState({ totalEarnings: 0, activeListings: 0, totalBookings: 0 });
+  const [stats, setStats] = useState({ 
+    totalEarnings: 0, 
+    activeListings: 0, 
+    totalBookings: 0,
+    averageRating: 0,
+    earningsData: [] as { month: string, earnings: number }[]
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -61,7 +60,13 @@ export function LenderDashboard() {
     // Fetch Items
     usersService.getUserItems(user.id).then(res => {
       setMyListings(res.data);
-      setStats(prev => ({ ...prev, activeListings: res.data.length }));
+    });
+
+    // Fetch Stats
+    statsService.getLenderStats().then(res => {
+        if (res.data) {
+            setStats(res.data);
+        }
     });
 
     let channel: RealtimeChannel;
@@ -242,7 +247,7 @@ export function LenderDashboard() {
                 {[
                   { 
                     label: "Chiffre d'Affaire", 
-                    value: stats.totalEarnings > 0 ? `${stats.totalEarnings} DA` : "0 DA", 
+                    value: stats.totalEarnings > 0 ? `${Number(stats.totalEarnings).toLocaleString()} DA` : "0 DA", 
                     trend: "+12.5%",
                     icon: DollarSign, 
                     color: "text-emerald-500",
@@ -269,7 +274,7 @@ export function LenderDashboard() {
                   },
                   { 
                     label: "Satisfaction", 
-                    value: "4.8", 
+                    value: stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "Nouveau", 
                     trend: "Optimale", 
                     icon: Star, 
                     color: "text-amber-500",
@@ -323,7 +328,7 @@ export function LenderDashboard() {
                   
                   <div className="h-80 w-full relative z-10">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={earningsData}>
+                      <AreaChart data={stats.earningsData}>
                         <defs>
                           <linearGradient id="lenderEarnings" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#FF4F5A" stopOpacity={0.3}/>
