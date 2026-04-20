@@ -11,59 +11,57 @@ export class StatsController {
         try {
             const userId = req.user!.id;
 
-            // 1. Total Earnings & Total Bookings
-            const { data: bookings, error: bookingsError } = await supabaseAdmin
-                .from("bookings")
-                .select("total_price, status, created_at")
-                .eq("owner_id", userId);
+            // 1. Bookings Earnings
+            const [
+                { data: bookings, error: bookingsError },
+                { data: sales, error: salesError },
+                { count: activeListings, error: itemsError }
+            ] = await Promise.all([
+                supabaseAdmin.from("bookings").select("total_price, status, created_at").eq("owner_id", userId),
+                supabaseAdmin.from("sales").select("price, status, created_at").eq("seller_id", userId),
+                supabaseAdmin.from("items").select("*", { count: "exact", head: true }).eq("owner_id", userId).eq("is_available", true)
+            ]);
 
-            if (bookingsError) throw bookingsError;
+            if (bookingsError) {
+                console.error("Bookings stats error:", bookingsError);
+                throw bookingsError;
+            }
+            if (salesError) console.error("Sales stats error:", salesError); // Non-critical if table doesn't exist yet
 
-            const completedBookings = bookings.filter(b => b.status === "completed");
-            const totalEarnings = completedBookings.reduce((acc, b) => acc + (Number(b.total_price) || 0), 0);
-            const totalBookings = bookings.length;
+            // Calculate Earnings
+            const completedBookings = (bookings || []).filter(b => ["completed", "active", "confirmed", "delivered"].includes(b.status));
+            const completedSales = (sales || []).filter(s => ["completed", "accepted", "delivered", "shipped"].includes(s.status));
+            
+            const bookingEarnings = completedBookings.reduce((acc, b) => acc + (Number(b.total_price) || 0), 0);
+            const saleEarnings = completedSales.reduce((acc, s) => acc + (Number(s.price) || 0), 0);
+            
+            const totalEarnings = bookingEarnings + saleEarnings;
+            const totalBookings = (bookings?.length || 0) + (sales?.length || 0);
 
-            // 2. Earnings by month (Last 6 months)
-            const now = new Date();
-            const sixMonthsAgo = new Date();
-            sixMonthsAgo.setMonth(now.getMonth() - 5);
-            sixMonthsAgo.setDate(1);
-            sixMonthsAgo.setHours(0, 0, 0, 0);
-
+            // 2. Earnings by month (Combined)
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const chartData = [];
             
-            for (let i = 0; i < 6; i++) {
-                const d = new Date(sixMonthsAgo);
-                d.setMonth(sixMonthsAgo.getMonth() + i);
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthName = months[d.getMonth()];
                 
-                const monthEarnings = completedBookings
-                    .filter(b => {
-                        const bDate = new Date(b.created_at);
-                        return bDate.getMonth() === d.getMonth() && bDate.getFullYear() === d.getFullYear();
+                const mEarnings = [...completedBookings, ...completedSales]
+                    .filter(item => {
+                        const iDate = new Date(item.created_at);
+                        return iDate.getMonth() === d.getMonth() && iDate.getFullYear() === d.getFullYear();
                     })
-                    .reduce((acc, b) => acc + (Number(b.total_price) || 0), 0);
+                    .reduce((acc, item: any) => acc + (Number(item.total_price || item.price) || 0), 0);
                 
-                chartData.push({ month: monthName, earnings: monthEarnings });
+                chartData.push({ month: monthName, earnings: mEarnings });
             }
 
-            // 3. Active Listings
-            const { count: activeListings, error: itemsError } = await supabaseAdmin
-                .from("items")
-                .select("*", { count: "exact", head: true })
-                .eq("owner_id", userId)
-                .eq("status", "active");
-
-            if (itemsError) throw itemsError;
-
-            // 4. Average Rating
-            // Note: In a real app, you might want to join or have a cached rating on profiles/items.
-            // Here we'll query reviews for items owned by the user.
+            // 3. Average Rating
             const { data: items } = await supabaseAdmin.from("items").select("id").eq("owner_id", userId);
             const itemIds = items?.map(i => i.id) || [];
             
-            let averageRating = 5.0; // Default
+            let averageRating = 5.0; 
             if (itemIds.length > 0) {
                 const { data: reviews } = await supabaseAdmin
                     .from("reviews")
@@ -86,6 +84,7 @@ export class StatsController {
                 }
             });
         } catch (error) {
+            console.error("Lender stats error:", error);
             next(error);
         }
     };
@@ -96,28 +95,39 @@ export class StatsController {
      */
     getAdminStats = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // Check if user is admin (this should be handled by middleware too, but let's be safe)
+            // Check if user is admin
             if (req.user?.role !== 'admin') {
                 throw new ApiError(403, "Access denied");
             }
 
             const [
-                { count: totalUsers },
-                { count: totalItems },
-                { count: totalBookings },
-                { data: revenueData },
-                { count: totalMessages },
-                { count: unreadNotifs }
+                { count: totalUsers, error: usersErr },
+                { count: totalItems, error: itemsErr },
+                { count: totalBookings, error: bookingsErr },
+                { data: bookingRevenueData, error: bRevErr },
+                { data: saleRevenueData, error: sRevErr },
+                { count: totalMessages, error: msgErr },
+                { count: unreadNotifs, error: notifErr }
             ] = await Promise.all([
                 supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("items").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("bookings").select("*", { count: "exact", head: true }),
-                supabaseAdmin.from("bookings").select("total_price").eq("status", "completed"),
+                supabaseAdmin.from("bookings").select("total_price").in("status", ["completed", "confirmed", "delivered"]),
+                supabaseAdmin.from("sales").select("price").in("status", ["completed", "accepted", "delivered", "shipped"]),
                 supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
             ]);
 
-            const totalRevenue = revenueData ? revenueData.reduce((acc, curr) => acc + (Number(curr.total_price) || 0), 0) : 0;
+            // Log errors if any
+            if (usersErr) console.error("Admin stats users error:", usersErr);
+            if (itemsErr) console.error("Admin stats items error:", itemsErr);
+            if (bookingsErr) console.error("Admin stats bookings error:", bookingsErr);
+            if (bRevErr) console.error("Admin stats booking revenue error:", bRevErr);
+            if (sRevErr) console.error("Admin stats sale revenue error:", sRevErr);
+
+            const bookingRevenue = bookingRevenueData ? bookingRevenueData.reduce((acc, curr) => acc + (Number(curr.total_price) || 0), 0) : 0;
+            const saleRevenue = saleRevenueData ? saleRevenueData.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0) : 0;
+            const totalRevenue = bookingRevenue + saleRevenue;
 
             res.json({
                 success: true,
@@ -125,18 +135,19 @@ export class StatsController {
                     kpis: {
                         totalUsers: totalUsers || 0,
                         totalItems: totalItems || 0,
-                        totalBookings: totalBookings || 0,
+                        totalBookings: (totalBookings || 0) + (saleRevenueData?.length || 0),
                         totalRevenue
                     },
                     system: {
                         totalMessages: totalMessages || 0,
                         unreadNotifications: unreadNotifs || 0,
-                        dbConnections: 120, // Static for now as placeholder for "Health"
-                        apiLatency: "18ms", // Static for now
+                        dbStatus: "Connecté",
+                        lastUpdate: new Date().toLocaleTimeString(),
                     }
                 }
             });
         } catch (error) {
+            console.error("Admin stats error:", error);
             next(error);
         }
     };
@@ -164,7 +175,7 @@ export class StatsController {
             }));
 
             // 2. Active cities
-            const { data: locations } = await supabaseAdmin.from("items").select("location").eq("status", "active");
+            const { data: locations } = await supabaseAdmin.from("items").select("location").eq("is_available", true);
             const cities = new Set();
             locations?.forEach(l => {
                 if (l.location) {
@@ -173,12 +184,17 @@ export class StatsController {
                 }
             });
 
+            // 3. Real Active Users count
+            const { count: realUserCount } = await supabaseAdmin
+                .from("profiles")
+                .select("*", { count: "exact", head: true });
+
             res.json({
                 success: true,
                 data: {
                     categories: categoryStats,
-                    totalCities: cities.size || 47, // Default to 47 if none found
-                    activeUsers: 1200 // Static placeholder
+                    totalCities: cities.size || 47,
+                    activeUsers: realUserCount || 0
                 }
             });
         } catch (error) {

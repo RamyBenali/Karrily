@@ -29,6 +29,7 @@ interface AuthState {
     clearImpersonation: () => void;
     getEffectiveUser: () => { id: string; email?: string } | null;
     getDashboardPath: () => string;
+    fetchUserMetadata: (userId: string) => Promise<{ role: string; hasItems: boolean }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -42,58 +43,73 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     hasItems: false,
 
     initialize: async () => {
+        set({ isLoading: true });
         try {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-
-            let currentRole = "user";
-            let currentHasItems = false;
-            
-            if (session?.user) {
-                const [profileReq, itemsReq] = await Promise.all([
-                   supabase.from("profiles").select("role").eq("id", session.user.id).single(),
-                   supabase.from("items").select("id", { count: "exact", head: true }).eq("owner_id", session.user.id)
-                ]);
-                
-                if (profileReq.data) currentRole = profileReq.data.role;
-                if (itemsReq.count && itemsReq.count > 0) currentHasItems = true;
-            }
-
-            set({
-                user: session?.user ?? null,
-                session,
-                isAuthenticated: !!session,
-                isLoading: false,
-                role: currentRole,
-                hasItems: currentHasItems
-            });
-
-            // Listen for auth changes
+            // 1. Initial listener setup (for future changes)
             supabase.auth.onAuthStateChange(async (_event, newSession) => {
-                let r = "user";
-                let h = false;
-                
-                if (newSession?.user) {
-                   const [profileReq, itemsReq] = await Promise.all([
-                      supabase.from("profiles").select("role").eq("id", newSession.user.id).single(),
-                      supabase.from("items").select("id", { count: "exact", head: true }).eq("owner_id", newSession.user.id)
-                   ]);
-                   if (profileReq.data) r = profileReq.data.role;
-                   if (itemsReq.count && itemsReq.count > 0) h = true;
+                if (_event === 'SIGNED_OUT') {
+                    set({ 
+                        user: null, 
+                        session: null, 
+                        isAuthenticated: false, 
+                        role: "user", 
+                        hasItems: false,
+                        isLoading: false
+                    });
+                    return;
                 }
                 
-                set({
-                    user: newSession?.user ?? null,
-                    session: newSession,
-                    isAuthenticated: !!newSession,
-                    role: r,
-                    hasItems: h
-                });
+                if (newSession?.user) {
+                    const { role, hasItems } = await get().fetchUserMetadata(newSession.user.id);
+                    set({
+                        user: newSession.user,
+                        session: newSession,
+                        isAuthenticated: true,
+                        role,
+                        hasItems,
+                        isLoading: false
+                    });
+                }
             });
-        } catch {
+
+            // 2. Explicitly get initial session (for persistence)
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session?.user) {
+                const { role, hasItems } = await get().fetchUserMetadata(session.user.id);
+                set({
+                    user: session.user,
+                    session: session,
+                    isAuthenticated: true,
+                    role,
+                    hasItems,
+                    isLoading: false
+                });
+            } else {
+                // If no session, set loading to false but keep user null (Anonymous mode)
+                set({ user: null, session: null, isAuthenticated: false, role: "user", hasItems: false, isLoading: false });
+            }
+
+        } catch (error) {
+            console.error("Auth initialization error:", error);
             set({ isLoading: false });
         }
+    },
+
+    fetchUserMetadata: async (userId: string) => {
+        let r = "user";
+        let h = false;
+        try {
+            const [profileReq, itemsReq] = await Promise.all([
+                supabase.from("profiles").select("role").eq("id", userId).single(),
+                supabase.from("items").select("id", { count: "exact", head: true }).eq("owner_id", userId)
+            ]);
+            if (profileReq.data) r = profileReq.data.role;
+            if (itemsReq.count && itemsReq.count > 0) h = true;
+        } catch (e) {
+            console.error("Error fetching user metadata:", e);
+        }
+        return { role: r, hasItems: h };
     },
 
     signUp: async (email, password, fullName) => {

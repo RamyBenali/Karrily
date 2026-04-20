@@ -434,7 +434,7 @@ export function UserDashboard() {
 
     const wilaya = WILAYAS.find(w => w.code === profile.wilaya_code);
 
-    const { error } = await supabase
+    const { error: profileError } = await supabase
       .from("profiles")
       .update({
         full_name: profile.full_name,
@@ -445,7 +445,14 @@ export function UserDashboard() {
       })
       .eq("id", user.id);
 
-    if (error) {
+    // Also update auth metadata so initials in header refresh
+    if (!profileError) {
+        await supabase.auth.updateUser({
+            data: { full_name: profile.full_name }
+        });
+    }
+
+    if (profileError) {
       setProfileError("Erreur lors de la sauvegarde. Réessayez.");
     } else {
       setSaveSuccess(true);
@@ -538,7 +545,7 @@ export function UserDashboard() {
                           <Package className="w-12 h-12 text-[#FF4F5A]" />
                        </div>
                        <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Locations</p>
-                       <h3 className="text-xl font-bold leading-none">{bookings.filter(b => b.status === 'active').length}</h3>
+                       <h3 className="text-xl font-bold leading-none">{bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length}</h3>
                        <p className="text-[10px] text-muted-foreground mt-2">En cours actuellement</p>
                     </div>
                     <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">

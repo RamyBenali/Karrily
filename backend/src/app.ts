@@ -15,10 +15,18 @@ app.use(helmet());
 app.use(
     cors({
         origin: (origin, callback) => {
+            if (config.nodeEnv === "development") {
+                // Allow any localhost/127.0.0.1 origins in development
+                if (!origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+                    return callback(null, true);
+                }
+            }
+            
             const allowed = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : [...config.cors.allowedOrigins];
             if (!origin || allowed.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
+                console.error(`CORS rejected origin: ${origin}`);
                 callback(new Error("Not allowed by CORS"));
             }
         },

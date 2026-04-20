@@ -34,6 +34,7 @@ const sidebarItems = [
   { icon: Users, label: "Utilisateurs" },
   { icon: Package, label: "Annonces" },
   { icon: Calendar, label: "Réservations" },
+  { icon: DollarSign, label: "Ventes" },
 ];
 
 // Interfaces
@@ -69,11 +70,21 @@ interface Booking {
   items: { title: string };
 }
 
+interface Sale {
+  id: string;
+  price: number;
+  status: string;
+  created_at: string;
+  buyer: { full_name: string };
+  seller: { full_name: string };
+  items: { title: string };
+}
+
 export function AdminPanel() {
   const navigate = useNavigate();
   const { user, setImpersonation } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "bookings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "bookings" | "sales">("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -95,6 +106,7 @@ export function AdminPanel() {
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [itemsList, setItemsList] = useState<Item[]>([]);
   const [bookingsList, setBookingsList] = useState<Booking[]>([]);
+  const [salesList, setSalesList] = useState<Sale[]>([]);
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,6 +163,19 @@ export function AdminPanel() {
         .order("created_at", { ascending: false })
         .limit(50);
       setBookingsList((bookingsData as any) || []);
+      
+      // 5. Fetch Sales
+      const { data: salesData } = await supabase
+        .from("sales")
+        .select(`
+          id, price, status, created_at,
+          buyer:buyer_id(full_name),
+          seller:seller_id(full_name),
+          items:item_id(title)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setSalesList((salesData as any) || []);
 
     } catch (error) {
       console.error("Error fetching admin data:", error);
@@ -228,7 +253,8 @@ export function AdminPanel() {
                   "Vue d'ensemble": "overview",
                   "Utilisateurs": "users",
                   "Annonces": "items",
-                  "Réservations": "bookings"
+                  "Réservations": "bookings",
+                  "Ventes": "sales"
                 };
                 setActiveTab(map[label]);
                 setIsMobileMenuOpen(false);
@@ -549,6 +575,54 @@ export function AdminPanel() {
                               Interrompre
                             </Button>
                           )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Sales Tab */}
+          {activeTab === "sales" && (
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0F1415] border border-white/5 rounded-[3rem] p-10 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-10">Gestion <span className="text-[#FF4F5A]">Ventes</span></h3>
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-separate border-spacing-y-3">
+                  <thead>
+                    <tr className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">
+                      <th className="py-4 px-6">Vente</th>
+                      <th className="py-4 px-6">Prix</th>
+                      <th className="py-4 px-6">Vendeur / Acheteur</th>
+                      <th className="py-4 px-6 text-center">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesList.map((sale) => (
+                      <tr key={sale.id} className="group transition-all">
+                        <td className="py-5 px-6 bg-white/10 rounded-l-2xl border-y border-l border-white/5">
+                          <div className="font-bold text-white text-base truncate max-w-[200px]" title={sale.items?.title}>{sale.items?.title}</div>
+                          <div className="text-[10px] font-black uppercase text-white/30 mt-1">{new Date(sale.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5 font-black text-white">
+                          {sale.price.toLocaleString()} DA
+                        </td>
+                        <td className="py-5 px-6 bg-white/10 border-y border-white/5">
+                           <div className="flex flex-col gap-1">
+                              <span className="text-xs font-bold text-emerald-400">V: {sale.seller?.full_name}</span>
+                              <span className="text-xs font-bold text-blue-400">A: {sale.buyer?.full_name}</span>
+                           </div>
+                        </td>
+                        <td className="py-5 px-6 bg-white/10 rounded-r-2xl border-y border-r border-white/5 text-center">
+                           <span className={cn(
+                             "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                             sale.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                             sale.status === 'accepted' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                             'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                           )}>
+                             {sale.status}
+                           </span>
                         </td>
                       </tr>
                     ))}

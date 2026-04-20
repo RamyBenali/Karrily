@@ -62,7 +62,7 @@ export function LandingPage() {
     const fetchFeatured = async () => {
       try {
         const res = await itemsService.getFeatured();
-        if (res.data) {
+        if (res && Array.isArray(res.data)) {
           const formatted = res.data.map((item: any, i: number) => ({
             id: item.id,
             title: item.title,
@@ -84,19 +84,21 @@ export function LandingPage() {
     const fetchStats = async () => {
         try {
             const res = await statsService.getGlobalStats();
-            if (res.data) {
+            if (res && res.data) {
                 setGlobalStats({
-                    totalCities: res.data.totalCities,
-                    activeUsers: res.data.activeUsers
+                    totalCities: res.data.totalCities || 47,
+                    activeUsers: res.data.activeUsers || 0
                 });
                 
-                setCategories(prev => prev.map(cat => {
-                    const dbCat = res.data.categories.find((c: any) => c.name === cat.label);
-                    return {
-                        ...cat,
-                        count: dbCat ? (dbCat.count >= 1000 ? (dbCat.count/1000).toFixed(1) + 'k' : dbCat.count.toString()) : "0"
-                    };
-                }));
+                if (res.data.categories && Array.isArray(res.data.categories)) {
+                    setCategories(prev => prev.map(cat => {
+                        const dbCat = res.data.categories.find((c: any) => c.name === cat.label || c.slug === cat.label.toLowerCase());
+                        return {
+                            ...cat,
+                            count: dbCat ? (dbCat.count >= 1000 ? (dbCat.count/1000).toFixed(1) + 'k' : dbCat.count.toString()) : "0"
+                        };
+                    }));
+                }
             }
         } catch (e) {
             console.error("Failed to load global stats", e);

@@ -145,10 +145,20 @@ export class ItemsController {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("❌ Supabase Item Insert Error:", {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                    dataSent: itemData
+                });
+                throw new ApiError(400, `Erreur lors de la création: ${error.message}`);
+            }
 
             res.status(201).json({ success: true, data });
-        } catch (error) {
+        } catch (error: any) {
+            console.error("ItemsController.create catch:", error);
             next(error);
         }
     };
