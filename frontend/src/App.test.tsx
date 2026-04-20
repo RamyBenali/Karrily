@@ -1,7 +1,4 @@
-// import { describe, it, expect } from 'vitest';
-const describe = (name: string, fn: any) => fn();
-const it = (name: string, fn: any) => fn();
-const expect = (val: any) => ({ toBe: (v: any) => {} });
+import { describe, it, expect } from 'vitest';
 
 describe('App Smoke Test', () => {
   it('should pass a basic sanity check', () => {
