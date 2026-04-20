@@ -9,6 +9,15 @@ export const itemsService = {
         if (params?.category_id) queryParams.append("category", params.category_id);
         if (params?.status) queryParams.append("status", params.status);
         if (params?.is_available !== undefined) queryParams.append("is_available", String(params.is_available));
+        if (params?.q) queryParams.append("search", params.q);
+        if (params?.minPrice) queryParams.append("minPrice", String(params.minPrice));
+        if (params?.maxPrice) queryParams.append("maxPrice", String(params.maxPrice));
+        if (params?.location) queryParams.append("location", params.location);
+        if (params?.condition) queryParams.append("condition", params.condition);
+        if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+        if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+        if (params?.page) queryParams.append("page", String(params.page));
+        if (params?.limit) queryParams.append("limit", String(params.limit));
 
         const response = await api.get(`/items?${queryParams.toString()}`);
         return { 
@@ -86,24 +95,13 @@ export const bookingsService = {
 
 export const categoriesService = {
     getAll: async () => {
-        // Optionnel : Passer par l'UI ou Supabase si les routes ne sont pas appelées en masse
-        const { data, error } = await supabase
-            .from("categories")
-            .select("*")
-            .eq("is_active", true)
-            .order("sort_order");
-        if (error) throw error;
-        return { data, success: true };
+        const response = await api.get('/categories');
+        return { data: response.data.data, success: true };
     },
 
     getBySlug: async (slug: string) => {
-        const { data, error } = await supabase
-            .from("categories")
-            .select("*")
-            .eq("slug", slug)
-            .single();
-        if (error) throw error;
-        return { data, success: true };
+        const response = await api.get(`/categories/${slug}`);
+        return { data: response.data.data, success: true };
     },
 };
 

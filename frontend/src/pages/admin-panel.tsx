@@ -122,60 +122,24 @@ export function AdminPanel() {
     setIsLoading(true);
 
     try {
-      // 1. Fetch Stats from Service
+      // 1. Fetch Comprehensive Data from Backend Stats Service
       const res = await statsService.getAdminStats();
+      
       if (res.data) {
+          // Update KPIs and System stats
           setStats({
               ...res.data.kpis,
               system: res.data.system
           });
+
+          // Update Lists from backend (bypass RLS)
+          if (res.data.lists) {
+              setUsersList(res.data.lists.users || []);
+              setItemsList(res.data.lists.items || []);
+              setBookingsList(res.data.lists.bookings || []);
+              setSalesList(res.data.lists.sales || []);
+          }
       }
-
-      // 2. Fetch Users
-      const { data: usersData } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setUsersList(usersData || []);
-
-      // 3. Fetch Items
-      const { data: itemsData } = await supabase
-        .from("items")
-        .select(`
-          id, title, owner_id, price_per_day, status, created_at,
-          profiles:owner_id(full_name, email),
-          categories:category_id(name)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setItemsList((itemsData as any) || []);
-
-      // 4. Fetch Bookings
-      const { data: bookingsData } = await supabase
-        .from("bookings")
-        .select(`
-          id, total_price, status, start_date, end_date, created_at,
-          renter:renter_id(full_name),
-          owner:owner_id(full_name),
-          items:item_id(title)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setBookingsList((bookingsData as any) || []);
-      
-      // 5. Fetch Sales
-      const { data: salesData } = await supabase
-        .from("sales")
-        .select(`
-          id, price, status, created_at,
-          buyer:buyer_id(full_name),
-          seller:seller_id(full_name),
-          items:item_id(title)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setSalesList((salesData as any) || []);
 
     } catch (error) {
       console.error("Error fetching admin data:", error);

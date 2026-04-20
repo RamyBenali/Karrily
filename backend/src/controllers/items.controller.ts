@@ -28,6 +28,7 @@ export class ItemsController {
             let query = supabaseAdmin
                 .from("items")
                 .select("*, category:categories(*), owner:profiles(*)", { count: "exact" })
+                .eq("status", "active")
                 .eq("is_available", true)
                 .range(offset, offset + limitNum - 1)
                 .order(sortBy as string, { ascending: sortOrder === "asc" });
@@ -63,15 +64,30 @@ export class ItemsController {
      */
     getFeatured = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const { data, error } = await supabaseAdmin
+            let { data, error } = await supabaseAdmin
                 .from("items")
                 .select("*, category:categories(*), owner:profiles(*)")
                 .eq("is_available", true)
+                .eq("status", "active")
                 .eq("is_premium", true)
                 .order("rating", { ascending: false })
                 .limit(8);
 
             if (error) throw error;
+
+            // Fallback: If no premium items, get latest active items
+            if (!data || data.length === 0) {
+                const { data: latest, error: fallbackError } = await supabaseAdmin
+                    .from("items")
+                    .select("*, category:categories(*), owner:profiles(*)")
+                    .eq("is_available", true)
+                    .eq("status", "active")
+                    .order("created_at", { ascending: false })
+                    .limit(8);
+                
+                if (fallbackError) throw fallbackError;
+                data = latest;
+            }
 
             res.json({ success: true, data });
         } catch (error) {

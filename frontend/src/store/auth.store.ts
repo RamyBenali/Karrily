@@ -44,55 +44,77 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: async () => {
         set({ isLoading: true });
+
+        // Safety timeout: Ensure loading state is ALWAYS cleared after 5 seconds
+        const timeoutId = setTimeout(() => {
+            const state = get();
+            if (state.isLoading) {
+                console.warn("Auth initialization safety trigger: Forcing loading to false.");
+                set({ isLoading: false });
+            }
+        }, 5000);
+
         try {
-            // 1. Initial listener setup (for future changes)
-            supabase.auth.onAuthStateChange(async (_event, newSession) => {
-                if (_event === 'SIGNED_OUT') {
+            // 1. Setup Auth State Listener
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_OUT' || !session) {
                     set({ 
                         user: null, 
                         session: null, 
                         isAuthenticated: false, 
                         role: "user", 
                         hasItems: false,
-                        isLoading: false
+                        isLoading: false 
                     });
                     return;
                 }
-                
-                if (newSession?.user) {
-                    const { role, hasItems } = await get().fetchUserMetadata(newSession.user.id);
-                    set({
-                        user: newSession.user,
-                        session: newSession,
-                        isAuthenticated: true,
-                        role,
-                        hasItems,
-                        isLoading: false
-                    });
-                }
+
+                // Update session/user immediately
+                set({ 
+                    user: session.user, 
+                    session, 
+                    isAuthenticated: true,
+                    isLoading: false // UI can show "Logged in" state now
+                });
+
+                // Fetch roles/metadata in background without blocking
+                get().fetchUserMetadata(session.user.id).then(({ role, hasItems }) => {
+                    set({ role, hasItems });
+                });
             });
 
-            // 2. Explicitly get initial session (for persistence)
-            const { data: { session } } = await supabase.auth.getSession();
+            // 2. Initial Session Check (with slight retry for network stability)
+            const getSessionWithRetry = async (retries = 2) => {
+                for (let i = 0; i < retries; i++) {
+                    const { data, error } = await supabase.auth.getSession();
+                    if (!error) return data.session;
+                    if (i < retries - 1) await new Promise(r => setTimeout(r, 500));
+                }
+                return null;
+            };
+
+            const session = await getSessionWithRetry();
             
             if (session?.user) {
-                const { role, hasItems } = await get().fetchUserMetadata(session.user.id);
+                // Set authenticated state immediately
                 set({
                     user: session.user,
-                    session: session,
-                    isAuthenticated: true,
-                    role,
-                    hasItems,
-                    isLoading: false
+                    session,
+                    isAuthenticated: true
                 });
+
+                // Fetch metadata in background
+                const { role, hasItems } = await get().fetchUserMetadata(session.user.id);
+                set({ role, hasItems, isLoading: false });
             } else {
-                // If no session, set loading to false but keep user null (Anonymous mode)
                 set({ user: null, session: null, isAuthenticated: false, role: "user", hasItems: false, isLoading: false });
             }
 
         } catch (error) {
-            console.error("Auth initialization error:", error);
+            console.error("Critical Auth initialization error:", error);
             set({ isLoading: false });
+        } finally {
+            clearTimeout(timeoutId);
         }
     },
 
@@ -113,22 +135,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signUp: async (email, password, fullName) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: { full_name: fullName, role: "user" },
             },
         });
-        if (error) throw error;
+        if (error) {
+            console.error("Supabase Signup Error:", error);
+            throw error;
+        }
+
+        if (data.user) {
+            // Initialize basic state for the new user
+            set({
+                user: data.user,
+                session: data.session,
+                isAuthenticated: !!data.session,
+                role: "user",
+                hasItems: false,
+                isLoading: false
+            });
+        }
     },
 
     signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
-        if (error) throw error;
+        
+        if (error) {
+            console.error("Supabase Login Error:", error);
+            throw error;
+        }
+
+        if (data.user) {
+            // Force immediate metadata fetch to avoid redirect race conditions
+            const { role, hasItems } = await get().fetchUserMetadata(data.user.id);
+            set({
+                user: data.user,
+                session: data.session,
+                isAuthenticated: true,
+                role,
+                hasItems,
+                isLoading: false
+            });
+        }
     },
 
     signOut: async () => {

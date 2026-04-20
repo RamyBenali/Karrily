@@ -129,6 +129,33 @@ export class StatsController {
             const saleRevenue = saleRevenueData ? saleRevenueData.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0) : 0;
             const totalRevenue = bookingRevenue + saleRevenue;
 
+            // Fetch Data Lists for Management Tabs
+            const [
+                { data: usersList },
+                { data: itemsList },
+                { data: bookingsList },
+                { data: salesList }
+            ] = await Promise.all([
+                supabaseAdmin.from("profiles").select("*").order("created_at", { ascending: false }).limit(50),
+                supabaseAdmin.from("items").select(`
+                    id, title, owner_id, price_per_day, status, created_at,
+                    profiles:owner_id(full_name, email),
+                    categories:category_id(name)
+                `).order("created_at", { ascending: false }).limit(50),
+                supabaseAdmin.from("bookings").select(`
+                    id, total_price, status, start_date, end_date, created_at,
+                    renter:renter_id(full_name),
+                    owner:owner_id(full_name),
+                    items:item_id(title)
+                `).order("created_at", { ascending: false }).limit(50),
+                supabaseAdmin.from("sales").select(`
+                    id, price, status, created_at,
+                    buyer:buyer_id(full_name),
+                    seller:seller_id(full_name),
+                    items:item_id(title)
+                `).order("created_at", { ascending: false }).limit(50)
+            ]);
+
             res.json({
                 success: true,
                 data: {
@@ -138,11 +165,19 @@ export class StatsController {
                         totalBookings: (totalBookings || 0) + (saleRevenueData?.length || 0),
                         totalRevenue
                     },
+                    lists: {
+                        users: usersList || [],
+                        items: itemsList || [],
+                        bookings: bookingsList || [],
+                        sales: salesList || []
+                    },
                     system: {
                         totalMessages: totalMessages || 0,
                         unreadNotifications: unreadNotifs || 0,
                         dbStatus: "Connecté",
                         lastUpdate: new Date().toLocaleTimeString(),
+                        dbConnections: 12, // Dummy static value for UI
+                        apiLatency: "24ms" // Dummy static value for UI
                     }
                 }
             });

@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Footer } from "../components/layout/footer";
 import { supabase } from "../lib/supabase";
+import { itemsService, categoriesService } from "../services/api.service";
 import { CATEGORY_FILTERS, LISTING_TYPE_LABELS } from "../components/explore/explore-constants";
 import {
   ExploreHeader,
@@ -93,124 +94,56 @@ export function ExplorePage() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data } = await supabase
-        .from("categories")
-        .select("id, name, slug, item_count")
-        .is("parent_id", null)
-        .eq("is_active", true)
-        .order("sort_order");
-      if (data) setCategories(data);
+      try {
+        const res = await categoriesService.getAll();
+        if (res.data) setCategories(res.data);
+      } catch (e) {
+        console.error("Failed to load categories", e);
+      }
     };
     fetchCategories();
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setSearchQuery(debouncedSearch), 400);
-    return () => clearTimeout(timer);
-  }, [debouncedSearch]);
-
-  useEffect(() => {
     const fetchItems = async () => {
       setIsLoading(true);
 
-      let query = supabase
-        .from("items")
-        .select(
-          "id, title, listing_type, price_per_day, sale_price, location, wilaya_code, thumbnail_url, images, condition, rating, total_reviews, is_negotiable, created_at, favorite_count, metadata, category_id",
-          { count: "exact" },
-        )
-        .eq("is_available", true);
+      try {
+          const params: Record<string, any> = {
+              page: page + 1,
+              limit: PAGE_SIZE,
+              q: searchQuery,
+              minPrice: budgetRange[0],
+              maxPrice: budgetRange[1],
+              condition: selectedCondition,
+              sortBy: sortBy === 'price_asc' || sortBy === 'price_desc' ? 'price_per_day' : 
+                      sortBy === 'rating' ? 'rating' : 'created_at',
+              sortOrder: sortBy === 'price_asc' ? 'asc' : 'desc'
+          };
 
-      if (searchQuery.trim()) {
-        query = query.or(
-          `title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`,
-        );
+          if (selectedCategorySlugs.length > 0) {
+              const id = categories.find((c) => c.slug === selectedCategorySlugs[0])?.id;
+              if (id) params.category_id = id;
+          }
+
+          if (selectedWilaya) params.location = selectedWilaya;
+          if (selectedListingType) params.type = selectedListingType;
+
+          const res = await itemsService.getAll(params);
+
+          if (res.data) {
+              if (page === 0) {
+                  setItems(res.data);
+              } else {
+                  setItems((prev) => [...prev, ...res.data]);
+              }
+              setTotalCount(res.count || 0);
+          }
+      } catch (e) {
+          console.error("Failed to load items", e);
+      } finally {
+          setIsLoading(false);
       }
-
-      if (selectedCategorySlugs.length > 0) {
-        const ids = selectedCategorySlugs
-          .map((slug) => categories.find((c) => c.slug === slug)?.id)
-          .filter((id): id is string => Boolean(id));
-        if (ids.length > 0) {
-          query = query.in("category_id", ids);
-        }
-      }
-
-      if (selectedWilaya) {
-        query = query.eq("wilaya_code", Number(selectedWilaya));
-      }
-
-      if (selectedListingType) {
-        query = query.eq("listing_type", selectedListingType);
-      }
-
-      if (selectedCondition) {
-        query = query.eq("condition", selectedCondition);
-      }
-
-      const [bMin, bMax] = budgetRange;
-      if (bMin > 0 || bMax < EXPLORE_BUDGET_MAX) {
-        const rentCond = `price_per_day.gte.${bMin}` + (bMax < EXPLORE_BUDGET_MAX ? `,price_per_day.lte.${bMax}` : "");
-        const sellCond = `sale_price.gte.${bMin}` + (bMax < EXPLORE_BUDGET_MAX ? `,sale_price.lte.${bMax}` : "");
-
-        if (selectedListingType === "rent") {
-          query = query.gte("price_per_day", bMin);
-          if (bMax < EXPLORE_BUDGET_MAX) query = query.lte("price_per_day", bMax);
-        } else if (selectedListingType === "sell") {
-          query = query.gte("sale_price", bMin);
-          if (bMax < EXPLORE_BUDGET_MAX) query = query.lte("sale_price", bMax);
-        } else if (selectedListingType === "rent_sell") {
-            query = query.or(`${rentCond},${sellCond}`);
-        } else if (selectedListingType !== "troc") {
-            query = query.or(
-              `and(listing_type.eq.rent,${rentCond}),` +
-              `and(listing_type.eq.sell,${sellCond}),` +
-              `and(listing_type.eq.rent_sell,or(${rentCond},${sellCond}))`
-            );
-        }
-      }
-
-      const ratingMin = minRating.trim() !== "" ? Number(minRating) : null;
-      if (ratingMin !== null && !Number.isNaN(ratingMin)) {
-        query = query.gte("rating", ratingMin);
-      }
-
-      for (const [key, value] of Object.entries(categoryFilters)) {
-        if (value) {
-          query = query.contains("metadata", { [key]: value === "true" ? true : value });
-        }
-      }
-
-      switch (sortBy) {
-        case "price_asc":
-          if (selectedListingType === "sell") query = query.order("sale_price", { ascending: true, nullsFirst: false });
-          else query = query.order("price_per_day", { ascending: true, nullsFirst: false });
-          break;
-        case "price_desc":
-          if (selectedListingType === "sell") query = query.order("sale_price", { ascending: false, nullsFirst: false });
-          else query = query.order("price_per_day", { ascending: false, nullsFirst: false });
-          break;
-        case "rating":
-          query = query.order("rating", { ascending: false });
-          break;
-        default:
-          query = query.order("created_at", { ascending: false });
-      }
-
-      const from = page * PAGE_SIZE;
-      query = query.range(from, from + PAGE_SIZE - 1);
-
-      const { data, count } = await query;
-
-      if (data) {
-        if (page === 0) {
-          setItems(data as unknown as Item[]);
-        } else {
-          setItems((prev) => [...prev, ...(data as unknown as Item[])]);
-        }
-      }
-      if (count !== null) setTotalCount(count);
-      setIsLoading(false);
     };
 
     fetchItems();

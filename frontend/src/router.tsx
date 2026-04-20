@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from "react-router";
+import { createBrowserRouter, Outlet, Navigate } from "react-router";
 import { LandingPage } from "./pages/landing-page";
 import { ExplorePage } from "./pages/explore-page";
 import { CategoryPage } from "./pages/category-page";
@@ -105,6 +105,15 @@ export const router = createBrowserRouter([
             Component: AdminPanel,
           },
         ],
+      },
+      // ─── Utility Routes ────────────────────────────────
+      {
+        path: "/explorer",
+        Component: () => <Navigate to="/explore" replace />,
+      },
+      {
+        path: "*",
+        Component: () => <Navigate to="/" replace />,
       },
     ]
   }
