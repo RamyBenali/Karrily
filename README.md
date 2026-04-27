@@ -1,8 +1,8 @@
-# Karrily 🏠
+# Karrily 
 
 > **Plateforme de location de tout et n'importe quoi**
 
-## 🏗️ Architecture
+##  Architecture
 
 Le projet est organisé en **monorepo** avec deux parties distinctes :
 
@@ -13,7 +13,7 @@ Karrily/
 └── package.json    # Scripts monorepo
 ```
 
-## 🚀 Démarrage rapide
+##  Démarrage rapide
 
 ### Prérequis
 - Node.js >= 18
@@ -46,7 +46,7 @@ npm run dev:frontend    # → http://localhost:5173
 npm run dev:backend     # → http://localhost:3001
 ```
 
-## 📦 Stack Technique
+##  Stack Technique
 
 ### Frontend
 - **React 18** + **TypeScript**
@@ -66,7 +66,7 @@ npm run dev:backend     # → http://localhost:3001
 - **Helmet** (sécurité)
 - **CORS** + **Morgan** (logging)
 
-## 🗂️ Structure Frontend
+##  Structure Frontend
 
 ```
 frontend/src/
@@ -84,7 +84,7 @@ frontend/src/
 └── types/           # Types TypeScript
 ```
 
-## 🗂️ Structure Backend
+##  Structure Backend
 
 ```
 backend/src/
@@ -96,7 +96,7 @@ backend/src/
 └── app.ts           # Point d'entrée Express
 ```
 
-## 🔗 API Endpoints
+##  API Endpoints
 
 | Méthode | Endpoint | Description |
 |---------|----------|-------------|

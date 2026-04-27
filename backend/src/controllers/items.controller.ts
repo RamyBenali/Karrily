@@ -162,7 +162,7 @@ export class ItemsController {
                 .single();
 
             if (error) {
-                console.error("❌ Supabase Item Insert Error:", {
+                console.error(" Supabase Item Insert Error:", {
                     message: error.message,
                     code: error.code,
                     details: error.details,

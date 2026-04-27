@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Search, MapPin, Calendar, Home, Car, Laptop, Wrench, Armchair, Camera, ArrowRight, Star, Shield, Clock, TrendingUp, Check, Zap, Sparkles, Tag } from "lucide-react";
+import { Search, MapPin, Calendar, Home, Car, Laptop, Wrench, Armchair, Camera, ArrowRight, Star, Shield, Clock, TrendingUp, Check, Zap, Sparkles, Tag, ShoppingCart, RefreshCw } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -10,9 +10,9 @@ import { useState } from "react";
 import { cn } from "../components/ui/utils";
 
 const LISTING_TYPES = [
-  { value: "rent", label: "Louer", icon: "🏠" },
-  { value: "sell", label: "Acheter", icon: "🛒" },
-  { value: "troc", label: "Troquer", icon: "🔄" },
+  { value: "rent", label: "Louer", icon: Home },
+  { value: "sell", label: "Acheter", icon: ShoppingCart },
+  { value: "troc", label: "Troquer", icon: RefreshCw },
 ];
 
 import { useEffect } from "react";
@@ -264,7 +264,7 @@ export function LandingPage() {
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      <span className="text-base leading-none">{type.icon}</span>
+                      <type.icon className="w-4 h-4" />
                       {type.label}
                     </button>
                   ))}

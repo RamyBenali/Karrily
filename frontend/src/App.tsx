@@ -14,6 +14,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import { ThemeProvider } from "./context/theme-context";
+
 export default function App() {
   const initialize = useAuthStore((state) => state.initialize);
   const impersonatedUser = useAuthStore((state) => state.impersonatedUser);
@@ -24,7 +26,9 @@ export default function App() {
   }, [initialize]);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+
       {impersonatedUser && (
         <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium shadow-lg">
           <span className="flex items-center gap-2">
@@ -47,5 +51,7 @@ export default function App() {
         <RouterProvider router={router} />
       </div>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 }
+

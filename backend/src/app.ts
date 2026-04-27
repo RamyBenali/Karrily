@@ -75,7 +75,7 @@ app.use(errorHandler);
 const server = app.listen(config.port, () => {
     console.log(`
   ╔═══════════════════════════════════════════════╗
-  ║        🚀 Karrily API Server                  ║
+  ║         Karrily API Server                  ║
   ║        Port: ${String(config.port).padEnd(31)}║
   ║        Env:  ${config.nodeEnv.padEnd(31)}║
   ╚═══════════════════════════════════════════════╝
@@ -84,12 +84,12 @@ const server = app.listen(config.port, () => {
 
 server.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${config.port} is already in use. Attempting to recover...`);
+        console.error(` Port ${config.port} is already in use. Attempting to recover...`);
         // The process will likely be restarted by tsx watch anyway, 
         // but this prevents the "Unhandled 'error' event" crash.
         process.exit(1);
     } else {
-        console.error('❌ Server error:', err);
+        console.error(' Server error:', err);
     }
 });
 

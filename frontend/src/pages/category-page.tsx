@@ -180,7 +180,7 @@ export function CategoryPage() {
               </div>
               <div className="w-px h-12 bg-white/20" />
               <div>
-                <div className="text-2xl font-bold text-white">4.8★</div>
+                <div className="text-2xl font-bold text-white">4.8</div>
                 <div className="text-sm text-white/70">Note Moy.</div>
               </div>
             </div>

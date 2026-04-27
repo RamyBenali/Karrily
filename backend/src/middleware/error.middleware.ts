@@ -36,7 +36,7 @@ export function errorHandler(
 
     // Log the error in development
     if (process.env.NODE_ENV === "development") {
-        console.error("❌ Error:", {
+        console.error(" Error:", {
             statusCode,
             message,
             stack: err.stack,

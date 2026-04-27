@@ -2,7 +2,7 @@
 
 ---
 
-## 🏛️ Phase 1 : Fondations (Semaine 1-2) ← **ON EST ICI**
+##  Phase 1 : Fondations (Semaine 1-2) ← **ON EST ICI**
 
 > Base de données, authentification, et structure de l'app.
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 📦 Phase 2 : Core Location (Semaine 3-4)
+##  Phase 2 : Core Location (Semaine 3-4)
 
 > Le cœur de la plateforme : publier, chercher et louer.
 
@@ -60,7 +60,7 @@
 
 ---
 
-## 💰 Phase 3 : Vente & Troc (Semaine 5-6)
+##  Phase 3 : Vente & Troc (Semaine 5-6)
 
 > Étendre au-delà de la location.
 
@@ -81,13 +81,13 @@
 - [ ] Historique des échanges
 
 ### 3.3 — Favoris & Collections
-- [ ] Ajouter aux favoris (❤️)
+- [ ] Ajouter aux favoris ()
 - [ ] Créer des collections personnalisées
 - [ ] Alertes prix sur les favoris
 
 ---
 
-## 🎛️ Phase 4 : Dashboards & Admin (Semaine 7-8)
+##  Phase 4 : Dashboards & Admin (Semaine 7-8)
 
 ### 4.1 — Dashboard Loueur/Vendeur
 - [ ] Vue d'ensemble (revenus, réservations, stats)
@@ -119,13 +119,13 @@
 
 > Ce qui va nous démarquer de la concurrence.
 
-### 5.1 — 🔐 Système de Confiance
+### 5.1 —  Système de Confiance
 - [ ] **Vérification d'identité** (photo CIN + selfie)
 - [ ] **Score de confiance** calculé (vérification, avis, ancienneté, transactions)
-- [ ] **Badges** : Vérifié ✓, Super Loueur ⭐, Top Vendeur 🏆
+- [ ] **Badges** : Vérifié , Super Loueur ⭐, Top Vendeur 
 - [ ] **Garantie Karrily** : Médiation en cas de litige
 
-### 5.2 — 🤖 Intelligence Artificielle
+### 5.2 —  Intelligence Artificielle
 - [ ] **Suggestion de prix** basée sur le marché local
 - [ ] **Matching intelligent de troc** (NLP sur descriptions)
 - [ ] **Recherche sémantique** ("je cherche un truc pour mon mariage")
@@ -133,39 +133,39 @@
 - [ ] **Catégorisation auto** des images uploadées
 - [ ] **Chatbot d'assistance** intégré
 
-### 5.3 — 📍 Géolocalisation Algérie
+### 5.3 —  Géolocalisation Algérie
 - [ ] **Carte interactive par wilaya** (48 wilayas)
 - [ ] **Recherche de proximité** ("à moins de 5km")
 - [ ] **Points de rencontre sécurisés** (lieux publics suggérés)
 - [ ] **Estimation de livraison** par wilaya
 
-### 5.4 — 📱 Notifications Intelligentes
+### 5.4 —  Notifications Intelligentes
 - [ ] **Alertes de proximité** : "Un perceuse est dispo à 500m de chez toi"
 - [ ] **Alertes de prix** : "Un objet de ta wishlist vient de baisser de prix"
 - [ ] **Rappels** : "Ta location se termine dans 2 jours"
 - [ ] **Suggestions saisonnières** : "L'été arrive, loue ta tente de camping !"
 
-### 5.5 — 💸 Système de Paiement (Adapté Algérie)
+### 5.5 —  Système de Paiement (Adapté Algérie)
 - [ ] **Cash à la remise** (le plus courant)
 - [ ] **CCP / Baridimob** (virement postal)
 - [ ] **Carte Edahabia** (CIB)
 - [ ] **Wallet Karrily** (solde interne rechargeable)
 - [ ] **Système de caution** (consignation)
 
-### 5.6 — 📸 Expérience Visuelle
+### 5.6 —  Expérience Visuelle
 - [ ] **Photos multiples** avec galerie swipeable
 - [ ] **Comparaison avant/après** (état de l'objet)
 - [ ] **QR Code de remise** (confirmer pickup/retour)
 - [ ] **Stories d'objets** (Reels-style pour les annonces)
 
-### 5.7 — 👥 Social & Communauté
+### 5.7 —  Social & Communauté
 - [ ] **Profils publics** avec réputation
 - [ ] **Suivre un loueur/vendeur**
 - [ ] **Partage social** (WhatsApp, Facebook, Instagram)
 - [ ] **Parrainage** : Invite un ami → bonus en crédit
 - [ ] **Avis vérifiés** (seuls ceux qui ont loué/acheté)
 
-### 5.8 — 🏢 Comptes Professionnels
+### 5.8 —  Comptes Professionnels
 - [ ] **Mode pro** pour les entreprises (agences, événementiel, BTP)
 - [ ] **Vitrine personnalisée** (mini-site du pro)
 - [ ] **Facturation automatique**
@@ -174,7 +174,7 @@
 
 ---
 
-## 📱 Phase 6 : Mobile & PWA (Semaine 13-14)
+##  Phase 6 : Mobile & PWA (Semaine 13-14)
 
 ### 6.1 — PWA (Progressive Web App)
 - [ ] Service Worker pour le offline
@@ -197,32 +197,32 @@
 
 ---
 
-## 🚀 Phase 7 : Perspectives Futures
+##  Phase 7 : Perspectives Futures
 
 ### Court terme (3-6 mois)
-- 📊 **Analytics avancées** pour les loueurs/vendeurs
-- 🎫 **Système de promotions** et codes promo
-- 📦 **Livraison intégrée** (partenariat Yassir/Tempo)
-- 🏷️ **Enchères en temps réel** pour certains objets
-- 🌐 **Multilingue complet** (FR/AR/EN)
+-  **Analytics avancées** pour les loueurs/vendeurs
+-  **Système de promotions** et codes promo
+-  **Livraison intégrée** (partenariat Yassir/Tempo)
+-  **Enchères en temps réel** pour certains objets
+-  **Multilingue complet** (FR/AR/EN)
 
 ### Moyen terme (6-12 mois)
-- 💳 **Porte-monnaie électronique** avec recharges
-- 🔗 **Abonnements** : locations illimitées mensuelles
-- 🤝 **Groupes de location** : partager les coûts entre amis
-- 📋 **Contrats intelligents** générés automatiquement
-- 🌱 **Score écologique** : impact carbone économisé
+-  **Porte-monnaie électronique** avec recharges
+-  **Abonnements** : locations illimitées mensuelles
+-  **Groupes de location** : partager les coûts entre amis
+-  **Contrats intelligents** générés automatiquement
+-  **Score écologique** : impact carbone économisé
 
 ### Long terme (1-2 ans)
-- 🏪 **Marketplace B2B** pour les entreprises
-- 🌍 **Expansion internationale** (Tunisie, Maroc, France)
-- 🔮 **AR/VR** : Visualiser un meuble chez soi avant de louer
-- 🪙 **Programme de fidélité** avec points Karrily
-- 📱 **Super App** : intégrer services, livraison, paiement
+-  **Marketplace B2B** pour les entreprises
+-  **Expansion internationale** (Tunisie, Maroc, France)
+-  **AR/VR** : Visualiser un meuble chez soi avant de louer
+-  **Programme de fidélité** avec points Karrily
+-  **Super App** : intégrer services, livraison, paiement
 
 ---
 
-## 📋 Stratégie de développement
+##  Stratégie de développement
 
 ### L'approche recommandée
 
@@ -237,9 +237,9 @@ Pour chaque feature :
 ```
 
 Cela permet :
-- ✅ D'avoir quelque chose de fonctionnel à chaque étape
-- ✅ De tester au fur et à mesure
-- ✅ De livrer incrémentalement
+-  D'avoir quelque chose de fonctionnel à chaque étape
+-  De tester au fur et à mesure
+-  De livrer incrémentalement
 
 ### Priorité de développement
 

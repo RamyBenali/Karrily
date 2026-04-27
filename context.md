@@ -5,18 +5,18 @@
 
 ---
 
-## 🎯 Vision
+##  Vision
 
 **Karrily** est une plateforme innovante de **location, vente et échange (troc)** de biens entre particuliers et professionnels, lancée en **Algérie** avec une ambition **universelle**.
 
 L'objectif est de devenir **LA** marketplace de référence pour :
-- 🏠 **Louer** n'importe quoi (immobilier, véhicules, électronique, outillage, événementiel…)
-- 🛒 **Vendre** des objets neufs ou d'occasion
-- 🔄 **Échanger** (système de troc intelligent)
+-  **Louer** n'importe quoi (immobilier, véhicules, électronique, outillage, événementiel…)
+-  **Vendre** des objets neufs ou d'occasion
+-  **Échanger** (système de troc intelligent)
 
 ---
 
-## 🌍 Marché Cible
+##  Marché Cible
 
 - **Lancement** : Algérie (48 wilayas)
 - **Expansion** : Maghreb → Monde arabe → International
@@ -26,7 +26,7 @@ L'objectif est de devenir **LA** marketplace de référence pour :
 
 ---
 
-## 🏗️ Stack Technique
+##  Stack Technique
 
 | Couche | Technologie |
 |--------|-------------|
@@ -42,7 +42,7 @@ L'objectif est de devenir **LA** marketplace de référence pour :
 
 ---
 
-## 📁 Architecture du Projet
+##  Architecture du Projet
 
 ```
 Karrily/
@@ -75,7 +75,7 @@ Karrily/
 
 ---
 
-## 🗄️ Base de Données (Supabase)
+##  Base de Données (Supabase)
 
 ### Tables principales
 | Table | Description |
@@ -99,12 +99,12 @@ Karrily/
 - Row Level Security (RLS) **activé** sur toutes les tables
 - Migrations numérotées : `001_initial_schema.sql`, `002_add_messages.sql`, etc.
 
-### ⚠️ Note importante
+###  Note importante
 L'utilisateur exécute les migrations SQL **manuellement** dans le dashboard Supabase (pas de Docker/CLI local).
 
 ---
 
-## 👥 Rôles Utilisateur
+##  Rôles Utilisateur
 
 | Rôle | Accès |
 |------|-------|
@@ -114,7 +114,7 @@ L'utilisateur exécute les migrations SQL **manuellement** dans le dashboard Sup
 
 ---
 
-## 🎨 Design System
+##  Design System
 
 - **Source** : Export Figma Make (Karilly Brand Identity)
 - **Couleurs primaires** : `#0F2A2E` (dark teal), `#FF4F5A` (coral/CTA)
@@ -127,21 +127,21 @@ L'utilisateur exécute les migrations SQL **manuellement** dans le dashboard Sup
 
 ---
 
-## 📱 Pages Existantes
+##  Pages Existantes
 
 | Page | Route | Status |
 |------|-------|--------|
-| Landing Page | `/` | ✅ Design prêt |
-| Explore | `/explore` | ✅ Design prêt |
-| Category | `/category/:name` | ✅ Design prêt |
-| Item Detail | `/item/:id` | ✅ Design prêt |
-| User Dashboard | `/dashboard` | ✅ Design prêt |
-| Lender Dashboard | `/lender` | ✅ Design prêt |
-| Admin Panel | `/admin` | ✅ Design prêt |
+| Landing Page | `/` |  Design prêt |
+| Explore | `/explore` |  Design prêt |
+| Category | `/category/:name` |  Design prêt |
+| Item Detail | `/item/:id` |  Design prêt |
+| User Dashboard | `/dashboard` |  Design prêt |
+| Lender Dashboard | `/lender` |  Design prêt |
+| Admin Panel | `/admin` |  Design prêt |
 
 ---
 
-## 🔑 Conventions de Code
+##  Conventions de Code
 
 ### Frontend
 - Composants en **PascalCase** (fichiers en kebab-case)
@@ -163,7 +163,7 @@ L'utilisateur exécute les migrations SQL **manuellement** dans le dashboard Sup
 
 ---
 
-## 💰 Modes de Transaction
+##  Modes de Transaction
 
 ### Location
 - Prix par jour / semaine / mois
@@ -184,7 +184,7 @@ L'utilisateur exécute les migrations SQL **manuellement** dans le dashboard Sup
 
 ---
 
-## 📊 Suivi des Migrations
+##  Suivi des Migrations
 
 Voir `supabase/migrations/README.md` pour l'historique complet.
 

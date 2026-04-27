@@ -37,7 +37,8 @@ def remove_emojis_from_file(filepath):
     return False
 
 def main():
-    root_dir = "/home/doudouche/Downloads/Karrily-main"
+    root_dir = "."
+
     exclude_dirs = {'.git', 'node_modules', '.gemini', 'dist', 'build'}
     
     modified_count = 0

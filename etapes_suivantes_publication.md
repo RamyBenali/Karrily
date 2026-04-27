@@ -4,7 +4,7 @@ Ce document détaille toutes les étapes nécessaires pour passer de l'état act
 
 ---
 
-## 1. 🔐 Sécurité & Infrastructure (Le plus critique)
+## 1.  Sécurité & Infrastructure (Le plus critique)
 Avant toute publication, la sécurité des données et des transactions est primordiale.
 
 ### Base de Données (Supabase)
@@ -22,7 +22,7 @@ Avant toute publication, la sécurité des données et des transactions est prim
 
 ---
 
-## 2. 🗺️ Pages Essentielles (Frontend)
+## 2.  Pages Essentielles (Frontend)
 Voici la liste des pages et fonctionnalités restantes pour compléter la marketplace.
 
 ### A. Pages Publiques (Accessibles à tous)
@@ -60,7 +60,7 @@ Voici la liste des pages et fonctionnalités restantes pour compléter la market
 
 ---
 
-## 3. 🔄 Flux Logiques (Flows) à Parfaire
+## 3.  Flux Logiques (Flows) à Parfaire
 Ces flux doivent être infaillibles pour une bonne expérience.
 
 ### A. Le Flux de Notification
@@ -69,7 +69,7 @@ Ces flux doivent être infaillibles pour une bonne expérience.
 
 ---
 
-## 4. 🧰 SEO & Performance (Référencement)
+## 4.  SEO & Performance (Référencement)
 Si le site ne sort pas dans Google, vous n'aurez pas de trafic gratuit.
 - [ ] **Meta Tags & OpenGraph** : `react-helmet-async` pour que chaque page d'annonce ait un titre généré (ex: "Location Perceuse Bosch à Alger - Karrily") et une image de partage pour Facebook/WhatsApp.
 - [ ] **Sitemap.xml** : Génération périodique d'un sitemap avec toutes les annonces.
@@ -78,7 +78,7 @@ Si le site ne sort pas dans Google, vous n'aurez pas de trafic gratuit.
 
 ---
 
-## 5. 🚀 Préparation Finale avant Lancement
+## 5.  Préparation Finale avant Lancement
 - [ ] **Analytics** : Intégrer un outil (Posthog, Google Analytics) pour comprendre où les utilisateurs cliquent et où ils bloquent.
 - [ ] **Error Tracking** : Ajouter **Sentry** frontend et backend. Si un utilisateur a une page blanche, Sentry vous alerte immédiatement avec l'erreur.
 - [ ] **Déploiement Frontend** : Vercel ou Netlify (avec vos propres domaines et certificats SSL / HTTPS activé).
@@ -87,7 +87,7 @@ Si le site ne sort pas dans Google, vous n'aurez pas de trafic gratuit.
 
 ---
 
-## 6. 📱 Application Mobile (Capacitor)
+## 6.  Application Mobile (Capacitor)
 - [ ] **Optimisation UI Mobile** : S'assurer que tous les composants sont "Touch Friendly" et n'ont pas de débordement horizontal.
 - [ ] **Génération d'Assets** : Créer l'icône de l'app et l'écran de splash (Splash Screen) aux bonnes dimensions.
 - [ ] **Build & Test Final** : Valider les derniers correctifs de build et de dépendances.

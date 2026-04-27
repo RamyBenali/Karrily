@@ -306,7 +306,7 @@ export const LISTING_TYPE_LABELS: Record<string, string> = {
 
 export const RATING_FILTER_OPTIONS = [
   { value: "", label: "Toutes les notes" },
-  { value: "3", label: "3★ et plus" },
-  { value: "4", label: "4★ et plus" },
-  { value: "4.5", label: "4,5★ et plus" },
+  { value: "3", label: "3 et plus" },
+  { value: "4", label: "4 et plus" },
+  { value: "4.5", label: "4,5 et plus" },
 ];
