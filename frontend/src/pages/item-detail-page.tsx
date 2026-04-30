@@ -16,6 +16,9 @@ import { useAuthStore } from "../store/auth.store";
 import { bookingsService, trocService, favoritesService } from "../services/api.service";
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
+import { ReviewDialog } from "../components/dashboard/ReviewDialog";
+import { reviewsService } from "../services/api.service";
+import { cn } from "../components/ui/utils";
 
 const CONDITION_LABELS: Record<string, string> = {
   new: "Neuf",
@@ -110,6 +113,16 @@ export function ItemDetailPage() {
   
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [datesOverlapping, setDatesOverlapping] = useState(false);
+  
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  
+  // Direct Review State
+  const [reviewRating, setReviewRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     if (!startDate || !endDate) {
@@ -177,8 +190,22 @@ export function ItemDetailPage() {
         setIsLiked(isFavorite);
     };
 
+    const fetchReviews = async () => {
+        if (!itemId) return;
+        setIsLoadingReviews(true);
+        try {
+            const { data } = await reviewsService.getByItem(itemId);
+            if (data) setReviews(data);
+        } catch (err) {
+            console.error("Error fetching reviews:", err);
+        } finally {
+            setIsLoadingReviews(false);
+        }
+    };
+
     fetchBookings();
     checkFavoriteStatus();
+    fetchReviews();
   }, [itemId, user]);
 
   const nextImage = () => {
@@ -301,6 +328,47 @@ export function ItemDetailPage() {
       navigate("/dashboard", { state: { tab: "Messages", convId: newConv.id } });
     } else {
       alert("Erreur lors de la création de la conversation.");
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (item && user.id === item.owner_id) {
+      setReviewError("Vous ne pouvez pas laisser d'avis sur votre propre annonce.");
+      return;
+    }
+    if (reviewRating === 0) {
+      setReviewError("Veuillez sélectionner une note.");
+      return;
+    }
+    if (reviewComment.length < 5) {
+      setReviewError("Veuillez laisser un commentaire d'au moins 5 caractères.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    setReviewError("");
+
+    try {
+      await reviewsService.create({
+        item_id: item?.id || "",
+        reviewed_user_id: item?.owner_id || "",
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      // Reset
+      setReviewRating(0);
+      setReviewComment("");
+      // Refresh
+      const { data } = await reviewsService.getByItem(itemId || "");
+      if (data) setReviews(data);
+    } catch (err: any) {
+      setReviewError(err.message || "Erreur lors de l'envoi.");
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -736,6 +804,155 @@ export function ItemDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* ═══ Reviews Section (Full Width) ═══ */}
+          <section className="mt-20 pt-20 border-t border-border">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-12 h-12 bg-[#FF4F5A]/10 rounded-2xl flex items-center justify-center">
+                <Star className="w-6 h-6 text-[#FF4F5A]" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-black tracking-tight text-foreground">Avis <span className="text-[#FF4F5A]">clients</span></h2>
+                <p className="text-muted-foreground font-medium">Ce que les autres utilisateurs pensent de cet article.</p>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-12 gap-12">
+              {/* Review Form Column */}
+              <div className="lg:col-span-4">
+                {user ? (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-card rounded-[2.5rem] p-8 border border-border shadow-xl shadow-black/5 sticky top-28"
+                  >
+                    <h3 className="text-xl font-bold mb-6">Laissez votre <span className="text-[#FF4F5A]">avis</span></h3>
+                    
+                    <div className="space-y-6">
+                      <div className="flex flex-col gap-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Note globale</p>
+                        <div className="flex gap-1.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onMouseEnter={() => setHoveredRating(star)}
+                              onMouseLeave={() => setHoveredRating(0)}
+                              onClick={() => setReviewRating(star)}
+                              className="transition-transform active:scale-90"
+                            >
+                              <Star
+                                className={cn(
+                                  "w-8 h-8 transition-colors",
+                                  (hoveredRating || reviewRating) >= star
+                                    ? "fill-[#FF4F5A] text-[#FF4F5A]"
+                                    : "text-muted-foreground/20"
+                                )}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Commentaire détaillé</label>
+                        <textarea
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Partagez votre expérience avec cet article..."
+                          className="w-full min-h-[120px] p-4 rounded-2xl bg-muted/30 border border-border focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold text-sm outline-none transition-all"
+                        />
+                      </div>
+
+                      {reviewError && (
+                        <p className="text-xs font-bold text-red-500 bg-red-500/10 p-4 rounded-2xl border border-red-500/20 flex items-center gap-2">
+                           <AlertCircle className="w-4 h-4" /> {reviewError}
+                        </p>
+                      )}
+
+                      <Button
+                        onClick={handleSubmitReview}
+                        disabled={isSubmittingReview}
+                        className="w-full bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-[1.25rem] h-14 font-black text-xs uppercase tracking-widest shadow-xl shadow-[#FF4F5A]/20 transition-all active:scale-[0.98]"
+                      >
+                        {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : "Publier mon avis"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="bg-muted/30 rounded-[2.5rem] p-10 border border-dashed border-border text-center sticky top-28">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Star className="w-8 h-8 text-muted-foreground/20" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-4">Connectez-vous pour laisser un avis</h3>
+                    <p className="text-muted-foreground text-sm mb-8">Partagez votre expérience avec la communauté Karrily.</p>
+                    <Button 
+                      onClick={() => navigate("/login")}
+                      className="w-full rounded-2xl bg-foreground text-background font-bold h-12"
+                    >
+                      Se connecter
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews List Column */}
+              <div className="lg:col-span-8">
+                {isLoadingReviews ? (
+                  <div className="py-20 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mx-auto" />
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="bg-card rounded-[2.5rem] p-20 text-center border border-border">
+                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                      <MessageCircle className="w-10 h-10 text-muted-foreground/30" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">Pas encore d'avis</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">Soyez la première personne à donner son avis sur cet article !</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {reviews.map((review) => (
+                      <motion.div
+                        key={review.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-card rounded-[2rem] p-8 border border-border shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-muted shadow-inner">
+                              {review.reviewer?.avatar_url ? (
+                                <img src={review.reviewer.avatar_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FF4F5A] to-[#0F2A2E] text-white font-black text-sm">
+                                  {review.reviewer?.full_name?.charAt(0) || "U"}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-lg text-foreground">{review.reviewer?.full_name}</h4>
+                              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} className={cn("w-3.5 h-3.5", s <= review.rating ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-muted-foreground/20")} />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="bg-muted/20 p-6 rounded-2xl border border-border/50">
+                          <p className="text-foreground/90 leading-relaxed font-medium italic">
+                            "{review.comment}"
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </main>
 

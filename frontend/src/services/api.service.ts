@@ -238,6 +238,72 @@ export const favoritesService = {
     }
 };
 
+// ─── Reviews Service ─────────────────────────────────
+
+export const reviewsService = {
+    getAll: async () => {
+        const { data, error } = await supabase
+            .from("reviews")
+            .select("*, item:items(title), reviewer:profiles!reviewer_id(full_name, avatar_url)")
+            .order("created_at", { ascending: false });
+        if (error) throw error;
+        return { data, success: true };
+    },
+
+    getByItem: async (itemId: string) => {
+        const { data, error } = await supabase
+            .from("reviews")
+            .select("*, reviewer:profiles!reviewer_id(full_name, avatar_url)")
+            .eq("item_id", itemId)
+            .order("created_at", { ascending: false });
+        if (error) throw error;
+        return { data, success: true };
+    },
+
+    getByLender: async (lenderId: string) => {
+        const { data, error } = await supabase
+            .from("reviews")
+            .select("*, item:items(title, owner_id), reviewer:profiles!reviewer_id(full_name, avatar_url)")
+            .eq("reviewed_user_id", lenderId)
+            .order("created_at", { ascending: false });
+        
+        // Supabase might need a different join or filter for nested relations depending on setup
+        // If the above fails, we might need a stored procedure or multiple calls
+        if (error) throw error;
+        return { data, success: true };
+    },
+
+    create: async (data: { item_id: string; reviewed_user_id?: string; booking_id?: string; rating: number; comment: string }) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Non authentifié");
+
+        const { data: review, error } = await supabase
+            .from("reviews")
+            .insert({
+                item_id: data.item_id,
+                reviewer_id: user.id,
+                reviewed_user_id: data.reviewed_user_id,
+                rating: data.rating,
+                comment: data.comment,
+                booking_id: data.booking_id // Added if schema supports it
+            })
+            .select()
+            .single();
+            
+        if (error) throw error;
+        return { data: review, success: true };
+    },
+
+    delete: async (id: string) => {
+        const { error } = await supabase
+            .from("reviews")
+            .delete()
+            .eq("id", id);
+        if (error) throw error;
+        return { success: true };
+    }
+};
+
 // ─── Stats Service ───────────────────────────────────
 
 export const statsService = {

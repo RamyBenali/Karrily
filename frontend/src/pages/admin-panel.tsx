@@ -17,9 +17,22 @@ import {
   Layers,
   UserX,
   UserCheck,
-  TrendingUp
+  TrendingUp,
+  Star,
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { Button } from "../components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../store/auth.store";
@@ -35,6 +48,7 @@ const sidebarItems = [
   { icon: Package, label: "Annonces" },
   { icon: Calendar, label: "Réservations" },
   { icon: DollarSign, label: "Ventes" },
+  { icon: Star, label: "Avis" },
 ];
 
 // Interfaces
@@ -84,7 +98,7 @@ export function AdminPanel() {
   const navigate = useNavigate();
   const { user, setImpersonation } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "bookings" | "sales">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "bookings" | "sales" | "reviews">("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -107,6 +121,25 @@ export function AdminPanel() {
   const [itemsList, setItemsList] = useState<Item[]>([]);
   const [bookingsList, setBookingsList] = useState<Booking[]>([]);
   const [salesList, setSalesList] = useState<Sale[]>([]);
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [isDeletingReview, setIsDeletingReview] = useState<string | null>(null);
+
+  // Confirmation Dialog State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    actionLabel: string;
+    variant: "destructive" | "default";
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+    actionLabel: "Confirmer",
+    variant: "default"
+  });
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -141,6 +174,13 @@ export function AdminPanel() {
           }
       }
 
+      // Fetch Reviews separately if not in stats
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('*, items(title), reviewer:profiles!reviewer_id(full_name)')
+        .order('created_at', { ascending: false });
+      if (reviews) setReviewsList(reviews);
+
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
@@ -168,12 +208,44 @@ export function AdminPanel() {
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir annuler cette réservation en tant qu'administrateur ?")) return;
-    const { error } = await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: "Admin cancelled" }).eq("id", bookingId);
-    if (!error) {
-      setBookingsList(prev => prev.map(b => b.id === bookingId ? { ...b, status: "cancelled" } : b));
-    }
+  const handleDeleteReview = (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Supprimer cet avis ?",
+      description: "Cette action est irréversible. L'avis sera définitivement supprimé de la base de données.",
+      actionLabel: "Supprimer",
+      variant: "destructive",
+      onConfirm: async () => {
+        setIsDeletingReview(id);
+        try {
+          const { error } = await supabase.from('reviews').delete().eq('id', id);
+          if (error) throw error;
+          setReviewsList(prev => prev.filter(r => r.id !== id));
+        } catch (err) {
+          console.error("Error deleting review:", err);
+        } finally {
+          setIsDeletingReview(null);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleCancelBooking = (bookingId: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Annuler cette réservation ?",
+      description: "En tant qu'administrateur, vous allez forcer l'annulation de cette transaction.",
+      actionLabel: "Annuler la réservation",
+      variant: "destructive",
+      onConfirm: async () => {
+        const { error } = await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: "Admin cancelled" }).eq("id", bookingId);
+        if (!error) {
+          setBookingsList(prev => prev.map(b => b.id === bookingId ? { ...b, status: "cancelled" } : b));
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   if (isLoading) {
@@ -217,14 +289,17 @@ export function AdminPanel() {
               items={sidebarItems}
               activeTab={activeTab === "overview" ? "Vue d'ensemble" : 
                          activeTab === "users" ? "Utilisateurs" :
-                         activeTab === "items" ? "Annonces" : "Réservations"}
+                         activeTab === "items" ? "Annonces" : 
+                         activeTab === "bookings" ? "Réservations" :
+                         activeTab === "sales" ? "Ventes" : "Avis"}
               setActiveTab={(label) => {
                 const map: Record<string, any> = {
                   "Vue d'ensemble": "overview",
                   "Utilisateurs": "users",
                   "Annonces": "items",
                   "Réservations": "bookings",
-                  "Ventes": "sales"
+                  "Ventes": "sales",
+                  "Avis": "reviews"
                 };
                 setActiveTab(map[label]);
                 setIsMobileMenuOpen(false);
@@ -589,10 +664,101 @@ export function AdminPanel() {
             </motion.div>
           )}
 
+          {/* Reviews Tab */}
+          {activeTab === "reviews" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card rounded-3xl shadow-xl border border-border overflow-hidden"
+            >
+              <div className="p-8 border-b border-border flex justify-between items-center bg-muted/30">
+                <div>
+                  <h2 className="text-xl font-black">Gestion des <span className="text-[#FF4F5A]">Avis</span></h2>
+                  <p className="text-sm text-muted-foreground font-medium">Modérez les commentaires des utilisateurs.</p>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Utilisateur</th>
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Article</th>
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Note</th>
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Commentaire</th>
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Date</th>
+                      <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {reviewsList.map((review) => (
+                      <tr key={review.id} className="hover:bg-muted/30 transition-colors group">
+                        <td className="px-8 py-5">
+                          <div className="font-bold text-sm">{review.reviewer?.full_name}</div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="font-bold text-sm text-[#FF4F5A]">{review.items?.title}</div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-1 text-amber-500">
+                             <Star className="w-3.5 h-3.5 fill-current" />
+                             <span className="font-black text-sm">{review.rating}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="text-sm font-medium line-clamp-1 max-w-xs">{review.comment}</div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="text-xs font-bold text-muted-foreground">{new Date(review.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteReview(review.id)}
+                            disabled={isDeletingReview === review.id}
+                            className="text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          >
+                            {isDeletingReview === review.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {reviewsList.length === 0 && (
+                  <div className="py-20 text-center text-muted-foreground font-bold">Aucun avis trouvé.</div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+            </div>
+          </div>
         </div>
       </div>
+
+      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent className="rounded-[2rem] border-border bg-card/95 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black">{confirmConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              {confirmConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl font-bold">Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmConfig.onConfirm}
+              className={cn(
+                "rounded-xl px-8 font-black text-xs uppercase tracking-widest shadow-lg transition-all",
+                confirmConfig.variant === "destructive" ? "bg-red-500 hover:bg-red-600 shadow-red-500/20" : "bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 shadow-[#FF4F5A]/20"
+              )}
+            >
+              {confirmConfig.actionLabel}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  </div>
-</div>
   );
 }
