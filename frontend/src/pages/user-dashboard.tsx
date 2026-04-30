@@ -11,7 +11,7 @@ import { supabase } from "../lib/supabase";
 import { bookingsService, salesService, trocService, itemsService, usersService } from "../services/api.service";
 import { api } from "../lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { ShoppingCart, RefreshCw } from "lucide-react";
+import { ShoppingCart, RefreshCw, ShoppingBag, MessageCircle, Settings2, AlertCircle, CalendarCheck } from "lucide-react";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 
 // Wilayas d'Algérie
@@ -109,8 +109,8 @@ interface Notification {
   id: string;
   user_id: string;
   title: string;
-  content: string;
-  type: 'booking' | 'sale' | 'troc' | 'message' | 'system';
+  body: string;
+  type: 'booking' | 'booking_request' | 'booking_confirmed' | 'booking_cancelled' | 'sale' | 'troc' | 'troc_proposal' | 'troc_accepted' | 'troc_rejected' | 'message' | 'system';
   link: string | null;
   is_read: boolean;
   created_at: string;
@@ -584,22 +584,56 @@ export function UserDashboard() {
                            <p className="text-xs text-muted-foreground/60 mt-1">Vos notifications apparaîtront ici</p>
                         </div>
                       ) : (
-                        notifications.slice(0, 5).map((notif) => (
-                           <div key={notif.id} className="flex gap-4 items-center px-7 py-4 hover:bg-muted/30 transition-colors group">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                notif.type === 'booking' ? 'bg-[#FF4F5A]/10' : notif.type === 'message' ? 'bg-blue-500/10' : 'bg-amber-500/10'
-                              }`}>
-                                 {notif.type === 'booking' ? <Calendar className="w-5 h-5 text-[#FF4F5A]" /> : 
-                                  notif.type === 'message' ? <MessageSquare className="w-5 h-5 text-blue-500" /> :
-                                  <Package className="w-5 h-5 text-amber-500" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                 <p className="text-sm font-semibold text-foreground line-clamp-1">{notif.title}</p>
-                                 <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.content}</p>
-                              </div>
-                              <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]" onClick={() => navigate(notif.link || '/dashboard')}>Voir →</Button>
-                           </div>
-                        ))
+                        notifications.slice(0, 5).map((notif) => {
+                          const getNotifIcon = () => {
+                            switch (notif.type) {
+                              case 'booking':
+                              case 'booking_request':
+                              case 'booking_confirmed':
+                              case 'booking_cancelled':
+                                return { Icon: CalendarCheck, bg: 'bg-blue-500/10', color: 'text-blue-500' };
+                              case 'sale':
+                                return { Icon: ShoppingBag, bg: 'bg-emerald-500/10', color: 'text-emerald-500' };
+                              case 'troc':
+                              case 'troc_proposal':
+                              case 'troc_accepted':
+                              case 'troc_rejected':
+                                return { Icon: RefreshCw, bg: 'bg-purple-500/10', color: 'text-purple-500' };
+                              case 'message':
+                                return { Icon: MessageCircle, bg: 'bg-sky-500/10', color: 'text-sky-500' };
+                              case 'system':
+                                return { Icon: Settings2, bg: 'bg-orange-500/10', color: 'text-orange-500' };
+                              default:
+                                return { Icon: AlertCircle, bg: 'bg-[#FF4F5A]/10', color: 'text-[#FF4F5A]' };
+                            }
+                          };
+                          const { Icon, bg, color } = getNotifIcon();
+
+                          return (
+                            <div key={notif.id} className="flex gap-4 items-center px-7 py-4 hover:bg-muted/30 transition-colors group">
+                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${bg}`}>
+                                  <Icon className={`w-5 h-5 ${color}`} />
+                               </div>
+                               <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-foreground line-clamp-1">{notif.title}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.body || ''}</p>
+                               </div>
+                               <Button 
+                                 size="sm" 
+                                 variant="ghost" 
+                                 className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]" 
+                                 onClick={() => {
+                                    const dest = notif.link
+                                      ? notif.link
+                                      : (notif.type?.startsWith('booking') || notif.type?.startsWith('troc') || notif.type === 'sale' ? '/lender' : '/dashboard');
+                                    navigate(dest);
+                                 }}
+                               >
+                                 Voir →
+                               </Button>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   </div>

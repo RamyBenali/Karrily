@@ -6,9 +6,9 @@ export interface Notification {
   id: string;
   user_id: string;
   title: string;
-  content: string;
-  type: 'booking' | 'sale' | 'troc' | 'message' | 'system';
-  link: string;
+  body: string;
+  type: 'booking' | 'booking_request' | 'booking_confirmed' | 'booking_cancelled' | 'sale' | 'troc' | 'troc_proposal' | 'troc_accepted' | 'troc_rejected' | 'message' | 'system';
+  link?: string;
   is_read: boolean;
   created_at: string;
 }

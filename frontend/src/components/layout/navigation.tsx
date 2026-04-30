@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid, Shield, Package } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid, Shield, Package, CalendarCheck, ShoppingBag, RefreshCw, MessageCircle, Settings2, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
@@ -210,34 +210,104 @@ export function Navigation() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-4 w-[360px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden z-50"
+                        className="absolute right-0 mt-4 w-[380px] bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden z-50"
                       >
                         <div className="p-6 border-b border-border/50 flex justify-between items-center">
-                          <h3 className="font-black text-xs uppercase tracking-widest">Notifications</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-black text-xs uppercase tracking-widest">Notifications</h3>
+                            {unreadCount > 0 && (
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#FF4F5A] text-white text-[9px] font-black">{unreadCount}</span>
+                            )}
+                          </div>
                           {unreadCount > 0 && (
-                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-[#FF4F5A]">Tout lire</button>
+                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-[#FF4F5A] hover:opacity-70 transition-opacity">Tout lire</button>
                           )}
                         </div>
-                        <div className="max-h-[400px] overflow-y-auto no-scrollbar">
+                        <div className="max-h-[440px] overflow-y-auto no-scrollbar divide-y divide-border/30">
                           {notifications.length === 0 ? (
-                            <div className="py-20 text-center text-muted-foreground text-sm px-10">
-                              Aucune notification pour le moment.
+                            <div className="py-16 text-center px-10 flex flex-col items-center gap-3">
+                              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+                                <Bell className="w-5 h-5 text-muted-foreground" />
+                              </div>
+                              <p className="text-sm font-bold text-muted-foreground">Aucune notification</p>
+                              <p className="text-xs text-muted-foreground/60">Vos notifications apparaîtront ici</p>
                             </div>
                           ) : (
-                            notifications.map(notif => (
-                              <div 
-                                key={notif.id}
-                                onClick={() => { markAsRead(notif.id); navigate(notif.link || getDashboardPath()); setShowNotifications(false); }}
-                                className={cn(
-                                  "p-5 border-b border-border/30 hover:bg-muted/50 cursor-pointer transition-all relative",
-                                  !notif.is_read && "bg-[#FF4F5A]/5"
-                                )}
-                              >
-                                <p className="font-bold text-sm mb-1">{notif.title}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-2">{notif.content}</p>
-                                <p className="text-[10px] text-muted-foreground/50 mt-2 font-medium">Il y a 2 heures</p>
-                              </div>
-                            ))
+                            notifications.map(notif => {
+                              const getNotifIcon = () => {
+                                switch (notif.type) {
+                                  case 'booking':
+                                  case 'booking_request':
+                                  case 'booking_confirmed':
+                                  case 'booking_cancelled':
+                                    return { Icon: CalendarCheck, bg: 'bg-blue-500/10', color: 'text-blue-500' };
+                                  case 'sale':
+                                    return { Icon: ShoppingBag, bg: 'bg-emerald-500/10', color: 'text-emerald-500' };
+                                  case 'troc':
+                                  case 'troc_proposal':
+                                  case 'troc_accepted':
+                                  case 'troc_rejected':
+                                    return { Icon: RefreshCw, bg: 'bg-purple-500/10', color: 'text-purple-500' };
+                                  case 'message':
+                                    return { Icon: MessageCircle, bg: 'bg-sky-500/10', color: 'text-sky-500' };
+                                  case 'system':
+                                    return { Icon: Settings2, bg: 'bg-orange-500/10', color: 'text-orange-500' };
+                                  default:
+                                    return { Icon: AlertCircle, bg: 'bg-[#FF4F5A]/10', color: 'text-[#FF4F5A]' };
+                                }
+                              };
+                              const { Icon, bg, color } = getNotifIcon();
+
+                              const getRelativeTime = (dateStr: string) => {
+                                const diff = Date.now() - new Date(dateStr).getTime();
+                                const mins = Math.floor(diff / 60000);
+                                const hours = Math.floor(diff / 3600000);
+                                const days = Math.floor(diff / 86400000);
+                                if (mins < 1) return "À l'instant";
+                                if (mins < 60) return `Il y a ${mins} min`;
+                                if (hours < 24) return `Il y a ${hours}h`;
+                                return `Il y a ${days}j`;
+                              };
+
+                              return (
+                                <div
+                                  key={notif.id}
+                                  className={cn(
+                                    "flex gap-3 p-4 hover:bg-muted/40 transition-all group cursor-pointer relative",
+                                    !notif.is_read && "bg-[#FF4F5A]/5"
+                                  )}
+                                  onClick={() => {
+                                    markAsRead(notif.id);
+                                    const dest = notif.link
+                                      ? notif.link
+                                      : (notif.type?.startsWith('booking') ? '/lender'
+                                        : notif.type?.startsWith('troc') ? '/lender'
+                                        : notif.type === 'sale' ? '/lender'
+                                        : '/dashboard');
+                                    navigate(dest);
+                                    setShowNotifications(false);
+                                  }}
+                                >
+                                  {!notif.is_read && (
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#FF4F5A]" />
+                                  )}
+                                  <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                                    <Icon className={`w-5 h-5 ${color}`} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm mb-0.5 leading-snug">{notif.title}</p>
+                                    <p className="text-xs text-muted-foreground line-clamp-2">{notif.body}</p>
+                                    <p className="text-[10px] text-muted-foreground/50 mt-1.5 font-medium">{getRelativeTime(notif.created_at)}</p>
+                                  </div>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-xl hover:bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"
+                                  >
+                                    <X className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
+                                  </button>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       </motion.div>
