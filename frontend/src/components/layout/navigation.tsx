@@ -269,7 +269,7 @@ export function Navigation() {
                           <p className="text-[10px] text-muted-foreground truncate font-medium mt-0.5">{user?.email}</p>
                         </div>
                         <button onClick={() => { navigate(getDashboardPath()); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
-                        {role !== 'admin' && (
+                        {(role === 'lender' || role === 'vendeur' || hasItems) && (
                           <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
                         )}
                         

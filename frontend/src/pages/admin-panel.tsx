@@ -179,9 +179,11 @@ export function AdminPanel() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0F10] flex items-center justify-center">
-        <div className="text-white text-xl flex items-center gap-3">
-          <Shield className="w-8 h-8 animate-pulse text-[#FF4F5A]" />
-          Chargement de l'administration...
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <Shield className="w-8 h-8 text-[#FF4F5A] animate-pulse" />
+          </div>
+          <p className="text-white/50 text-sm font-medium">Chargement de l'administration...</p>
         </div>
       </div>
     );
@@ -195,12 +197,16 @@ export function AdminPanel() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 lg:mb-10"
+            className="mb-10"
           >
-            <h1 className="text-4xl lg:text-6xl font-black text-white mb-3 leading-tight tracking-tight">
-              Admin <span className="text-[#FF4F5A]">Command</span>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Administration</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-white mb-2 leading-tight">
+              Admin <span style={{ background: 'linear-gradient(135deg,#FF4F5A,#FF8C94)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Center</span>
             </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground/70 font-medium max-w-2xl">
+            <p className="text-sm text-white/40 max-w-xl">
               Surveillez la santé de votre plateforme et gérez les utilisateurs en toute sécurité.
             </p>
           </motion.div>
@@ -241,118 +247,105 @@ export function AdminPanel() {
 
           {/* Overview / Command Center */}
           {activeTab === "overview" && (
-            <div className="space-y-10">
+            <div className="space-y-8">
               {/* Main KPI Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
-                  { label: "Volume Utilisateurs", value: stats.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", shadow: "shadow-blue-500/10" },
-                  { label: "Catalogue Actif", value: stats.totalItems, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", shadow: "shadow-[#FF4F5A]/10" },
-                  { label: "Flux Transactions", value: stats.totalBookings, icon: Calendar, color: "text-purple-500", bg: "bg-purple-500/10", shadow: "shadow-purple-500/10" },
-                  { label: "Revenu Brut", value: stats.totalRevenue.toLocaleString() + " DA", icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", shadow: "shadow-emerald-500/10" },
+                  { label: "Utilisateurs", value: stats.totalUsers, icon: Users, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/10" },
+                  { label: "Annonces", value: stats.totalItems, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", border: "border-[#FF4F5A]/10" },
+                  { label: "Transactions", value: stats.totalBookings, icon: Calendar, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/10" },
+                  { label: "Revenu Brut", value: stats.totalRevenue.toLocaleString() + " DA", icon: DollarSign, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/10" },
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`bg-[#0F1415] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 ${stat.shadow}`}
+                    transition={{ delay: index * 0.08 }}
+                    className={`bg-white/[0.03] border ${stat.border} rounded-2xl p-5 hover:-translate-y-0.5 transition-all duration-200 group`}
                   >
-                    <div className="flex items-center justify-between mb-4 relative z-10">
-                      <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center transition-transform group-hover:rotate-6`}>
-                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center`}>
+                        <stat.icon className={`w-5 h-5 ${stat.color}`} />
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                         <TrendingUp className="w-4 h-4 text-white/20" />
-                      </div>
+                      <TrendingUp className="w-4 h-4 text-white/10" />
                     </div>
-                    <div className="relative z-10">
-                       <p className="text-[11px] font-medium text-white/50 mb-1 leading-none">{stat.label}</p>
-                       <div className="text-xl font-bold text-white tracking-tight leading-none">{stat.value}</div>
-                    </div>
-                    {/* Background Detail */}
-                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <p className="text-[11px] text-white/30 mb-1">{stat.label}</p>
+                    <div className="text-2xl font-black text-white">{stat.value}</div>
                   </motion.div>
                 ))}
               </div>
-
-              <div className="grid lg:grid-cols-3 gap-10">
-                {/* System Health / Stats Visualization Placeholder */}
+              <div className="grid lg:grid-cols-3 gap-8">
+                {/* System Health */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="lg:col-span-2 bg-[#0F1415] rounded-[3rem] p-10 shadow-2xl border border-white/5 relative overflow-hidden h-[450px]"
+                  className="lg:col-span-2 bg-white/[0.03] rounded-2xl p-7 border border-white/5"
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <Shield className="w-40 h-40 text-white" />
+                  <div className="flex items-center justify-between mb-7">
+                    <div>
+                      <h2 className="text-lg font-black text-white">Santé du <span className="text-[#FF4F5A]">Système</span></h2>
+                      <p className="text-xs text-white/30 mt-0.5">Monitoring des activités en temps réel</p>
+                    </div>
+                    <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold flex items-center gap-2 border border-emerald-500/20">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      En ligne
+                    </div>
                   </div>
-                  <div className="relative z-10 flex items-center justify-between mb-10">
-                     <div>
-                        <h2 className="text-2xl font-black text-white mb-2">Santé du <span className="text-[#FF4F5A]">Système</span></h2>
-                        <p className="text-sm text-white/40 font-medium">Monitoring des activités en temps réel</p>
-                     </div>
-                     <div className="px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        Live Status
-                     </div>
+                  <div className="grid md:grid-cols-2 gap-5 mb-7">
+                    <div className="bg-white/[0.03] rounded-xl p-5 border border-white/5">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Messages</h4>
+                      <div className="h-1.5 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.totalMessages / 10, 100)}%` }} className="h-full bg-blue-500 rounded-full" />
+                      </div>
+                      <p className="text-xs text-white/40">{stats.system.totalMessages} messages</p>
+                    </div>
+                    <div className="bg-white/[0.03] rounded-xl p-5 border border-white/5">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Alertes</h4>
+                      <div className="h-1.5 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.unreadNotifications * 10, 100)}%` }} className="h-full bg-[#FF4F5A] rounded-full" />
+                      </div>
+                      <p className="text-xs text-white/40">{stats.system.unreadNotifications} non lues</p>
+                    </div>
                   </div>
-                         <div className="grid md:grid-cols-2 gap-8 relative z-10">
-                      <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                         <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Volume Messages</h4>
-                         <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.totalMessages / 10, 100)}%` }} className="h-full bg-blue-500 shadow-[0_0_10px_#3B82F6]" />
-                         </div>
-                         <p className="text-[10px] font-bold text-white/60">Total: {stats.system.totalMessages}</p>
+                  <div className="flex gap-5">
+                    {[
+                      { label: "Latence API", value: stats.system.apiLatency },
+                      { label: "Connexions DB", value: stats.system.dbConnections },
+                      { label: "Transactions", value: stats.totalBookings }
+                    ].map((m) => (
+                      <div key={m.label} className="flex-1 text-center p-4 bg-white/[0.03] rounded-xl border border-white/5">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-white/25 mb-1">{m.label}</p>
+                        <p className="text-xl font-black text-white font-mono">{m.value}</p>
                       </div>
-                      <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                         <h4 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4">Alertes Non Lues</h4>
-                         <div className="h-2 w-full bg-white/5 rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.unreadNotifications * 10, 100)}%` }} className="h-full bg-[#FF4F5A] shadow-[0_0_10px_#FF4F5A]" />
-                         </div>
-                         <p className="text-[10px] font-bold text-white/60">Unread: {stats.system.unreadNotifications}</p>
-                      </div>
-                   </div>
-                  <div className="mt-12 flex justify-center">
-                     <div className="inline-flex items-center gap-6 px-8 py-4 bg-white/5 rounded-2xl border border-white/5">
-                        <div className="text-center">
-                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">API Latency</p>
-                           <p className="text-xl font-black text-white font-mono">{stats.system.apiLatency}</p>
-                        </div>
-                        <div className="w-px h-8 bg-white/10" />
-                        <div className="text-center">
-                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">DB Connections</p>
-                           <p className="text-xl font-black text-white font-mono">{stats.system.dbConnections}</p>
-                        </div>
-                        <div className="w-px h-8 bg-white/10" />
-                        <div className="text-center">
-                           <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-1">Transactions</p>
-                           <p className="text-xl font-black text-emerald-500 font-mono">{stats.totalBookings}</p>
-                        </div>
-                     </div>
+                    ))}
                   </div>
                 </motion.div>
 
-                {/* Command Center Activity Feed */}
+                {/* Activity Feed */}
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: 16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="bg-[#0F1415] rounded-[3rem] p-10 shadow-2xl border border-white/5 flex flex-col h-[450px]"
+                  className="bg-white/[0.03] rounded-2xl border border-white/5 flex flex-col overflow-hidden"
                 >
-                  <h2 className="text-xl font-black text-white mb-8">Journal <span className="text-[#FF4F5A]">Système</span></h2>
-                  <div className="flex-1 space-y-6 overflow-y-auto pr-2 no-scrollbar">
-                     {usersList.slice(0, 4).map((u, idx) => (
-                        <div key={idx} className="flex gap-4 items-start p-4 hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5 group">
-                           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <UserCheck className="w-5 h-5 text-blue-400" />
-                           </div>
-                           <div className="min-w-0">
-                              <p className="text-xs font-black uppercase text-white/30 mb-1">Inscription</p>
-                              <p className="text-sm font-bold text-white line-clamp-1">{u.full_name}</p>
-                              <p className="text-[10px] text-white/40 mt-1">Nouveau compte créé</p>
-                           </div>
-                        </div>
-                     ))}
+                  <div className="px-6 py-5 border-b border-white/5">
+                    <h2 className="text-base font-black text-white">Journal <span className="text-[#FF4F5A]">Système</span></h2>
                   </div>
-                  <Button variant="ghost" className="mt-8 rounded-2xl h-12 font-black text-[10px] uppercase tracking-widest text-[#FF4F5A] hover:bg-[#FF4F5A]/10 transition-all">Voir tout le log</Button>
+                  <div className="flex-1 divide-y divide-white/5 overflow-y-auto no-scrollbar">
+                    {usersList.slice(0, 5).map((u, idx) => (
+                      <div key={idx} className="flex gap-3 items-start px-5 py-4 hover:bg-white/[0.03] transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                          <UserCheck className="w-4 h-4 text-blue-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold text-white/25 uppercase">Inscription</p>
+                          <p className="text-sm font-semibold text-white truncate">{u.full_name || u.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-5 py-4 border-t border-white/5">
+                    <Button variant="ghost" className="w-full rounded-xl h-9 text-[10px] font-bold text-[#FF4F5A] hover:bg-[#FF4F5A]/10">Voir tout le log</Button>
+                  </div>
                 </motion.div>
               </div>
             </div>

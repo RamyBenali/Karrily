@@ -20,9 +20,11 @@ export function BottomNav() {
       <div className="bg-background/80 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[32px] overflow-hidden h-20 flex items-center justify-around px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const { role, hasItems } = useAuthStore();
+          const isSeller = role === 'lender' || role === 'vendeur' || hasItems;
           const show = item.auth ? isAuthenticated : true;
 
-          if (!show) return null;
+          if (!show || (item.primary && !isSeller)) return null;
 
           if (item.primary) {
             return (

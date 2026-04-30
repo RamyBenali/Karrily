@@ -119,7 +119,7 @@ interface Notification {
 export function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuthStore();
+  const { user, role, hasItems } = useAuthStore();
   const [activeTab, setActiveTab] = useState(location.state?.tab || "Vue d'ensemble");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -494,19 +494,21 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      
-
       <div className="py-8 lg:py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 lg:mb-10"
+            className="mb-8 lg:mb-12"
           >
-            <h1 className="text-4xl lg:text-6xl font-black text-foreground mb-3 leading-tight tracking-tight">
-              Mon <span className="text-[#FF4F5A]">Compte</span>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Dashboard</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-3 leading-tight tracking-tight">
+              Mon <span className="gradient-text">Espace</span>
             </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground font-medium max-w-2xl">
+            <p className="text-base text-muted-foreground max-w-xl">
               Gérez vos locations, suivez vos échanges et personnalisez votre expérience Karrily.
             </p>
           </motion.div>
@@ -523,11 +525,11 @@ export function UserDashboard() {
               userAvatar={profile.avatar_url}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
-              extraAction={{
-                label: "Devenir loueur",
-                onClick: () => navigate('/lender'),
+              extraAction={(role === 'lender' || role === 'vendeur' || hasItems) ? {
+                label: "Publier une annonce",
+                onClick: () => navigate('/create'),
                 variant: "premium"
-              }}
+              } : undefined}
             />
 
             {/* Main Content */}
@@ -537,61 +539,65 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                          <Package className="w-12 h-12 text-[#FF4F5A]" />
-                       </div>
-                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Locations</p>
-                       <h3 className="text-xl font-bold leading-none">{bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length}</h3>
-                       <p className="text-[10px] text-muted-foreground mt-2">En cours actuellement</p>
-                    </div>
-                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                          <MessageSquare className="w-12 h-12 text-[#FF4F5A]" />
-                       </div>
-                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Messages</p>
-                       <h3 className="text-xl font-bold leading-none">{unreadCount}</h3>
-                       <p className="text-[10px] text-muted-foreground mt-2">Non lus</p>
-                    </div>
-                    <div className="bg-card rounded-3xl p-5 shadow-lg border border-border relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                          <Heart className="w-12 h-12 text-[#FF4F5A]" />
-                       </div>
-                       <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Favoris</p>
-                       <h3 className="text-xl font-bold leading-none">{favorites.length}</h3>
-                       <p className="text-[10px] text-muted-foreground mt-2">Objets épinglés</p>
-                    </div>
+                  {/* KPI Cards */}
+                  <div className="grid md:grid-cols-3 gap-5">
+                    {[
+                      { icon: Package, label: "Locations actives", value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: "En cours", color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: "Locations actives" },
+                      { icon: MessageSquare, label: "Messages", value: unreadCount, sub: "Non lus", color: "text-blue-500", bg: "bg-blue-500/10", tab: "Messages" },
+                      { icon: Heart, label: "Favoris", value: favorites.length, sub: "Épinglés", color: "text-rose-400", bg: "bg-rose-400/10", tab: "Favoris" },
+                    ].map((s, i) => (
+                      <motion.div
+                        key={s.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.08 }}
+                        onClick={() => setActiveTab(s.tab)}
+                        className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group stat-card-hover"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <s.icon className={`w-5 h-5 ${s.color}`} />
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                        <div className="text-3xl font-black text-foreground mb-1">{s.value}</div>
+                        <div className="text-xs text-muted-foreground">{s.sub} · <span className="font-semibold">{s.label}</span></div>
+                      </motion.div>
+                    ))}
                   </div>
 
-                  <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
-                    <div className="flex items-center justify-between mb-8">
-                       <h2 className="text-2xl font-black">Activité <span className="text-[#FF4F5A]">récente</span></h2>
-                       <Button variant="ghost" className="text-xs uppercase font-black tracking-widest" onClick={() => setActiveTab("Messages")}>Voir tout</Button>
+                  {/* Recent Activity */}
+                  <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-7 py-5 border-b border-border/60">
+                       <h2 className="text-lg font-bold">Activité <span className="text-[#FF4F5A]">récente</span></h2>
+                       <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab("Messages")}>Voir tout →</Button>
                     </div>
-                    
-                    <div className="space-y-6">
+                    <div className="divide-y divide-border/50">
                       {notifications.length === 0 ? (
-                        <div className="py-12 text-center">
-                           <Clock className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-                           <p className="text-muted-foreground">Aucune activité récente pour le moment.</p>
+                        <div className="py-16 text-center">
+                           <div className="w-14 h-14 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                             <Clock className="w-7 h-7 text-muted-foreground/30" />
+                           </div>
+                           <p className="text-sm text-muted-foreground font-medium">Aucune activité récente</p>
+                           <p className="text-xs text-muted-foreground/60 mt-1">Vos notifications apparaîtront ici</p>
                         </div>
                       ) : (
                         notifications.slice(0, 5).map((notif) => (
-                           <div key={notif.id} className="flex gap-6 items-start p-4 hover:bg-muted/50 rounded-2xl transition-colors border border-transparent hover:border-border">
-                              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
-                                 {notif.type === 'booking' ? <Calendar className="w-6 h-6 text-[#FF4F5A]" /> : 
-                                  notif.type === 'message' ? <MessageSquare className="w-6 h-6 text-[#FF4F5A]" /> :
-                                  <Package className="w-6 h-6 text-[#FF4F5A]" />}
+                           <div key={notif.id} className="flex gap-4 items-center px-7 py-4 hover:bg-muted/30 transition-colors group">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                notif.type === 'booking' ? 'bg-[#FF4F5A]/10' : notif.type === 'message' ? 'bg-blue-500/10' : 'bg-amber-500/10'
+                              }`}>
+                                 {notif.type === 'booking' ? <Calendar className="w-5 h-5 text-[#FF4F5A]" /> : 
+                                  notif.type === 'message' ? <MessageSquare className="w-5 h-5 text-blue-500" /> :
+                                  <Package className="w-5 h-5 text-amber-500" />}
                               </div>
                               <div className="flex-1 min-w-0">
-                                 <h4 className="font-bold text-foreground text-base mb-1">{notif.title}</h4>
-                                 <p className="text-sm text-muted-foreground line-clamp-1">{notif.content}</p>
-                                 <p className="text-[10px] uppercase font-black tracking-tighter text-muted-foreground/50 mt-2">Il y a quelques instants</p>
+                                 <p className="text-sm font-semibold text-foreground line-clamp-1">{notif.title}</p>
+                                 <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.content}</p>
                               </div>
-                              <Button size="sm" variant="outline" className="rounded-full h-8 px-4 text-[10px] font-black uppercase" onClick={() => navigate(notif.link || '/dashboard')}>Gérer</Button>
+                              <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]" onClick={() => navigate(notif.link || '/dashboard')}>Voir →</Button>
                            </div>
                         ))
                       )}
@@ -605,64 +611,68 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
                 >
                   {/* Renter / Owner toggle */}
-                  <div className="flex gap-2 mb-6">
-                    <button
-                      onClick={() => setBookingTab("renter")}
-                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "renter" ? "bg-[#0F2A2E] text-white" : "bg-card text-muted-foreground hover:bg-muted"
+                  <div className="flex gap-1.5 p-1.5 bg-muted/60 rounded-xl w-fit">
+                    {(["renter", "owner"] as const).map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setBookingTab(tab)}
+                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                          bookingTab === tab
+                            ? "bg-card text-foreground shadow-sm border border-border/60"
+                            : "text-muted-foreground hover:text-foreground"
                         }`}
-                    >
-                      Mes réservations
-                    </button>
-                    <button
-                      onClick={() => setBookingTab("owner")}
-                      className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${bookingTab === "owner" ? "bg-[#0F2A2E] text-white" : "bg-card text-muted-foreground hover:bg-muted"
-                        }`}
-                    >
-                      Demandes reçues
-                    </button>
+                      >
+                        {tab === "renter" ? "Mes réservations" : "Demandes reçues"}
+                      </button>
+                    ))}
                   </div>
 
                   {/* Stats */}
-                  <div className="grid md:grid-cols-3 gap-6 mb-8">
+                  <div className="grid md:grid-cols-3 gap-4">
                     {[
-                      { label: "En attente", value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b" },
-                      { label: "Actives", value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A" },
-                      { label: "Terminées", value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#0F2A2E" }
+                      { label: "En attente", value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b", bg: "bg-amber-500/10" },
+                      { label: "Actives", value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A", bg: "bg-[#FF4F5A]/10" },
+                      { label: "Terminées", value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#64748b", bg: "bg-slate-500/10" }
                     ].map((stat, index) => (
                       <motion.div
                         key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-card rounded-3xl p-6 shadow-lg border border-border"
+                        transition={{ delay: index * 0.08 }}
+                        className="bg-card rounded-2xl p-5 border border-border shadow-sm"
                       >
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${stat.color}15` }}>
-                            <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
-                          </div>
+                        <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center mb-4`}>
+                          <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
                         </div>
-                        <div className="text-4xl font-bold text-foreground mb-1">{stat.value}</div>
-                        <div className="text-muted-foreground">{stat.label}</div>
+                        <div className="text-3xl font-black text-foreground mb-1">{stat.value}</div>
+                        <div className="text-sm text-muted-foreground">{stat.label}</div>
                       </motion.div>
                     ))}
                   </div>
 
                   {/* Bookings List */}
-                  <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
-                    <h2 className="text-2xl font-bold text-foreground mb-6">
-                      {bookingTab === "renter" ? "Mes réservations" : "Demandes reçues"}
-                    </h2>
+                  <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                    <div className="px-7 py-5 border-b border-border/60">
+                      <h2 className="text-lg font-bold text-foreground">
+                        {bookingTab === "renter" ? "Mes réservations" : "Demandes reçues"}
+                      </h2>
+                    </div>
+                    <div className="p-7">
 
                     {isLoadingBookings ? (
                       <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A]" />
+                        <Loader2 className="w-7 h-7 animate-spin text-[#FF4F5A]" />
                       </div>
                     ) : bookings.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Calendar className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-                        <p className="text-muted-foreground">Aucune réservation pour le moment</p>
+                      <div className="text-center py-16">
+                        <div className="w-16 h-16 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                          <Calendar className="w-8 h-8 text-muted-foreground/30" />
+                        </div>
+                        <p className="text-sm font-semibold text-muted-foreground mb-1">Aucune réservation pour le moment</p>
+                        <p className="text-xs text-muted-foreground/60">Vos demandes apparaîtront ici</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -787,6 +797,7 @@ export function UserDashboard() {
                         ))}
                       </div>
                     )}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -973,49 +984,52 @@ export function UserDashboard() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-card rounded-3xl shadow-lg border border-border overflow-hidden h-[600px] flex"
+                  className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex"
+                  style={{ height: '620px' }}
                 >
                   {/* Left Column: Conversations List */}
-                  <div className="w-1/3 border-r border-border flex flex-col h-full bg-gray-50/50">
-                    <div className="p-6 border-b border-border bg-white">
-                      <h2 className="text-xl font-bold text-foreground">Messages</h2>
+                  <div className="w-[280px] flex-shrink-0 border-r border-border flex flex-col bg-muted/20">
+                    <div className="px-5 py-4 border-b border-border">
+                      <h2 className="text-base font-bold text-foreground">Messages</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</p>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto no-scrollbar">
                       {conversations.length === 0 ? (
-                        <div className="p-8 text-center text-muted-foreground text-sm">
-                          Aucune conversation pour le moment.
+                        <div className="p-8 text-center text-muted-foreground">
+                          <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                          <p className="text-sm font-medium">Aucune conversation</p>
+                          <p className="text-xs mt-1 opacity-60">Contactez un vendeur pour commencer</p>
                         </div>
                       ) : (
                         conversations.map((conv) => (
                           <div
                             key={conv.id}
                             onClick={() => setActiveConversationId(conv.id)}
-                            className={`p-4 border-b border-border cursor-pointer transition-colors ${activeConversationId === conv.id ? "bg-[#FF4F5A]/5 border-l-4 border-l-[#FF4F5A]" : "hover:bg-white"
-                              }`}
+                            className={`p-4 cursor-pointer transition-all border-b border-border/40 ${
+                              activeConversationId === conv.id
+                                ? "bg-[#FF4F5A]/5 border-l-2 border-l-[#FF4F5A]"
+                                : "hover:bg-muted/40"
+                            }`}
                           >
-                            <div className="flex gap-3 items-center">
-                              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-200">
+                            <div className="flex gap-3 items-start">
+                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-border">
                                 {conv.other_user?.avatar_url ? (
                                   <img src={conv.other_user.avatar_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <div className="w-full h-full bg-[#0F2A2E] text-white flex items-center justify-center font-bold">
+                                  <div className="w-full h-full bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] text-white flex items-center justify-center font-bold text-sm">
                                     {conv.other_user?.full_name?.charAt(0) || "U"}
                                   </div>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center mb-1">
-                                  <h4 className="font-bold text-foreground truncate">{conv.other_user?.full_name}</h4>
-                                  <span className="text-xs text-muted-foreground/70">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-semibold text-foreground text-sm truncate">{conv.other_user?.full_name}</p>
+                                  <span className="text-[10px] text-muted-foreground/60 ml-1 flex-shrink-0">
                                     {new Date(conv.last_message_at).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit' })}
                                   </span>
                                 </div>
-                                <p className="text-xs font-semibold text-[#FF4F5A] truncate mb-0.5">
-                                  {conv.items?.title || "Annonce supprimée"}
-                                </p>
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {conv.last_message_preview || "Nouvelle conversation"}
-                                </p>
+                                <p className="text-[11px] font-medium text-[#FF4F5A] truncate mt-0.5">{conv.items?.title || "Annonce"}</p>
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.last_message_preview || "Nouvelle conversation"}</p>
                               </div>
                             </div>
                           </div>
@@ -1025,11 +1039,13 @@ export function UserDashboard() {
                   </div>
 
                   {/* Right Column: Active Chat */}
-                  <div className="flex-1 flex flex-col h-full bg-card relative">
+                  <div className="flex-1 flex flex-col bg-background/50">
                     {!activeConversationId ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/70">
-                        <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
-                        <p>Sélectionnez une conversation</p>
+                      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50 gap-3">
+                        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                          <MessageSquare className="w-8 h-8 opacity-30" />
+                        </div>
+                        <p className="text-sm font-medium">Sélectionnez une conversation</p>
                       </div>
                     ) : (
                       <>
@@ -1037,20 +1053,20 @@ export function UserDashboard() {
                         {(() => {
                           const conv = conversations.find(c => c.id === activeConversationId);
                           return conv ? (
-                            <div className="p-4 border-b border-border flex items-center gap-4 bg-card shadow-sm z-10">
-                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                            <div className="px-5 py-3.5 border-b border-border flex items-center gap-3 bg-card shadow-sm">
+                              <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-border flex-shrink-0">
                                 {conv.other_user?.avatar_url ? (
                                   <img src={conv.other_user.avatar_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <div className="w-full h-full bg-[#0F2A2E] text-white flex items-center justify-center font-bold">
+                                  <div className="w-full h-full bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] text-white flex items-center justify-center font-bold text-xs">
                                     {conv.other_user?.full_name?.charAt(0) || "U"}
                                   </div>
                                 )}
                               </div>
                               <div>
-                                <h3 className="font-bold text-foreground">{conv.other_user?.full_name}</h3>
-                                <p className="text-xs text-muted-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => conv.item_id && navigate(`/item/${conv.item_id}`)}>
-                                  Lié à : <span className="underline">{conv.items?.title}</span>
+                                <p className="font-semibold text-foreground text-sm">{conv.other_user?.full_name}</p>
+                                <p className="text-[11px] text-muted-foreground cursor-pointer hover:text-[#FF4F5A] transition-colors" onClick={() => conv.item_id && navigate(`/item/${conv.item_id}`)}>
+                                  {conv.items?.title || "Annonce"}
                                 </p>
                               </div>
                             </div>
@@ -1058,19 +1074,23 @@ export function UserDashboard() {
                         })()}
 
                         {/* Chat Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 flex flex-col">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-3 no-scrollbar">
                           {isLoadingMsgs ? (
-                            <div className="flex justify-center my-auto"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground/70" /></div>
+                            <div className="flex justify-center my-auto"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground/40" /></div>
                           ) : (
-                            // Render messages exactly in order of array (since oldest is first via ascending order)
                             messages.map(msg => {
                               const isMe = msg.sender_id === user?.id;
                               return (
                                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                                  <div className={`max-w-[70%] rounded-2xl px-5 py-3 ${isMe ? "bg-[#FF4F5A] text-white rounded-br-sm shadow-sm" : "bg-card border border-border text-foreground rounded-bl-sm shadow-sm"
+                                  <div className={`relative max-w-[72%] px-4 py-2.5 ${
+                                    isMe
+                                      ? "bg-[#FF4F5A] text-white rounded-2xl rounded-br-md shadow-sm"
+                                      : "bg-card border border-border text-foreground rounded-2xl rounded-bl-md shadow-sm"
+                                  }`}>
+                                    <p className="text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
+                                    <p className={`text-[10px] mt-1.5 ${
+                                      isMe ? "text-white/60 text-right" : "text-muted-foreground/60"
                                     }`}>
-                                    <p className="text-sm" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
-                                    <p className={`text-[10px] mt-1 text-right ${isMe ? "text-white/70" : "text-muted-foreground/70"}`}>
                                       {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                   </div>
@@ -1081,20 +1101,20 @@ export function UserDashboard() {
                         </div>
 
                         {/* Chat Input */}
-                        <div className="p-4 border-t border-border bg-white">
+                        <div className="p-4 border-t border-border bg-card">
                           <form onSubmit={handleSendMessage} className="flex gap-2">
                             <Input
                               value={newMessage}
                               onChange={e => setNewMessage(e.target.value)}
                               placeholder="Écrivez votre message..."
-                              className="flex-1 rounded-full bg-muted/50 border-border focus-visible:ring-[#FF4F5A]"
+                              className="flex-1 rounded-xl h-10 bg-muted/50 border-border/60 focus-visible:ring-[#FF4F5A]/30 text-sm"
                             />
                             <Button
                               type="submit"
                               disabled={!newMessage.trim()}
-                              className="w-10 h-10 rounded-full bg-[#0F2A2E] hover:bg-[#1A4851] text-white p-0 flex items-center justify-center"
+                              className="w-10 h-10 rounded-xl bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white p-0 flex items-center justify-center shadow-sm"
                             >
-                              <ChevronRight className="w-5 h-5 mx-auto" />
+                              <ChevronRight className="w-5 h-5" />
                             </Button>
                           </form>
                         </div>

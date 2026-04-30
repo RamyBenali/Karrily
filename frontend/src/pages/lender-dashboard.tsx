@@ -180,26 +180,28 @@ export function LenderDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      
-
       <div className="py-8 lg:py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 lg:mb-10 gap-4"
+            className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-5"
           >
             <div>
-              <h1 className="text-4xl lg:text-6xl font-black text-foreground mb-3 leading-tight tracking-tight">
-                Propriétaire <span className="text-[#FF4F5A]">Center</span>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Espace Propriétaire</span>
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-2 leading-tight">
+                Mon <span className="gradient-text">Centre</span>
               </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground font-medium max-w-2xl">
-                Gérez votre inventaire, suivez vos revenus et monitorez vos transactions en temps réel.
+              <p className="text-base text-muted-foreground max-w-xl">
+                Gérez votre inventaire, suivez vos revenus et monitorez vos transactions.
               </p>
             </div>
-            <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-gradient-to-r from-[#FF4F5A] to-[#FF6B74] hover:shadow-xl shadow-[#FF4F5A]/20 text-white px-8 h-12 rounded-2xl font-black text-xs uppercase tracking-widest group">
-              <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
+            <Button onClick={() => navigate("/create")} className="w-full md:w-auto bg-gradient-to-r from-[#FF4F5A] to-[#FF6B74] text-white px-7 h-11 rounded-xl font-bold text-sm shadow-lg shadow-[#FF4F5A]/20 group hover:shadow-xl transition-all">
+              <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />
               Publier une annonce
             </Button>
           </motion.div>
@@ -241,9 +243,9 @@ export function LenderDashboard() {
             <div className="lg:col-span-9">
           {/* Overview / Merchant Center */}
           {activeView === "overview" && (
-            <div className="space-y-10">
+            <div className="space-y-8">
               {/* Main KPI Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
                   { 
                     label: "Chiffre d'Affaire", 
@@ -252,7 +254,7 @@ export function LenderDashboard() {
                     icon: DollarSign, 
                     color: "text-emerald-500",
                     bg: "bg-emerald-500/10",
-                    shadow: "shadow-emerald-500/10"
+                    trendColor: "text-emerald-600 bg-emerald-50"
                   },
                   { 
                     label: "Inventaire Actif", 
@@ -261,16 +263,16 @@ export function LenderDashboard() {
                     icon: Package, 
                     color: "text-[#FF4F5A]",
                     bg: "bg-[#FF4F5A]/10",
-                    shadow: "shadow-[#FF4F5A]/10"
+                    trendColor: "text-blue-600 bg-blue-50"
                   },
                   { 
-                    label: "Performance Location", 
+                    label: "Réservations", 
                     value: stats.totalBookings, 
                     trend: "+3 ce mois", 
                     icon: TrendingUp, 
                     color: "text-blue-500",
                     bg: "bg-blue-500/10",
-                    shadow: "shadow-blue-500/10"
+                    trendColor: "text-blue-600 bg-blue-50"
                   },
                   { 
                     label: "Satisfaction", 
@@ -279,93 +281,87 @@ export function LenderDashboard() {
                     icon: Star, 
                     color: "text-amber-500",
                     bg: "bg-amber-500/10",
-                    shadow: "shadow-amber-500/10"
+                    trendColor: "text-amber-600 bg-amber-50"
                   }
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`bg-card rounded-3xl p-5 shadow-lg border border-border group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl ${stat.shadow}`}
+                    transition={{ delay: index * 0.08 }}
+                    className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 stat-card-hover"
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center transition-transform group-hover:rotate-6`}>
-                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                    <div className="flex items-center justify-between mb-5">
+                      <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center`}>
+                        <stat.icon className={`w-5 h-5 ${stat.color}`} />
                       </div>
-                      <span className="text-xs font-medium px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${stat.trendColor}`}>
                         {stat.trend}
                       </span>
                     </div>
-                     <div className="relative z-10">
-                        <p className="text-[11px] font-medium text-muted-foreground/70 mb-1 leading-none">{stat.label}</p>
-                       <div className="text-xl font-bold text-foreground tracking-tight leading-none">{stat.value}</div>
-                    </div>
+                    <div className="text-[11px] text-muted-foreground mb-1">{stat.label}</div>
+                    <div className="text-2xl font-black text-foreground tracking-tight">{stat.value}</div>
                   </motion.div>
                 ))}
               </div>
 
-              <div className="grid lg:grid-cols-3 gap-10">
+              <div className="grid lg:grid-cols-3 gap-8">
                 {/* Advanced Analytics Chart */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="lg:col-span-2 bg-card rounded-[3rem] p-10 shadow-2xl border border-border relative overflow-hidden"
+                  className="lg:col-span-2 bg-card rounded-2xl p-7 border border-border shadow-sm"
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <TrendingUp className="w-40 h-40 text-[#FF4F5A]" />
-                  </div>
-                  <div className="flex items-center justify-between mb-10 relative z-10">
+                  <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-black text-foreground mb-2">Performance <span className="text-[#FF4F5A]">Analytique</span></h2>
-                      <p className="text-sm text-muted-foreground font-medium">Évolution de vos revenus sur les 6 derniers mois</p>
+                      <h2 className="text-lg font-bold text-foreground">Performance <span className="text-[#FF4F5A]">Analytique</span></h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Revenus sur les 6 derniers mois</p>
                     </div>
-                    <div className="flex gap-2">
-                       <button className="px-5 py-2 bg-[#0F2A2E] text-white rounded-full text-[10px] font-black uppercase tracking-widest">Revenus</button>
-                       <button className="px-5 py-2 bg-muted text-muted-foreground rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-border transition-colors">Vues</button>
+                    <div className="flex gap-1.5 p-1 bg-muted/60 rounded-lg">
+                       <button className="px-3 py-1.5 bg-card text-foreground rounded-md text-[10px] font-bold shadow-sm border border-border/60">Revenus</button>
+                       <button className="px-3 py-1.5 text-muted-foreground rounded-md text-[10px] font-bold hover:text-foreground transition-colors">Vues</button>
                     </div>
                   </div>
                   
-                  <div className="h-80 w-full relative z-10">
+                  <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={stats.earningsData}>
                         <defs>
                           <linearGradient id="lenderEarnings" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FF4F5A" stopOpacity={0.3}/>
+                            <stop offset="5%" stopColor="#FF4F5A" stopOpacity={0.25}/>
                             <stop offset="95%" stopColor="#FF4F5A" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.06} />
                         <XAxis 
                           dataKey="month" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} 
-                          dy={15}
+                          tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
+                          dy={10}
                         />
                         <YAxis 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} 
+                          tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} 
                         />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: '#0F2A2E', 
-                            border: 'none',
-                            borderRadius: '16px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                            backgroundColor: 'var(--card)', 
+                            border: '1px solid var(--border)',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                            fontSize: '12px'
                           }}
-                          itemStyle={{ color: 'white', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px' }}
-                          labelStyle={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '4px' }}
                         />
                         <Area 
                           type="monotone" 
                           dataKey="earnings" 
                           stroke="#FF4F5A" 
-                          strokeWidth={4} 
+                          strokeWidth={2.5} 
                           fillOpacity={1} 
                           fill="url(#lenderEarnings)" 
-                          animationDuration={2000}
+                          animationDuration={1500}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -374,38 +370,45 @@ export function LenderDashboard() {
 
                 {/* Merchant Activity Feed */}
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: 16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="bg-card rounded-[3rem] p-10 shadow-2xl border border-border flex flex-col"
+                  className="bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden"
                 >
-                  <h2 className="text-xl font-black mb-8">Flux <span className="text-[#FF4F5A]">Marchand</span></h2>
-                  <div className="flex-1 space-y-6 overflow-y-auto pr-2 no-scrollbar">
+                  <div className="px-6 py-5 border-b border-border/60">
+                    <h2 className="text-base font-bold">Flux <span className="text-[#FF4F5A]">Marchand</span></h2>
+                  </div>
+                  <div className="flex-1 divide-y divide-border/50 overflow-y-auto no-scrollbar">
                     {trocProposals.slice(0, 3).map((p, idx) => (
-                       <div key={idx} className="flex gap-4 items-start p-4 hover:bg-muted/50 rounded-2xl transition-all border border-transparent hover:border-border group">
-                          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                             <RefreshCw className="w-5 h-5 text-orange-600" />
+                       <div key={idx} className="flex gap-3 items-start px-5 py-4 hover:bg-muted/30 transition-colors group">
+                          <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                             <RefreshCw className="w-4 h-4 text-orange-600" />
                           </div>
                           <div className="min-w-0">
-                             <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Proposition de Troc</p>
-                             <p className="text-sm font-bold text-foreground line-clamp-1">{p.items?.title || "Annonce"}</p>
-                             <p className="text-[10px] text-muted-foreground mt-1">À l'instant</p>
+                             <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase">Troc reçu</p>
+                             <p className="text-sm font-semibold text-foreground truncate">{p.items?.title || "Annonce"}</p>
                           </div>
                        </div>
                     ))}
                     {upcomingBookings.slice(0, 3).map((b, idx) => (
-                       <div key={idx} className="flex gap-4 items-start p-4 hover:bg-muted/50 rounded-2xl transition-all border border-transparent hover:border-border group">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                             <Calendar className="w-5 h-5 text-blue-600" />
+                       <div key={idx} className="flex gap-3 items-start px-5 py-4 hover:bg-muted/30 transition-colors group">
+                          <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                             <Calendar className="w-4 h-4 text-blue-600" />
                           </div>
                           <div className="min-w-0">
-                             <p className="text-[11px] font-medium text-muted-foreground mb-1 leading-none">Location</p>
-                             <p className="text-sm font-bold text-foreground line-clamp-1">{b.items?.title || "Objet"}</p>
-                             <p className="text-[10px] text-muted-foreground mt-1">Aujourd'hui, 14:00</p>
+                             <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase">Location</p>
+                             <p className="text-sm font-semibold text-foreground truncate">{b.items?.title || "Objet"}</p>
                           </div>
                        </div>
                     ))}
+                    {(trocProposals.length + upcomingBookings.length) === 0 && (
+                      <div className="py-12 text-center">
+                        <p className="text-sm text-muted-foreground">Aucune activité récente</p>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="outline" className="mt-8 rounded-2xl h-12 font-black text-[10px] uppercase tracking-widest border-border hover:bg-[#0F2A2E] hover:text-white transition-all">Consulter toutes les activités</Button>
+                  <div className="px-5 py-4 border-t border-border/60">
+                    <Button variant="outline" className="w-full rounded-xl h-9 text-xs font-bold border-border hover:bg-muted">Toutes les activités</Button>
+                  </div>
                 </motion.div>
               </div>
             </div>
