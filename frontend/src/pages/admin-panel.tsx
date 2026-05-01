@@ -9,20 +9,13 @@ import {
   Settings,
   Search,
   MoreVertical,
-  CheckCircle,
-  XCircle,
-  Eye,
-  LogOut,
   Calendar,
-  Layers,
-  UserX,
-  UserCheck,
   TrendingUp,
   Star,
   Trash2,
   Loader2,
-  Activity,
-  ClipboardList
+  ClipboardList,
+  Flag,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -41,15 +34,26 @@ import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { cn } from "../components/ui/utils";
-import { statsService } from "../services/api.service";
+import { statsService, reportsService, itemsService, reviewsService } from "../services/api.service";
+import { toast } from "react-hot-toast";
 
 const sidebarItems = [
   { icon: BarChart3, label: "Vue d'ensemble" },
   { icon: Users, label: "Utilisateurs" },
   { icon: Package, label: "Annonces" },
   { icon: Star, label: "Avis" },
+  { icon: Flag, label: "Signalements" },
   { icon: ClipboardList, label: "Journal" },
 ];
+
+const REASON_LABELS: Record<string, string> = {
+  inappropriate: "Contenu inapproprié",
+  fraud: "Arnaque ou fraude",
+  spam: "Spam ou doublon",
+  counterfeit: "Objet contrefait",
+  harassment: "Harcèlement",
+  other: "Autre raison"
+};
 
 interface UserProfile {
   id: string;
@@ -97,7 +101,7 @@ export function AdminPanel() {
   const navigate = useNavigate();
   const { user, setImpersonation } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "reviews" | "logs">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "reviews" | "reports" | "logs">("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -120,6 +124,9 @@ export function AdminPanel() {
   const [salesList, setSalesList] = useState<Sale[]>([]);
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [isDeletingReview, setIsDeletingReview] = useState<string | null>(null);
+  const [reportsList, setReportsList] = useState<any[]>([]);
+  const [isResolvingReport, setIsResolvingReport] = useState<string | null>(null);
+  const [allLogs, setAllLogs] = useState<any[]>([]);
 
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
@@ -139,39 +146,79 @@ export function AdminPanel() {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const allLogs = [
+  // Derived logs for the overview
+  const displayLogs = [
+    ...allLogs,
     ...usersList.map(u => ({ id: u.id, type: 'Inscription', title: u.full_name || u.email, date: u.created_at, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => new Date(b.date || b.created_at).getTime() - new Date(a.date || a.created_at).getTime());
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      const res = await statsService.getAdminStats();
-      if (res.data) {
+      // Fetch stats once on load
+      statsService.getAdminStats().then(res => {
+        if (res.data) {
           setStats({
-              ...res.data.kpis,
-              system: res.data.system
+            ...res.data.kpis,
+            system: res.data.system
           });
-          if (res.data.lists) {
-              setUsersList(res.data.lists.users || []);
-              setItemsList(res.data.lists.items || []);
-              setBookingsList(res.data.lists.bookings || []);
-              setSalesList(res.data.lists.sales || []);
+          // Also set some logs from the system activity if available
+          if (res.data.lists?.bookings) {
+            const logs = res.data.lists.bookings.map((b: any) => ({
+              type: 'TRANSACTION',
+              title: `Nouvelle transaction: ${b.total_price} DA`,
+              date: b.created_at,
+              icon: DollarSign,
+              color: 'text-emerald-500',
+              bg: 'bg-emerald-500/10'
+            }));
+            setAllLogs(logs);
           }
+        }
+      });
+      
+      // Fetch current tab data
+      refreshCurrentTab();
+    }
+  }, [user, activeTab]);
+
+  const refreshCurrentTab = async () => {
+    if (!user) return;
+    
+    try {
+      if (activeTab === "overview") {
+        const res = await statsService.getAdminStats();
+        if (res.data) {
+          setStats({
+            ...res.data.kpis,
+            system: res.data.system
+          });
+          if (res.data.lists?.bookings) {
+            const logs = res.data.lists.bookings.map((b: any) => ({
+              type: 'TRANSACTION',
+              title: `Nouvelle transaction: ${b.total_price} DA`,
+              date: b.created_at,
+              icon: DollarSign,
+              color: 'text-emerald-500',
+              bg: 'bg-emerald-500/10'
+            }));
+            setAllLogs(logs);
+          }
+        }
+      } else if (activeTab === "users") {
+        const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        if (data) setUsersList(data);
+      } else if (activeTab === "items") {
+        const { data } = await supabase.from('items').select('*, profiles(full_name, email), categories(name)').order('created_at', { ascending: false });
+        if (data) setItemsList(data);
+      } else if (activeTab === "reviews") {
+        const { data } = await supabase.from('reviews').select('*, items(title), reviewer:profiles!reviewer_id(full_name)').order('created_at', { ascending: false });
+        if (data) setReviewsList(data);
+      } else if (activeTab === "reports") {
+        const res = await reportsService.getAll();
+        if (res.success) setReportsList(res.data);
       }
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('*, items(title), reviewer:profiles!reviewer_id(full_name)')
-        .order('created_at', { ascending: false });
-      if (reviews) setReviewsList(reviews);
-    } catch (error) {
-      console.error("Error fetching admin data:", error);
+    } catch (err) {
+      console.error("Error refreshing tab:", activeTab, err);
     } finally {
       setIsLoading(false);
     }
@@ -182,42 +229,161 @@ export function AdminPanel() {
     navigate("/dashboard");
   };
 
-  const handleToggleVerification = async (userId: string, currentState: boolean) => {
-    const { error } = await supabase.from("profiles").update({ is_verified: !currentState }).eq("id", userId);
-    if (!error) {
-      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, is_verified: !currentState } : u));
+  const handleToggleVerifyUser = async (userId: string, currentStatus: boolean) => {
+    setUsersList(prev => prev.map(u => u.id === userId ? { ...u, is_verified: !currentStatus } : u));
+    
+    try {
+      const { error } = await supabase.from('profiles').update({ is_verified: !currentStatus }).eq('id', userId);
+      if (error) throw error;
+      toast.success(!currentStatus ? "Utilisateur vérifié" : "Vérification retirée");
+    } catch (err) {
+      console.error("Error toggling verification:", err);
+      toast.error("Erreur de mise à jour");
+      refreshCurrentTab();
     }
+  };
+  const handleDeleteUser = async (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Supprimer cet utilisateur ?",
+      description: "Cette action est irréversible. L'utilisateur et toutes ses données associées seront définitivement supprimés.",
+      actionLabel: "Supprimer",
+      variant: "destructive",
+      onConfirm: async () => {
+        // Optimistic update
+        setUsersList(prev => prev.filter(u => u.id !== id));
+        
+        try {
+          const { error } = await supabase.from('profiles').delete().eq('id', id);
+          if (error) throw error;
+          toast.success("Utilisateur supprimé");
+        } catch (err) {
+          console.error("Error deleting user:", err);
+          toast.error("Erreur lors de la suppression");
+          refreshCurrentTab(); // Rollback
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   const handleToggleStatusItem = async (itemId: string, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "paused" : "active";
-    const { error } = await supabase.from("items").update({ status: newStatus }).eq("id", itemId);
-    if (!error) {
-      setItemsList(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
+    setItemsList(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
+    
+    try {
+        const { error } = await supabase.from("items").update({ status: newStatus }).eq("id", itemId);
+        if (error) throw error;
+    } catch (err) {
+        toast.error("Erreur lors de la mise à jour");
+        refreshCurrentTab();
     }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Supprimer cette annonce ?",
+      description: "Cette action est irréversible. L'annonce sera définitivement supprimée.",
+      actionLabel: "Supprimer",
+      variant: "destructive",
+      onConfirm: async () => {
+        setItemsList(prev => prev.filter(i => i.id !== id));
+        
+        try {
+          const { error } = await supabase.from('items').delete().eq('id', id);
+          if (error) throw error;
+          toast.success("Annonce supprimée");
+        } catch (err) {
+          console.error("Error deleting item:", err);
+          toast.error("Erreur lors de la suppression");
+          refreshCurrentTab();
+        } finally {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   const handleDeleteReview = (id: string) => {
     setConfirmConfig({
       isOpen: true,
       title: "Supprimer cet avis ?",
-      description: "Cette action est irréversible. L'avis sera définitivement supprimé de la base de données.",
+      description: "Cette action est irréversible. L'avis ne sera plus visible sur la plateforme.",
       actionLabel: "Supprimer",
       variant: "destructive",
       onConfirm: async () => {
         setIsDeletingReview(id);
+        setReviewsList(prev => prev.filter(r => r.id !== id));
+        
         try {
-          const { error } = await supabase.from('reviews').delete().eq('id', id);
-          if (error) throw error;
-          setReviewsList(prev => prev.filter(r => r.id !== id));
-        } catch (err) {
-          console.error("Error deleting review:", err);
+          await reviewsService.delete(id);
+          toast.success("Avis supprimé");
+        } catch (error) {
+          toast.error("Erreur lors de la suppression");
+          refreshCurrentTab();
         } finally {
           setIsDeletingReview(null);
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         }
       }
     });
+  };
+
+  const handleResolveReport = async (id: string, action: 'dismiss' | 'delete_element', targetType?: string, targetId?: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: action === 'dismiss' ? "Ignorer le signalement ?" : "Supprimer l'élément ?",
+      description: action === 'dismiss' 
+        ? "Le signalement sera marqué comme traité (sans action) et l'élément restera en ligne." 
+        : "L'élément signalé sera définitivement supprimé et le signalement marqué comme résolu.",
+      actionLabel: action === 'dismiss' ? "Ignorer" : "Supprimer",
+      variant: action === 'dismiss' ? "default" : "destructive",
+      onConfirm: async () => {
+        setIsResolvingReport(id);
+        
+        const finalStatus = action === 'dismiss' ? 'dismissed' : 'resolved';
+        setReportsList(prev => prev.map(r => r.id === id ? { ...r, status: finalStatus } : r));
+
+        try {
+          if (action === 'delete_element') {
+            if (targetType === 'item') {
+              await itemsService.delete(targetId!);
+              setItemsList(prev => prev.filter(i => i.id !== targetId));
+            }
+            if (targetType === 'review') {
+              await reviewsService.delete(targetId!);
+              setReviewsList(prev => prev.filter(r => r.id !== targetId));
+            }
+          }
+
+          await reportsService.updateStatus(id, finalStatus, "Traité par l'admin");
+          toast.success(action === 'dismiss' ? "Signalement ignoré" : "Élément supprimé");
+        } catch (error) {
+          console.error("Error resolving report:", error);
+          toast.error("Erreur lors du traitement");
+          refreshCurrentTab();
+        } finally {
+          setIsResolvingReport(null);
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleDeleteReport = async (id: string) => {
+    setReportsList(prev => prev.filter(r => r.id !== id));
+    
+    try {
+      const res = await reportsService.delete(id);
+      if (res.success) {
+        toast.success("Signalement supprimé du journal");
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+      refreshCurrentTab();
+    }
   };
 
   if (isLoading) {
@@ -256,13 +422,15 @@ export function AdminPanel() {
               activeTab={activeTab === "overview" ? "Vue d'ensemble" : 
                          activeTab === "users" ? "Utilisateurs" :
                          activeTab === "items" ? "Annonces" : 
-                         activeTab === "reviews" ? "Avis" : "Journal"}
+                         activeTab === "reviews" ? "Avis" : 
+                         activeTab === "reports" ? "Signalements" : "Journal"}
               setActiveTab={(label) => {
                 const map: Record<string, any> = {
                   "Vue d'ensemble": "overview",
                   "Utilisateurs": "users",
                   "Annonces": "items",
                   "Avis": "reviews",
+                  "Signalements": "reports",
                   "Journal": "logs"
                 };
                 setActiveTab(map[label]);
@@ -355,7 +523,7 @@ export function AdminPanel() {
                         <h2 className="text-base font-black">Journal <span className="text-[#FF4F5A]">Système</span></h2>
                       </div>
                       <div className="flex-1 divide-y divide-border overflow-y-auto no-scrollbar">
-                        {allLogs.slice(0, 10).map((log, idx) => (
+                        {displayLogs.slice(0, 10).map((log, idx) => (
                           <div key={idx} className="flex gap-3 items-start px-5 py-4 hover:bg-muted/50 transition-colors">
                             <div className={`w-8 h-8 rounded-lg ${log.bg} flex items-center justify-center flex-shrink-0`}>
                               <log.icon className={`w-4 h-4 ${log.color}`} />
@@ -418,11 +586,14 @@ export function AdminPanel() {
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-2xl border-y border-r border-border text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => handleToggleVerification(u.id, u.is_verified)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
+                                <Button size="sm" variant="ghost" onClick={() => handleToggleVerifyUser(u.id, u.is_verified)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
                                   {u.is_verified ? 'Révoquer' : 'Vérifier'}
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => handleImpersonate(u.id, u.full_name, u.email)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
                                   Incarner
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleDeleteUser(u.id)} className="w-10 h-10 opacity-30 hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all flex items-center justify-center">
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
                             </td>
@@ -471,14 +642,24 @@ export function AdminPanel() {
                               </span>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-2xl border-y border-r border-border text-right">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest"
-                                onClick={() => handleToggleStatusItem(item.id, item.status)}
-                              >
-                                {item.status === 'active' ? 'Pauser' : 'Activer'}
-                              </Button>
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest"
+                                  onClick={() => handleToggleStatusItem(item.id, item.status)}
+                                >
+                                  {item.status === 'active' ? 'Pauser' : 'Activer'}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="w-10 h-10 opacity-30 hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -548,6 +729,115 @@ export function AdminPanel() {
                 </motion.div>
               )}
 
+              {activeTab === "reports" && (
+                <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
+                    <div>
+                      <h3 className="text-2xl font-black">Modération des <span className="text-[#FF4F5A]">Signalements</span></h3>
+                      <p className="text-sm text-muted-foreground mt-1">Gérez les alertes de contenu inapproprié envoyées par les utilisateurs.</p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-left border-separate border-spacing-y-3">
+                      <thead>
+                        <tr className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
+                          <th className="py-4 px-6">Source</th>
+                          <th className="py-4 px-6">Élément / Type</th>
+                          <th className="py-4 px-6">Motif & Détails</th>
+                          <th className="py-4 px-6">Statut</th>
+                          <th className="py-4 px-6 text-right">Modération</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportsList.map((report) => (
+                          <tr key={report.id} className="group transition-all">
+                            <td className="py-5 px-6 bg-muted/30 rounded-l-3xl border-y border-l border-border">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#FF4F5A]/10 flex items-center justify-center text-[#FF4F5A] font-black text-[10px]">
+                                  {report.reporter?.full_name?.charAt(0) || "U"}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-sm leading-none">{report.reporter?.full_name || "Anonyme"}</div>
+                                  <div className="text-[9px] font-black opacity-30 uppercase tracking-tighter mt-1">{new Date(report.created_at).toLocaleDateString()}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-5 px-6 bg-muted/30 border-y border-border">
+                              <div className="flex flex-col gap-1.5">
+                                <span className={cn(
+                                  "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border w-fit",
+                                  report.reported_item_id ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 
+                                  report.reported_review_id ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                  'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                                )}>
+                                  {report.reported_item_id ? 'Produit' : report.reported_review_id ? 'Avis' : 'Utilisateur'}
+                                </span>
+                                <div className="font-bold text-xs truncate max-w-[180px] leading-tight">
+                                  {report.item?.title || report.review?.comment || report.reported_user?.full_name}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-5 px-6 bg-muted/30 border-y border-border">
+                              <div className="font-black text-[11px] text-[#FF4F5A] mb-1">{REASON_LABELS[report.reason] || report.reason}</div>
+                              <div className="text-[10px] font-medium opacity-60 line-clamp-1 italic">"{report.description || "Pas de description"}"</div>
+                            </td>
+                            <td className="py-5 px-6 bg-muted/30 border-y border-border">
+                              <span className={cn(
+                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center justify-center gap-1.5 w-fit",
+                                report.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                'bg-white/10 text-muted-foreground border-border/50'
+                              )}>
+                                {report.status === 'pending' && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+                                {report.status === 'pending' ? 'En attente' : report.status === 'resolved' ? 'Traité' : 'Ignoré'}
+                              </span>
+                            </td>
+                            <td className="py-5 px-6 bg-muted/30 rounded-r-3xl border-y border-r border-border text-right">
+                              {report.status === 'pending' ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted/80"
+                                    onClick={() => handleResolveReport(report.id, 'dismiss')}
+                                  >
+                                    Ignorer
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10"
+                                    onClick={() => handleResolveReport(
+                                      report.id, 
+                                      'delete_element', 
+                                      report.reported_item_id ? 'item' : report.reported_review_id ? 'review' : 'user',
+                                      report.reported_item_id || report.reported_review_id || report.reported_user_id
+                                    )}
+                                  >
+                                    Supprimer
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-end">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteReport(report.id)}
+                                    className="w-10 h-10 opacity-30 hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              )}
+
               {activeTab === "logs" && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   <div className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
@@ -558,7 +848,7 @@ export function AdminPanel() {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      {allLogs.map((log, idx) => (
+                      {displayLogs.map((log, idx) => (
                         <div key={idx} className="flex items-center gap-4 p-5 bg-muted/30 border border-border rounded-2xl hover:bg-muted/50 transition-all group">
                           <div className={`w-12 h-12 rounded-xl ${log.bg} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                             <log.icon className={`w-6 h-6 ${log.color}`} />

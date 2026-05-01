@@ -5,7 +5,7 @@ import {
   Star, MapPin, Shield, Clock, CheckCircle, Heart, Share2,
   Calendar, ChevronLeft, ChevronRight, Loader2, ArrowLeft,
   Tag, MessageCircle, ShoppingCart, RefreshCw, Eye, AlertCircle,
-  Home, HandCoins, Info,
+  Home, HandCoins, Info, Flag
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -17,7 +17,8 @@ import { bookingsService, trocService, favoritesService } from "../services/api.
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
 import { ReviewDialog } from "../components/dashboard/ReviewDialog";
-import { reviewsService } from "../services/api.service";
+import { ReportDialog } from "../components/dashboard/ReportDialog";
+import { reviewsService, reportsService } from "../services/api.service";
 import { cn } from "../components/ui/utils";
 
 const CONDITION_LABELS: Record<string, string> = {
@@ -123,6 +124,19 @@ export function ItemDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
+  
+  // Report State
+  const [reportConfig, setReportConfig] = useState<{
+    isOpen: boolean;
+    targetId: string;
+    targetType: "item" | "review";
+    targetTitle: string;
+  }>({
+    isOpen: false,
+    targetId: "",
+    targetType: "item",
+    targetTitle: ""
+  });
 
   useEffect(() => {
     if (!startDate || !endDate) {
@@ -596,6 +610,18 @@ export function ItemDetailPage() {
                       <button className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-muted">
                         <Share2 className="w-5 h-5" />
                       </button>
+                      <button 
+                        onClick={() => setReportConfig({ 
+                          isOpen: true, 
+                          targetId: item.id, 
+                          targetType: "item", 
+                          targetTitle: item.title 
+                        })}
+                        className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+                        title="Signaler cette annonce"
+                      >
+                        <Flag className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                   <h1 className="text-3xl font-extrabold text-foreground leading-tight mb-4">{item.title}</h1>
@@ -935,10 +961,24 @@ export function ItemDetailPage() {
                               <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                             </div>
                           </div>
-                          <div className="flex gap-1 bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star key={s} className={cn("w-3.5 h-3.5", s <= review.rating ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-muted-foreground/20")} />
-                            ))}
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1 bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star key={s} className={cn("w-3.5 h-3.5", s <= review.rating ? "fill-[#FF4F5A] text-[#FF4F5A]" : "text-muted-foreground/20")} />
+                              ))}
+                            </div>
+                            <button 
+                              onClick={() => setReportConfig({ 
+                                isOpen: true, 
+                                targetId: review.id, 
+                                targetType: "review", 
+                                targetTitle: `l'avis de ${review.reviewer?.full_name}` 
+                              })}
+                              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 text-muted-foreground/40 hover:text-red-500 transition-colors"
+                              title="Signaler cet avis"
+                            >
+                              <Flag className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                         <div className="bg-muted/20 p-6 rounded-2xl border border-border/50">
@@ -975,6 +1015,14 @@ export function ItemDetailPage() {
           />
         </>
       )}
+
+      <ReportDialog 
+        isOpen={reportConfig.isOpen}
+        onClose={() => setReportConfig(prev => ({ ...prev, isOpen: false }))}
+        targetId={reportConfig.targetId}
+        targetType={reportConfig.targetType}
+        targetTitle={reportConfig.targetTitle}
+      />
     </div>
   );
 }

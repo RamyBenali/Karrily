@@ -216,14 +216,14 @@ export function UserDashboard() {
         setFavorites(res.data || []);
       } catch (err) { console.error(err); }
     };
-    
+
     // Fetch History
     const fetchHistory = async () => {
-       try {
-         const res = await api.get('/bookings');
-         // Filter history on client side for all roles
-         setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
-       } catch (err) { console.error(err); }
+      try {
+        const res = await api.get('/bookings');
+        // Filter history on client side for all roles
+        setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
+      } catch (err) { console.error(err); }
     }
 
     // Fetch Notifications
@@ -236,7 +236,7 @@ export function UserDashboard() {
         .order("created_at", { ascending: false })
         .limit(10);
       setNotifications(data || []);
-      
+
       // Count unread messages (placeholder logic, should check messages table)
       const { count } = await supabase
         .from("notifications")
@@ -252,32 +252,32 @@ export function UserDashboard() {
     fetchHistory();
     fetchNotifications();
 
-     if (user) {
-       // Realtime for Notifications
-       const notifChannel = supabase
-         .channel(`user_notifs:${user.id}`)
-         .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
-         .subscribe();
+    if (user) {
+      // Realtime for Notifications
+      const notifChannel = supabase
+        .channel(`user_notifs:${user.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
+        .subscribe();
 
-       // Realtime for Sales
-       const salesChannel = supabase
-         .channel(`user_sales:${user.id}`)
-         .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
-         .subscribe();
-  
-       // Realtime for Troc
-       const trocChannel = supabase
-         .channel(`user_troc:${user.id}`)
-         .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
-         .subscribe();
-  
-       return () => {
-         if (channel) supabase.removeChannel(channel);
-         supabase.removeChannel(salesChannel);
-         supabase.removeChannel(trocChannel);
-         supabase.removeChannel(notifChannel);
-       };
-     }
+      // Realtime for Sales
+      const salesChannel = supabase
+        .channel(`user_sales:${user.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
+        .subscribe();
+
+      // Realtime for Troc
+      const trocChannel = supabase
+        .channel(`user_troc:${user.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
+        .subscribe();
+
+      return () => {
+        if (channel) supabase.removeChannel(channel);
+        supabase.removeChannel(salesChannel);
+        supabase.removeChannel(trocChannel);
+        supabase.removeChannel(notifChannel);
+      };
+    }
   }, [user, bookingTab]);
 
   // Handle booking action (confirm/reject/cancel)
@@ -447,9 +447,9 @@ export function UserDashboard() {
 
     // Also update auth metadata so initials in header refresh
     if (!profileError) {
-        await supabase.auth.updateUser({
-            data: { full_name: profile.full_name }
-        });
+      await supabase.auth.updateUser({
+        data: { full_name: profile.full_name }
+      });
     }
 
     if (profileError) {
@@ -571,17 +571,17 @@ export function UserDashboard() {
                   {/* Recent Activity */}
                   <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     <div className="flex items-center justify-between px-7 py-5 border-b border-border/60">
-                       <h2 className="text-lg font-bold">Activité <span className="text-[#FF4F5A]">récente</span></h2>
-                       <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab("Messages")}>Voir tout →</Button>
+                      <h2 className="text-lg font-bold">Activité <span className="text-[#FF4F5A]">récente</span></h2>
+                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab("Messages")}>Voir tout →</Button>
                     </div>
                     <div className="divide-y divide-border/50">
                       {notifications.length === 0 ? (
                         <div className="py-16 text-center">
-                           <div className="w-14 h-14 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                             <Clock className="w-7 h-7 text-muted-foreground/30" />
-                           </div>
-                           <p className="text-sm text-muted-foreground font-medium">Aucune activité récente</p>
-                           <p className="text-xs text-muted-foreground/60 mt-1">Vos notifications apparaîtront ici</p>
+                          <div className="w-14 h-14 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                            <Clock className="w-7 h-7 text-muted-foreground/30" />
+                          </div>
+                          <p className="text-sm text-muted-foreground font-medium">Aucune activité récente</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">Vos notifications apparaîtront ici</p>
                         </div>
                       ) : (
                         notifications.slice(0, 5).map((notif) => {
@@ -611,26 +611,26 @@ export function UserDashboard() {
 
                           return (
                             <div key={notif.id} className="flex gap-4 items-center px-7 py-4 hover:bg-muted/30 transition-colors group">
-                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${bg}`}>
-                                  <Icon className={`w-5 h-5 ${color}`} />
-                               </div>
-                               <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-foreground line-clamp-1">{notif.title}</p>
-                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.body || ''}</p>
-                               </div>
-                               <Button 
-                                 size="sm" 
-                                 variant="ghost" 
-                                 className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]" 
-                                 onClick={() => {
-                                    const dest = notif.link
-                                      ? notif.link
-                                      : (notif.type?.startsWith('booking') || notif.type?.startsWith('troc') || notif.type === 'sale' ? '/lender' : '/dashboard');
-                                    navigate(dest);
-                                 }}
-                               >
-                                 Voir →
-                               </Button>
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${bg}`}>
+                                <Icon className={`w-5 h-5 ${color}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground line-clamp-1">{notif.title}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.body || ''}</p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]"
+                                onClick={() => {
+                                  const dest = notif.link
+                                    ? notif.link
+                                    : (notif.type?.startsWith('booking') || notif.type?.startsWith('troc') || notif.type === 'sale' ? '/lender' : '/dashboard');
+                                  navigate(dest);
+                                }}
+                              >
+                                Voir →
+                              </Button>
                             </div>
                           );
                         })
@@ -653,11 +653,10 @@ export function UserDashboard() {
                       <button
                         key={tab}
                         onClick={() => setBookingTab(tab)}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                          bookingTab === tab
-                            ? "bg-card text-foreground shadow-sm border border-border/60"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
+                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${bookingTab === tab
+                          ? "bg-card text-foreground shadow-sm border border-border/60"
+                          : "text-muted-foreground hover:text-foreground"
+                          }`}
                       >
                         {tab === "renter" ? "Mes réservations" : "Demandes reçues"}
                       </button>
@@ -696,141 +695,141 @@ export function UserDashboard() {
                     </div>
                     <div className="p-7">
 
-                    {isLoadingBookings ? (
-                      <div className="flex justify-center py-12">
-                        <Loader2 className="w-7 h-7 animate-spin text-[#FF4F5A]" />
-                      </div>
-                    ) : bookings.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="w-16 h-16 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                          <Calendar className="w-8 h-8 text-muted-foreground/30" />
+                      {isLoadingBookings ? (
+                        <div className="flex justify-center py-12">
+                          <Loader2 className="w-7 h-7 animate-spin text-[#FF4F5A]" />
                         </div>
-                        <p className="text-sm font-semibold text-muted-foreground mb-1">Aucune réservation pour le moment</p>
-                        <p className="text-xs text-muted-foreground/60">Vos demandes apparaîtront ici</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {bookings.map((booking) => (
-                          <div
-                            key={booking.id}
-                            className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
-                          >
+                      ) : bookings.length === 0 ? (
+                        <div className="text-center py-16">
+                          <div className="w-16 h-16 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                            <Calendar className="w-8 h-8 text-muted-foreground/30" />
+                          </div>
+                          <p className="text-sm font-semibold text-muted-foreground mb-1">Aucune réservation pour le moment</p>
+                          <p className="text-xs text-muted-foreground/60">Vos demandes apparaîtront ici</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {bookings.map((booking) => (
                             <div
-                              className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer"
-                              onClick={() => navigate(`/item/${booking.item_id}`)}
+                              key={booking.id}
+                              className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
                             >
-                              <ImageWithFallback
-                                src={(booking.items as any)?.thumbnail_url || ""}
-                                alt={(booking.items as any)?.title || ""}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-3">
-                                <div>
-                                  <h3
-                                    className="text-xl font-bold text-foreground hover:text-[#FF4F5A] transition-colors cursor-pointer"
-                                    onClick={() => navigate(`/item/${booking.item_id}`)}
-                                  >
-                                    {(booking.items as any)?.title || "Annonce"}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                                    <MapPin className="w-4 h-4" />
-                                    {(booking.items as any)?.location || ""}
-                                  </p>
-                                </div>
-                                <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-muted text-foreground/80"
-                                  }`}>
-                                  {BOOKING_STATUS[booking.status]?.label || booking.status}
-                                </span>
+                              <div
+                                className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer"
+                                onClick={() => navigate(`/item/${booking.item_id}`)}
+                              >
+                                <ImageWithFallback
+                                  src={(booking.items as any)?.thumbnail_url || ""}
+                                  alt={(booking.items as any)?.title || ""}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
                               </div>
-                              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>
-                                    {new Date(booking.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                                    {" → "}
-                                    {new Date(booking.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <h3
+                                      className="text-xl font-bold text-foreground hover:text-[#FF4F5A] transition-colors cursor-pointer"
+                                      onClick={() => navigate(`/item/${booking.item_id}`)}
+                                    >
+                                      {(booking.items as any)?.title || "Annonce"}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                      <MapPin className="w-4 h-4" />
+                                      {(booking.items as any)?.location || ""}
+                                    </p>
+                                  </div>
+                                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-muted text-foreground/80"
+                                    }`}>
+                                    {BOOKING_STATUS[booking.status]?.label || booking.status}
                                   </span>
                                 </div>
-                                <div className="font-semibold text-foreground">
-                                  {Number(booking.total_price).toLocaleString()} DA
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    <span>
+                                      {new Date(booking.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                                      {" → "}
+                                      {new Date(booking.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                                    </span>
+                                  </div>
+                                  <div className="font-semibold text-foreground">
+                                    {Number(booking.total_price).toLocaleString()} DA
+                                  </div>
+                                  {booking.deposit_amount > 0 && (
+                                    <span className="text-xs text-muted-foreground">+ {Number(booking.deposit_amount).toLocaleString()} DA caution</span>
+                                  )}
                                 </div>
-                                {booking.deposit_amount > 0 && (
-                                  <span className="text-xs text-muted-foreground">+ {Number(booking.deposit_amount).toLocaleString()} DA caution</span>
+                                {booking.message && (
+                                  <p className="text-sm text-muted-foreground italic mb-3">« {booking.message} »</p>
                                 )}
-                              </div>
-                              {booking.message && (
-                                <p className="text-sm text-muted-foreground italic mb-3">« {booking.message} »</p>
-                              )}
-                              <div className="flex gap-3">
-                                {/* Owner actions */}
-                                {bookingTab === "owner" && (
-                                  <>
-                                    {booking.status === "pending" && (
-                                      <>
+                                <div className="flex gap-3">
+                                  {/* Owner actions */}
+                                  {bookingTab === "owner" && (
+                                    <>
+                                      {booking.status === "pending" && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+                                            onClick={() => handleBookingAction(booking.id, "confirmed")}
+                                          >
+                                            <Check className="w-4 h-4 mr-1" /> Accepter
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
+                                            onClick={() => handleBookingAction(booking.id, "rejected")}
+                                          >
+                                            Refuser
+                                          </Button>
+                                        </>
+                                      )}
+                                      {booking.status === "confirmed" && new Date() >= new Date(booking.start_date) && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
+                                          onClick={() => handleBookingAction(booking.id, "active")}
+                                        >
+                                          <Package className="w-4 h-4 mr-1" /> Confirmer la remise
+                                        </Button>
+                                      )}
+                                      {booking.status === "active" && (
                                         <Button
                                           size="sm"
                                           className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
-                                          onClick={() => handleBookingAction(booking.id, "confirmed")}
+                                          onClick={() => handleBookingAction(booking.id, "completed")}
                                         >
-                                          <Check className="w-4 h-4 mr-1" /> Accepter
+                                          <Check className="w-4 h-4 mr-1" /> Confirmer le retour
                                         </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
-                                          onClick={() => handleBookingAction(booking.id, "rejected")}
-                                        >
-                                          Refuser
-                                        </Button>
-                                      </>
-                                    )}
-                                    {booking.status === "confirmed" && new Date() >= new Date(booking.start_date) && (
-                                      <Button
-                                        size="sm"
-                                        className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
-                                        onClick={() => handleBookingAction(booking.id, "active")}
-                                      >
-                                        <Package className="w-4 h-4 mr-1" /> Confirmer la remise
-                                      </Button>
-                                    )}
-                                    {booking.status === "active" && (
-                                      <Button
-                                        size="sm"
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
-                                        onClick={() => handleBookingAction(booking.id, "completed")}
-                                      >
-                                        <Check className="w-4 h-4 mr-1" /> Confirmer le retour
-                                      </Button>
-                                    )}
-                                  </>
-                                )}
-                                {/* Renter actions */}
-                                {bookingTab === "renter" && booking.status === "pending" && (
+                                      )}
+                                    </>
+                                  )}
+                                  {/* Renter actions */}
+                                  {bookingTab === "renter" && booking.status === "pending" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
+                                      onClick={() => handleBookingAction(booking.id, "cancelled")}
+                                    >
+                                      Annuler la demande
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
-                                    onClick={() => handleBookingAction(booking.id, "cancelled")}
+                                    className="rounded-full"
+                                    onClick={() => navigate(`/item/${booking.item_id}`)}
                                   >
-                                    Annuler la demande
+                                    Voir l'annonce
                                   </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-full"
-                                  onClick={() => navigate(`/item/${booking.item_id}`)}
-                                >
-                                  Voir l'annonce
-                                </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -844,32 +843,31 @@ export function UserDashboard() {
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                       <ShoppingCart className="w-6 h-6" /> Mes demandes d'achat
+                      <ShoppingCart className="w-6 h-6" /> Mes demandes d'achat
                     </h2>
-                    
+
                     <div className="space-y-4">
                       {mySales.map((sale) => (
                         <div key={sale.id} className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl group">
                           <div className="w-full md:w-32 h-24 rounded-2xl overflow-hidden flex-shrink-0">
-                            <ImageWithFallback 
-                              src={sale.item?.thumbnail_url} 
-                              alt={sale.item?.title} 
+                            <ImageWithFallback
+                              src={sale.item?.thumbnail_url}
+                              alt={sale.item?.title}
                               className="w-full h-full object-cover"
                             />
                           </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${sale.item_id}`)}>{sale.item?.title}</h3>
-                              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
-                                sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                                 sale.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
-                                sale.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                'bg-red-100 text-red-700'
-                              }`}>
-                                {sale.status === 'pending' ? 'En attente' : 
-                                 sale.status === 'accepted' ? 'Acceptée' : 
-                                 sale.status === 'completed' ? 'Terminée' :
-                                 sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                                  sale.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                    'bg-red-100 text-red-700'
+                                }`}>
+                                {sale.status === 'pending' ? 'En attente' :
+                                  sale.status === 'accepted' ? 'Acceptée' :
+                                    sale.status === 'completed' ? 'Terminée' :
+                                      sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
                               </span>
                             </div>
                             <p className="text-2xl font-bold text-foreground mb-2">{sale.price} DZD</p>
@@ -911,40 +909,39 @@ export function UserDashboard() {
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                       <RefreshCw className="w-6 h-6" /> Mes propositions de troc
+                      <RefreshCw className="w-6 h-6" /> Mes propositions de troc
                     </h2>
-                    
+
                     <div className="space-y-4">
                       {myTroc.map((proposal) => (
                         <div key={proposal.id} className="p-6 bg-muted/50 rounded-3xl border border-border">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                               <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">Objet souhaité</p>
-                               <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
+                              <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">Objet souhaité</p>
+                              <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
                             </div>
-                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${
-                                proposal.status === 'pending' ? 'bg-purple-100 text-purple-700' :
-                                proposal.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
+                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${proposal.status === 'pending' ? 'bg-purple-100 text-purple-700' :
+                              proposal.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
                                 proposal.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                'bg-red-100 text-red-700'
+                                  'bg-red-100 text-red-700'
                               }`}>
-                                {proposal.status === 'pending' ? 'Envoyée' : 
-                                 proposal.status === 'accepted' ? 'Acceptée' : 
-                                 proposal.status === 'completed' ? 'Finalisé' :
-                                 proposal.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                              {proposal.status === 'pending' ? 'Envoyée' :
+                                proposal.status === 'accepted' ? 'Acceptée' :
+                                  proposal.status === 'completed' ? 'Finalisé' :
+                                    proposal.status === 'rejected' ? 'Refusée' : 'Annulée'}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border">
-                             <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
-                                <RefreshCw className="w-5 h-5 rotate-45" />
-                             </div>
-                             <div>
-                                <p className="text-xs font-bold text-purple-600 uppercase">Votre proposition :</p>
-                                <p className="font-bold text-foreground">
-                                  {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || "Objet personnel")}
-                                </p>
-                             </div>
+                            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                              <RefreshCw className="w-5 h-5 rotate-45" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-purple-600 uppercase">Votre proposition :</p>
+                              <p className="font-bold text-foreground">
+                                {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || "Objet personnel")}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -967,7 +964,7 @@ export function UserDashboard() {
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
                   <h2 className="text-2xl font-bold text-foreground mb-6">Mes favoris</h2>
-                  
+
                   {favorites.length === 0 ? (
                     <div className="text-center py-16 rounded-[2rem] bg-gradient-to-b from-muted to-transparent border border-dashed border-border/60">
                       <Heart className="w-16 h-16 text-[#FF4F5A]/40 mx-auto mb-4 animate-pulse" />
@@ -982,32 +979,32 @@ export function UserDashboard() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                       {favorites.map((fav) => (
-                          <div key={fav.id} className="flex gap-5 p-4 rounded-[1.5rem] border border-border/50 bg-card hover:bg-muted/30 shadow-sm hover:shadow-[0_10px_30px_-10px_rgba(255,79,90,0.15)] group hover:border-[#FF4F5A]/30 transition-all duration-300">
-                             <div className="w-28 h-28 rounded-2xl flex-shrink-0 overflow-hidden cursor-pointer relative shadow-inner" onClick={() => navigate(`/item/${fav.item_id}`)}>
-                                <ImageWithFallback src={fav.item?.thumbnail_url} alt={fav.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
-                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
-                             </div>
-                             <div className="flex flex-col justify-between py-1.5 flex-1 min-w-0">
-                                <div>
-                                   <div className="flex justify-between items-start mb-1">
-                                      <h3 className="font-bold text-foreground hover:text-[#FF4F5A] cursor-pointer line-clamp-2 transition-colors text-base pr-2" onClick={() => navigate(`/item/${fav.item_id}`)}>
-                                         {fav.item?.title}
-                                      </h3>
-                                   </div>
-                                   <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
-                                      <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" /> 
-                                      <span className="truncate max-w-[120px]">{fav.item?.location || "Non spécifié"}</span>
-                                   </p>
-                                </div>
-                                <div className="flex items-end justify-between mt-3">
-                                   <p className="font-black text-lg text-foreground tracking-tight">
-                                      {fav.item?.price_per_day} DA <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
-                                   </p>
-                                </div>
-                             </div>
+                      {favorites.map((fav) => (
+                        <div key={fav.id} className="flex gap-5 p-4 rounded-[1.5rem] border border-border/50 bg-card hover:bg-muted/30 shadow-sm hover:shadow-[0_10px_30px_-10px_rgba(255,79,90,0.15)] group hover:border-[#FF4F5A]/30 transition-all duration-300">
+                          <div className="w-28 h-28 rounded-2xl flex-shrink-0 overflow-hidden cursor-pointer relative shadow-inner" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                            <ImageWithFallback src={fav.item?.thumbnail_url} alt={fav.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
                           </div>
-                       ))}
+                          <div className="flex flex-col justify-between py-1.5 flex-1 min-w-0">
+                            <div>
+                              <div className="flex justify-between items-start mb-1">
+                                <h3 className="font-bold text-foreground hover:text-[#FF4F5A] cursor-pointer line-clamp-2 transition-colors text-base pr-2" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                                  {fav.item?.title}
+                                </h3>
+                              </div>
+                              <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
+                                <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" />
+                                <span className="truncate max-w-[120px]">{fav.item?.location || "Non spécifié"}</span>
+                              </p>
+                            </div>
+                            <div className="flex items-end justify-between mt-3">
+                              <p className="font-black text-lg text-foreground tracking-tight">
+                                {fav.item?.price_per_day} DA <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </motion.div>
@@ -1039,11 +1036,10 @@ export function UserDashboard() {
                           <div
                             key={conv.id}
                             onClick={() => setActiveConversationId(conv.id)}
-                            className={`p-4 cursor-pointer transition-all border-b border-border/40 ${
-                              activeConversationId === conv.id
-                                ? "bg-[#FF4F5A]/5 border-l-2 border-l-[#FF4F5A]"
-                                : "hover:bg-muted/40"
-                            }`}
+                            className={`p-4 cursor-pointer transition-all border-b border-border/40 ${activeConversationId === conv.id
+                              ? "bg-[#FF4F5A]/5 border-l-2 border-l-[#FF4F5A]"
+                              : "hover:bg-muted/40"
+                              }`}
                           >
                             <div className="flex gap-3 items-start">
                               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-border">
@@ -1116,15 +1112,13 @@ export function UserDashboard() {
                               const isMe = msg.sender_id === user?.id;
                               return (
                                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                                  <div className={`relative max-w-[72%] px-4 py-2.5 ${
-                                    isMe
-                                      ? "bg-[#FF4F5A] text-white rounded-2xl rounded-br-md shadow-sm"
-                                      : "bg-card border border-border text-foreground rounded-2xl rounded-bl-md shadow-sm"
-                                  }`}>
-                                    <p className="text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
-                                    <p className={`text-[10px] mt-1.5 ${
-                                      isMe ? "text-white/60 text-right" : "text-muted-foreground/60"
+                                  <div className={`relative max-w-[72%] px-4 py-2.5 ${isMe
+                                    ? "bg-[#FF4F5A] text-white rounded-2xl rounded-br-md shadow-sm"
+                                    : "bg-card border border-border text-foreground rounded-2xl rounded-bl-md shadow-sm"
                                     }`}>
+                                    <p className="text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
+                                    <p className={`text-[10px] mt-1.5 ${isMe ? "text-white/60 text-right" : "text-muted-foreground/60"
+                                      }`}>
                                       {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                   </div>
@@ -1182,15 +1176,15 @@ export function UserDashboard() {
                           <div className="flex-1">
                             <h3 className="font-bold text-foreground">{(booking.items as any)?.title}</h3>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                               <span>Du {new Date(booking.start_date).toLocaleDateString()}</span>
-                               <span>au {new Date(booking.end_date).toLocaleDateString()}</span>
+                              <span>Du {new Date(booking.start_date).toLocaleDateString()}</span>
+                              <span>au {new Date(booking.end_date).toLocaleDateString()}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${BOOKING_STATUS[booking.status]?.color}`}>
-                               {BOOKING_STATUS[booking.status]?.label || booking.status}
-                             </span>
-                             <div className="font-bold text-lg">{booking.total_price} DA</div>
+                            <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${BOOKING_STATUS[booking.status]?.color}`}>
+                              {BOOKING_STATUS[booking.status]?.label || booking.status}
+                            </span>
+                            <div className="font-bold text-lg">{booking.total_price} DA</div>
                           </div>
                         </div>
                       ))}
@@ -1233,128 +1227,128 @@ export function UserDashboard() {
                         <h3 className="text-xl font-black text-foreground truncate px-2">{profile.full_name || "Utilisateur"}</h3>
                         <p className="text-sm text-muted-foreground truncate px-2 mb-4 opacity-70">{profile.email}</p>
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-muted rounded-full text-[10px] font-black uppercase tracking-widest text-[#FF4F5A] border border-border">
-                           <Check className="w-3 h-3" /> Membre vérifié
+                          <Check className="w-3 h-3" /> Membre vérifié
                         </div>
                       </div>
 
                       <div className="bg-card rounded-[2rem] p-8 shadow-lg border border-border">
-                         <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Statistiques</h4>
-                         <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                               <span className="text-sm font-bold text-foreground/70">Ancienneté</span>
-                               <span className="text-sm font-black">2 ans</span>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Statistiques</h4>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-foreground/70">Ancienneté</span>
+                            <span className="text-sm font-black">2 ans</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-foreground/70">Locations</span>
+                            <span className="text-sm font-black">14</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-foreground/70">Note moyenne</span>
+                            <div className="flex items-center gap-1 text-[#FF4F5A]">
+                              <Star className="w-4 h-4 fill-current" />
+                              <span className="text-sm font-black">4.9</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                               <span className="text-sm font-bold text-foreground/70">Locations</span>
-                               <span className="text-sm font-black">14</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                               <span className="text-sm font-bold text-foreground/70">Note moyenne</span>
-                               <div className="flex items-center gap-1 text-[#FF4F5A]">
-                                  <Star className="w-4 h-4 fill-current" />
-                                  <span className="text-sm font-black">4.9</span>
-                               </div>
-                            </div>
-                         </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Right: Personal Info Form */}
                     <div className="lg:col-span-2">
-                       <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
-                          <div className="flex items-center justify-between mb-10">
-                             <h2 className="text-2xl font-black">Informations <span className="text-[#FF4F5A]">personnelles</span></h2>
-                             <div className="h-px flex-1 bg-border mx-8 hidden sm:block" />
+                      <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
+                        <div className="flex items-center justify-between mb-10">
+                          <h2 className="text-2xl font-black">Informations <span className="text-[#FF4F5A]">personnelles</span></h2>
+                          <div className="h-px flex-1 bg-border mx-8 hidden sm:block" />
+                        </div>
+
+                        {profileError && (
+                          <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3">
+                            <XCircle className="w-5 h-5 flex-shrink-0" /> {profileError}
                           </div>
+                        )}
 
-                          {profileError && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3">
-                              <XCircle className="w-5 h-5 flex-shrink-0" /> {profileError}
+                        {saveSuccess && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3"
+                          >
+                            <CheckCircle className="w-5 h-5 flex-shrink-0" /> Profil mis à jour avec succès !
+                          </motion.div>
+                        )}
+
+                        {isLoadingProfile ? (
+                          <div className="py-20 text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mx-auto" />
+                          </div>
+                        ) : (
+                          <div className="space-y-8">
+                            <div className="grid sm:grid-cols-2 gap-8">
+                              <div className="space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nom complet</label>
+                                <Input
+                                  value={profile.full_name}
+                                  onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
+                                  className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
+                                  placeholder="Votre nom complet"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Télephone</label>
+                                <Input
+                                  value={profile.phone}
+                                  onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
+                                  className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
+                                  placeholder="+213 5XX XX XX XX"
+                                />
+                              </div>
                             </div>
-                          )}
 
-                          {saveSuccess && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3"
-                            >
-                              <CheckCircle className="w-5 h-5 flex-shrink-0" /> Profil mis à jour avec succès !
-                            </motion.div>
-                          )}
-
-                          {isLoadingProfile ? (
-                            <div className="py-20 text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mx-auto" />
+                            <div className="grid sm:grid-cols-2 gap-8">
+                              <div className="space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Email <span className="opacity-50">(Lectue seule)</span></label>
+                                <Input value={profile.email} disabled className="h-14 bg-muted border-border rounded-2xl font-bold opacity-60" />
+                              </div>
+                              <div className="space-y-2 font-bold">
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Wilaya</label>
+                                <select
+                                  value={profile.wilaya_code || ""}
+                                  onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
+                                  className="w-full h-14 px-4 bg-muted/30 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 appearance-none font-bold transition-all"
+                                >
+                                  <option value="">Sélectionnez votre wilaya</option>
+                                  {WILAYAS.map(w => <option key={w.code} value={w.code}>{w.code} - {w.name}</option>)}
+                                </select>
+                              </div>
                             </div>
-                          ) : (
-                            <div className="space-y-8">
-                               <div className="grid sm:grid-cols-2 gap-8">
-                                  <div className="space-y-2">
-                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nom complet</label>
-                                     <Input
-                                       value={profile.full_name}
-                                       onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
-                                       className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
-                                       placeholder="Votre nom complet"
-                                     />
-                                  </div>
-                                  <div className="space-y-2">
-                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Télephone</label>
-                                     <Input
-                                       value={profile.phone}
-                                       onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
-                                       className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
-                                       placeholder="+213 5XX XX XX XX"
-                                     />
-                                  </div>
-                               </div>
 
-                               <div className="grid sm:grid-cols-2 gap-8">
-                                  <div className="space-y-2">
-                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Email <span className="opacity-50">(Lectue seule)</span></label>
-                                     <Input value={profile.email} disabled className="h-14 bg-muted border-border rounded-2xl font-bold opacity-60" />
-                                  </div>
-                                  <div className="space-y-2 font-bold">
-                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Wilaya</label>
-                                     <select
-                                       value={profile.wilaya_code || ""}
-                                       onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
-                                       className="w-full h-14 px-4 bg-muted/30 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 appearance-none font-bold transition-all"
-                                     >
-                                       <option value="">Sélectionnez votre wilaya</option>
-                                       {WILAYAS.map(w => <option key={w.code} value={w.code}>{w.code} - {w.name}</option>)}
-                                     </select>
-                                  </div>
-                               </div>
-
-                               <div className="space-y-2">
-                                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Bio</label>
-                                  <textarea
-                                    value={profile.bio}
-                                    onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
-                                    rows={5}
-                                    className="w-full px-5 py-4 bg-muted/30 border border-border rounded-[2rem] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold transition-all"
-                                    placeholder="Décrivez-vous en quelques mots..."
-                                    maxLength={500}
-                                  />
-                                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mt-2 text-right">
-                                    {profile.bio.length} / 500 caractères
-                                  </p>
-                               </div>
-
-                               <div className="pt-4 border-t border-border flex justify-end">
-                                  <Button
-                                    onClick={handleSaveProfile}
-                                    disabled={isSaving}
-                                    className="bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0F2A2E]/20 transition-all hover:-translate-y-1 active:translate-y-0"
-                                  >
-                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sauvegarder les modifications"}
-                                  </Button>
-                               </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Bio</label>
+                              <textarea
+                                value={profile.bio}
+                                onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
+                                rows={5}
+                                className="w-full px-5 py-4 bg-muted/30 border border-border rounded-[2rem] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold transition-all"
+                                placeholder="Décrivez-vous en quelques mots..."
+                                maxLength={500}
+                              />
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mt-2 text-right">
+                                {profile.bio.length} / 500 caractères
+                              </p>
                             </div>
-                          )}
-                       </div>
+
+                            <div className="pt-4 border-t border-border flex justify-end">
+                              <Button
+                                onClick={handleSaveProfile}
+                                disabled={isSaving}
+                                className="bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0F2A2E]/20 transition-all hover:-translate-y-1 active:translate-y-0"
+                              >
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sauvegarder les modifications"}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>

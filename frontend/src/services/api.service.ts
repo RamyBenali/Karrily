@@ -304,6 +304,36 @@ export const reviewsService = {
     }
 };
 
+// ─── Reports Service ─────────────────────────────────
+
+export const reportsService = {
+    create: async (data: { 
+        reported_item_id?: string; 
+        reported_user_id?: string; 
+        reported_review_id?: string; 
+        reason: string; 
+        description?: string 
+    }) => {
+        const response = await api.post('/reports', data);
+        return { data: response.data.data, success: true };
+    },
+
+    getAll: async () => {
+        const response = await api.get('/reports');
+        return { data: response.data.data, success: true };
+    },
+
+    updateStatus: async (id: string, status: string, admin_notes?: string) => {
+        const response = await api.patch(`/reports/${id}/status`, { status, admin_notes });
+        return { data: response.data.data, success: true };
+    },
+
+    delete: async (id: string) => {
+        const response = await api.delete(`/reports/${id}`);
+        return { success: true };
+    }
+};
+
 // ─── Stats Service ───────────────────────────────────
 
 export const statsService = {
