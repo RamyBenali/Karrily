@@ -105,12 +105,6 @@
     "loginLink": "Se connecter",
     "heroLogin": "Louez, vendez, échangez.",
     "heroLoginSub": "La première plateforme algérienne de location et d'échange entre particuliers.",
-    "realEstate": "Immobilier",
-    "vehicles": "Véhicules",
-    "electronics": "Électronique",
-    "tools": "Outillage",
-    "events": "Événementiel",
-    "sports": "Sport",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "signupError": "Erreur lors de l'inscription.",
     "passwordPlaceholder": "Minimum 8 caractères",
@@ -160,14 +154,22 @@
     "poor": "Usé"
   },
   "listingTypes": {
-    "rent": "Location",
-    "sell": "Vente",
-    "troc": "Troc",
-    "rent_sell": "Mixte",
-    "rent_desc": "Louer votre bien temporairement",
-    "sell_desc": "Vendre votre bien définitivement",
-    "troc_desc": "Échanger contre un autre objet",
-    "mixed_desc": "Location et vente possibles"
+    "rent": {
+      "label": "Location",
+      "desc": "Louer votre bien temporairement"
+    },
+    "sell": {
+      "label": "Vente",
+      "desc": "Vendre votre bien définitivement"
+    },
+    "troc": {
+      "label": "Troc",
+      "desc": "Échanger contre un autre objet"
+    },
+    "rent_sell": {
+      "label": "Mixte",
+      "desc": "Location et vente possibles"
+    }
   },
   "bookingStatus": {
     "pending": "En attente",
@@ -474,10 +476,12 @@
     "immobilier": "Immobilier",
     "vehicules": "Véhicules",
     "electronique": "Électronique",
+    "electromenager": "Électroménager",
     "outillage": "Outillage",
     "mobilier": "Mobilier",
     "photo-video": "Photo & Vidéo",
-    "sport": "Sport",
-    "evenementiel": "Événementiel"
+    "sport-loisirs": "Sport & Loisirs",
+    "evenementiel": "Événementiel",
+    "mode-accessoires": "Mode & Accessoires"
   }
 }

@@ -48,12 +48,12 @@ export function LandingPage() {
   };
 
   const [categories, setCategories] = useState([
-    { icon: Home, label: t("categories.realEstate"), count: "...", color: "#0F2A2E" },
-    { icon: Car, label: t("categories.vehicles"), count: "...", color: "#FF4F5A" },
-    { icon: Laptop, label: t("categories.electronics"), count: "...", color: "#0F2A2E" },
-    { icon: Wrench, label: t("categories.tools"), count: "...", color: "#FF4F5A" },
-    { icon: Armchair, label: t("categories.furniture"), count: "...", color: "#0F2A2E" },
-    { icon: Camera, label: t("categories.photoVideo"), count: "...", color: "#FF4F5A" },
+    { icon: Home, label: t("categories.immobilier"), count: "...", color: "#0F2A2E" },
+    { icon: Car, label: t("categories.vehicules"), count: "...", color: "#FF4F5A" },
+    { icon: Laptop, label: t("categories.electronique"), count: "...", color: "#0F2A2E" },
+    { icon: Wrench, label: t("categories.outillage"), count: "...", color: "#FF4F5A" },
+    { icon: Armchair, label: t("categories.mobilier"), count: "...", color: "#0F2A2E" },
+    { icon: Camera, label: t("categories.photo-video"), count: "...", color: "#FF4F5A" },
   ]);
 
   const [globalStats, setGlobalStats] = useState({ totalCities: 47, activeUsers: 1200 });
@@ -315,7 +315,7 @@ export function LandingPage() {
                     {t("landing.popularSearches")}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {[t("categories.realEstate"), t("categories.vehicles"), t("categories.photoVideo"), t("categories.tools"), t("categories.electronics")].map((tag) => (
+                    {[t("categories.immobilier"), t("categories.vehicules"), t("categories.photo-video"), t("categories.outillage"), t("categories.electronique")].map((tag) => (
                       <button
                         key={tag}
                         type="button"
@@ -674,7 +674,7 @@ export function LandingPage() {
             </div>
 
             {[
-              { title: t("footer.explore"), links: [t("footer.allCategories"), t("categories.realEstate"), t("categories.vehicles"), t("categories.electronics"), t("categories.tools")] },
+              { title: t("footer.explore"), links: [t("footer.allCategories"), t("categories.immobilier"), t("categories.vehicules"), t("categories.electronique"), t("categories.outillage")] },
               { title: t("footer.company"), links: [t("footer.about"), t("footer.howItWorks"), t("footer.trustSafety"), t("footer.careers")] },
               { title: t("footer.support"), links: [t("footer.helpCenter"), t("footer.contactUs"), t("footer.faq"), t("footer.insurance")] }
             ].map((column) => (

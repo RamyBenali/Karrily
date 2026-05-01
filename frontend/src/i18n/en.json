@@ -105,12 +105,6 @@
     "loginLink": "Log in",
     "heroLogin": "Rent, sell, trade.",
     "heroLoginSub": "The first Algerian platform for renting and trading between individuals.",
-    "realEstate": "Real Estate",
-    "vehicles": "Vehicles",
-    "electronics": "Electronics",
-    "tools": "Tools",
-    "events": "Events",
-    "sports": "Sports",
     "passwordMismatch": "Passwords do not match.",
     "signupError": "Error during registration.",
     "passwordPlaceholder": "Minimum 8 characters",
@@ -160,14 +154,22 @@
     "poor": "Worn"
   },
   "listingTypes": {
-    "rent": "Rent",
-    "sell": "Sell",
-    "troc": "Trade",
-    "rent_sell": "Mixed",
-    "rent_desc": "Rent out your property temporarily",
-    "sell_desc": "Sell your property permanently",
-    "troc_desc": "Exchange for another item",
-    "mixed_desc": "Both rental and sale possible"
+    "rent": {
+      "label": "Rent",
+      "desc": "Rent out your property temporarily"
+    },
+    "sell": {
+      "label": "Sell",
+      "desc": "Sell your property permanently"
+    },
+    "troc": {
+      "label": "Trade",
+      "desc": "Exchange for another item"
+    },
+    "rent_sell": {
+      "label": "Mixed",
+      "desc": "Both rental and sale possible"
+    }
   },
   "bookingStatus": {
     "pending": "Pending",
@@ -474,10 +476,12 @@
     "immobilier": "Real Estate",
     "vehicules": "Vehicles",
     "electronique": "Electronics",
+    "electromenager": "Appliances",
     "outillage": "Tools",
     "mobilier": "Furniture",
     "photo-video": "Photo & Video",
-    "sport": "Sports",
-    "evenementiel": "Events"
+    "sport-loisirs": "Sports & Leisure",
+    "evenementiel": "Events",
+    "mode-accessoires": "Fashion & Accessories"
   }
 }

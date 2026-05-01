@@ -105,12 +105,6 @@
     "loginLink": "تسجيل الدخول",
     "heroLogin": "استأجر، بع، بادل.",
     "heroLoginSub": "أول منصة جزائرية للتأجير والمقايضة بين الأفراد.",
-    "realEstate": "عقارات",
-    "vehicles": "مركبات",
-    "electronics": "إلكترونيات",
-    "tools": "أدوات",
-    "events": "فعاليات",
-    "sports": "رياضة",
     "passwordMismatch": "كلمات المرور غير متطابقة.",
     "signupError": "خطأ أثناء التسجيل.",
     "passwordPlaceholder": "8 أحرف على الأقل",
@@ -160,14 +154,22 @@
     "poor": "مستعمل جداً"
   },
   "listingTypes": {
-    "rent": "كراء",
-    "sell": "بيع",
-    "troc": "مقايضة",
-    "rent_sell": "مختلط",
-    "rent_desc": "تأجير غرضك مؤقتاً",
-    "sell_desc": "بيع غرضك بشكل نهائي",
-    "troc_desc": "التبادل بغرض آخر",
-    "mixed_desc": "إمكانية الكراء والبيع"
+    "rent": {
+      "label": "كراء",
+      "desc": "تأجير غرضك مؤقتاً"
+    },
+    "sell": {
+      "label": "بيع",
+      "desc": "بيع غرضك بشكل نهائي"
+    },
+    "troc": {
+      "label": "مقايضة",
+      "desc": "التبادل بغرض آخر"
+    },
+    "rent_sell": {
+      "label": "مختلط",
+      "desc": "إمكانية الكراء والبيع"
+    }
   },
   "bookingStatus": {
     "pending": "قيد الانتظار",
@@ -474,10 +476,12 @@
     "immobilier": "عقارات",
     "vehicules": "مركبات",
     "electronique": "إلكترونيات",
+    "electromenager": "أجهزة منزلية",
     "outillage": "أدوات",
     "mobilier": "أثاث",
     "photo-video": "تصوير وفيديو",
-    "sport": "رياضة",
-    "evenementiel": "فعاليات"
+    "sport-loisirs": "رياضة وترفيه",
+    "evenementiel": "فعاليات",
+    "mode-accessoires": "موضة وإكسسوارات"
   }
 }

@@ -36,12 +36,12 @@ export function LoginPage() {
     };
 
     const categoryIcons = [
-        { icon: Home, label: t("auth.realEstate") },
-        { icon: Car, label: t("auth.vehicles") },
-        { icon: Camera, label: t("auth.electronics") },
-        { icon: Wrench, label: t("auth.tools") },
-        { icon: PartyPopper, label: t("auth.events") },
-        { icon: Dumbbell, label: t("auth.sports") },
+        { icon: Home, label: t("categories.immobilier") },
+        { icon: Car, label: t("categories.vehicules") },
+        { icon: Camera, label: t("categories.electronique") },
+        { icon: Wrench, label: t("categories.outillage") },
+        { icon: PartyPopper, label: t("categories.evenementiel") },
+        { icon: Dumbbell, label: t("categories.sport") },
     ];
 
     return (

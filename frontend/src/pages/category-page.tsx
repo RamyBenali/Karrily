@@ -22,7 +22,7 @@ const categoryData: Record<string, {
     image: string;
   }>;
 }> = {
-  "vehicles": {
+  "vehicules": {
     title: "Véhicules",
     description: "Voitures, motos et bien plus pour chaque trajet",
     gradient: "from-[#FF4F5A] to-[#FF6B74]",
@@ -59,7 +59,7 @@ const categoryData: Record<string, {
       }
     ]
   },
-  "electronics": {
+  "electronique": {
     title: "Électronique",
     description: "Appareils photo, ordinateurs portables et équipement professionnel",
     gradient: "from-[#0F2A2E] to-[#1A4851]",
@@ -96,7 +96,7 @@ const categoryData: Record<string, {
       }
     ]
   },
-  "real-estate": {
+  "immobilier": {
     title: "Immobilier",
     description: "Appartements, maisons et espaces uniques",
     gradient: "from-[#0F2A2E] to-[#1A4851]",
@@ -130,7 +130,7 @@ export function CategoryPage() {
   const navigate = useNavigate();
   const [likedItems, setLikedItems] = useState<number[]>([]);
   
-  const category = categoryData[categoryName || "vehicles"] || categoryData.vehicles;
+  const category = categoryData[categoryName || "vehicules"] || categoryData.vehicules;
 
   const toggleLike = (id: number) => {
     setLikedItems(prev => 

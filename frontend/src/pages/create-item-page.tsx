@@ -322,7 +322,7 @@ export function CreateItemPage() {
                                                                 : "bg-muted hover:bg-muted/80 text-muted-foreground"
                                                         }`}
                                                     >
-                                                        {cat.name}
+                                                        {t(`categories.${cat.slug}`)}
                                                     </button>
                                                 ))}
                                             </div>
