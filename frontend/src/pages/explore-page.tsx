@@ -257,7 +257,7 @@ export function ExplorePage() {
         <main className="flex-1 min-w-0">
           <div className="mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                  {totalCount} {totalCount === 1 ? t("explore.listingFound", { n: totalCount }) : t("explore.listingsFound", { n: totalCount })}
+                  {totalCount === 1 ? t("explore.listingFound", { n: totalCount }) : t("explore.listingsFound", { n: totalCount })}
               </h2>
           </div>
 
