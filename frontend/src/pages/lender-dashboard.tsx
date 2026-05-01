@@ -26,13 +26,13 @@ import {
 import { Input } from "../components/ui/input";
 
 const sidebarItems = [
-  { icon: BarChart3, label: "Vue d'ensemble" },
-  { icon: Package, label: "Mes annonces" },
-  { icon: Calendar, label: "Locations" },
-  { icon: ShoppingCart, label: "Ventes" },
-  { icon: RefreshCw, label: "Troc" },
-  { icon: DollarSign, label: "Revenus" },
-  { icon: Star, label: "Avis" },
+  { id: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
+  { id: 'listings', icon: Package, label: "Mes annonces" },
+  { id: 'bookings', icon: Calendar, label: "Locations" },
+  { id: 'sales', icon: ShoppingCart, label: "Ventes" },
+  { id: 'troc', icon: RefreshCw, label: "Troc" },
+  { id: 'earnings', icon: DollarSign, label: "Revenus" },
+  { id: 'reviews', icon: Star, label: "Avis" },
 ];
 
 const WILAYAS: Record<number, string> = {
@@ -229,10 +229,9 @@ export function LenderDashboard() {
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
             <DashboardSidebar
               items={sidebarItems}
-              activeTab={activeView === "overview" ? "Vue d'ensemble" : activeView === "listings" ? "Mes annonces" : activeView === "bookings" ? "Locations" : activeView === "sales" ? "Ventes" : activeView === "troc" ? "Troc" : activeView === "earnings" ? "Revenus" : "Avis"}
-              setActiveTab={(label) => {
-                const map: any = { "Vue d'ensemble": "overview", "Mes annonces": "listings", "Locations": "bookings", "Ventes": "sales", "Troc": "troc", "Revenus": "earnings", "Avis": "reviews" };
-                setActiveView(map[label]);
+              activeTab={activeView}
+              setActiveTab={(id) => {
+                setActiveView(id);
                 setIsMobileMenuOpen(false);
               }}
               userInitials={user?.user_metadata?.full_name?.charAt(0) || "U"}

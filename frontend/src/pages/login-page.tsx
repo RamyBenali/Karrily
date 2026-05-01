@@ -6,9 +6,11 @@ import { useAuthStore } from "../store/auth.store";
 import { KarillyLogo } from "../components/brand/karilly-logo";
 import { Button } from "../components/ui/button";
 import { useTheme } from "../context/theme-context";
+import { useTranslation } from "../context/language-context";
 
 export function LoginPage() {
     const { isDark } = useTheme();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const signIn = useAuthStore((s) => s.signIn);
     const [email, setEmail] = useState("");
@@ -27,19 +29,19 @@ export function LoginPage() {
             const path = useAuthStore.getState().getDashboardPath();
             navigate(path);
         } catch (err: any) {
-            setError(err?.message || "Erreur de connexion. Vérifiez vos identifiants.");
+            setError(err?.message || t("auth.loginError"));
         } finally {
             setIsLoading(false);
         }
     };
 
     const categoryIcons = [
-        { icon: Home, label: "Immobilier" },
-        { icon: Car, label: "Véhicules" },
-        { icon: Camera, label: "Électronique" },
-        { icon: Wrench, label: "Outillage" },
-        { icon: PartyPopper, label: "Événementiel" },
-        { icon: Dumbbell, label: "Sport" },
+        { icon: Home, label: t("auth.realEstate") },
+        { icon: Car, label: t("auth.vehicles") },
+        { icon: Camera, label: t("auth.electronics") },
+        { icon: Wrench, label: t("auth.tools") },
+        { icon: PartyPopper, label: t("auth.events") },
+        { icon: Dumbbell, label: t("auth.sports") },
     ];
 
     return (
@@ -60,10 +62,10 @@ export function LoginPage() {
                         transition={{ duration: 0.6 }}
                     >
                         <h1 className="text-4xl font-bold text-white mb-4">
-                            Louez, vendez, échangez.
+                            {t("auth.heroLogin")}
                         </h1>
                         <p className="text-xl text-white/70 mb-8">
-                            La première plateforme algérienne de location et d'échange entre particuliers.
+                            {t("auth.heroLoginSub")}
                         </p>
                     </motion.div>
 
@@ -100,10 +102,10 @@ export function LoginPage() {
                     className="w-full max-w-md"
                 >
                     <h2 className="mt-8 mb-2 text-3xl font-bold text-foreground">
-                        Bon retour !
+                        {t("auth.welcomeBack")}
                     </h2>
                     <p className="mb-8 text-muted-foreground">
-                        Connectez-vous pour accéder à votre compte.
+                        {t("auth.loginSubtitle")}
                     </p>
 
                     {/* Error message */}
@@ -121,13 +123,13 @@ export function LoginPage() {
                         {/* Email */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Email
+                                {t("auth.email")}
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                                 <input
                                     type="email"
-                                    placeholder="votre@email.com"
+                                    placeholder={t("auth.emailPlaceholder")}
                                     value={email}
                                     onChange={(e) => {
                                         setEmail(e.target.value);
@@ -142,7 +144,7 @@ export function LoginPage() {
                         {/* Password */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Mot de passe
+                                {t("auth.password")}
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -174,7 +176,7 @@ export function LoginPage() {
                                 type="button"
                                 className="text-sm text-[#FF4F5A] hover:text-[#FF4F5A]/80 font-medium transition-colors"
                             >
-                                Mot de passe oublié ?
+                                {t("auth.forgotPassword")}
                             </button>
                         </div>
 
@@ -188,8 +190,8 @@ export function LoginPage() {
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <>
-                                    Se connecter
-                                    <ArrowRight className="w-5 h-5" />
+                                    {t("auth.loginButton")}
+                                    <ArrowRight className="w-5 h-5 rtl-mirror" />
                                 </>
                             )}
                         </Button>
@@ -198,7 +200,7 @@ export function LoginPage() {
                     {/* Divider */}
                     <div className="my-8 flex items-center gap-4">
                         <div className="h-px flex-1 bg-border" />
-                        <span className="text-sm text-muted-foreground">ou</span>
+                        <span className="text-sm text-muted-foreground">{t("auth.or")}</span>
                         <div className="h-px flex-1 bg-border" />
                     </div>
 
@@ -213,17 +215,17 @@ export function LoginPage() {
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
-                        Continuer avec Google
+                        {t("auth.continueWithGoogle")}
                     </button>
 
                     {/* Sign up link */}
                     <p className="mt-8 text-center text-muted-foreground">
-                        Pas encore de compte ?{" "}
+                        {t("auth.noAccount")}{" "}
                         <Link
                             to="/signup"
                             className="text-[#FF4F5A] font-semibold hover:text-[#FF4F5A]/80 transition-colors"
                         >
-                            Créer un compte
+                            {t("auth.createAccount")}
                         </Link>
                     </p>
                 </motion.div>

@@ -1,7 +1,10 @@
 import { KarillyLogo } from "../brand/karilly-logo";
 import { Link } from "react-router";
+import { useTranslation } from "../../context/language-context";
 
 export function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-[#0F2A2E] text-white py-16">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
@@ -11,7 +14,7 @@ export function Footer() {
               <KarillyLogo className="h-8" variant="white" />
             </div>
             <p className="text-white/70 mb-6 leading-relaxed">
-              La marketplace universelle de location et de troc en Algérie. Louez tout, partout, tout le temps.
+              {t("footer.description")}
             </p>
             <div className="flex gap-3">
               {["Twitter", "Instagram", "LinkedIn"].map((social) => (
@@ -28,21 +31,21 @@ export function Footer() {
 
           {[
             {
-              title: "Explorer",
+              title: t("footer.explore"),
               links: [
-                { label: "Toutes les catégories", to: "/explore" }
+                { label: t("footer.allCategories"), to: "/explore" }
               ]
             },
             {
-              title: "L'entreprise",
+              title: t("footer.company"),
               links: [
-                { label: "À propos", to: "/explore" }
+                { label: t("footer.about"), to: "/explore" }
               ]
             },
             {
-              title: "Support",
+              title: t("footer.support"),
               links: [
-                { label: "Centre d'aide", to: "/explore" }
+                { label: t("footer.helpCenter"), to: "/explore" }
               ]
             }
           ].map((column) => (
@@ -63,17 +66,17 @@ export function Footer() {
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/50 text-sm">
-            © {new Date().getFullYear()} Karrily. Tous droits réservés.
+            © {new Date().getFullYear()} Karrily. {t("footer.allRightsReserved")}
           </p>
           <div className="flex gap-6">
             <Link to="/cgu" className="text-white/50 hover:text-white text-sm transition-colors">
-              CGU
+              {t("footer.cgu")}
             </Link>
             <Link to="/privacy" className="text-white/50 hover:text-white text-sm transition-colors">
-              Confidentialité
+              {t("footer.confidentiality")}
             </Link>
             <Link to="/legal" className="text-white/50 hover:text-white text-sm transition-colors">
-              Mentions Légales
+              {t("footer.legalNotices")}
             </Link>
           </div>
         </div>

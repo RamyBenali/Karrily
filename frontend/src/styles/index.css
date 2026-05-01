@@ -53,3 +53,8 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 79, 90, 0.5); /* Brand color */
 }
+
+/* RTL Helpers */
+[dir="rtl"] .rtl-mirror {
+    transform: scaleX(-1);
+}

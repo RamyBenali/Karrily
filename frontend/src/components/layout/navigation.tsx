@@ -1,11 +1,13 @@
 import { Link, useNavigate } from "react-router";
 import { KarillyLogo } from "../brand/karilly-logo";
-import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid, Shield, Package, CalendarCheck, ShoppingBag, RefreshCw, MessageCircle, Settings2, AlertCircle } from "lucide-react";
+import { ChevronDown, User, Heart, Menu, LogOut, X, Bell, Trash2, Home, Car, Laptop, Wrench, Armchair, Camera, Dumbbell, PartyPopper, LayoutGrid, Shield, Package, CalendarCheck, ShoppingBag, RefreshCw, MessageCircle, Settings2, AlertCircle, Globe } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/auth.store";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../../context/theme-context";
+import { useTranslation } from "../../context/language-context";
+import { LOCALE_META, type Locale } from "../../context/language-context";
 import { ThemeToggle } from "./theme-toggle";
 import { useNotifications } from "../../hooks/useNotifications";
 import { supabase } from "../../lib/supabase";
@@ -22,14 +24,17 @@ export function Navigation() {
   const navigate = useNavigate();
   const { isAuthenticated, user, signOut, role, hasItems, getDashboardPath } = useAuthStore();
   const { isDark } = useTheme();
+  const { t, locale, setLocale } = useTranslation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
   
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   
@@ -56,6 +61,9 @@ export function Navigation() {
       }
       if (categoriesRef.current && !categoriesRef.current.contains(e.target as Node)) {
         setShowCategories(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -91,6 +99,17 @@ export function Navigation() {
     }
   };
 
+  const getRelativeTime = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (mins < 1) return t("nav.justNow");
+    if (mins < 60) return t("nav.minutesAgo", { n: mins });
+    if (hours < 24) return t("nav.hoursAgo", { n: hours });
+    return t("nav.daysAgo", { n: days });
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
@@ -107,7 +126,7 @@ export function Navigation() {
                 onClick={() => navigate('/explore')}
                 className="text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors"
               >
-                Explorer
+                {t("nav.explore")}
               </button>
 
               <div className="relative" ref={categoriesRef}>
@@ -115,7 +134,7 @@ export function Navigation() {
                   onClick={() => setShowCategories(!showCategories)}
                   className="flex items-center gap-1 text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors group"
                 >
-                  Catégories
+                  {t("nav.categories")}
                   <ChevronDown className={cn("w-4 h-4 transition-transform", showCategories && "rotate-180")} />
                 </button>
                 
@@ -142,7 +161,7 @@ export function Navigation() {
                               <div className="w-10 h-10 rounded-xl bg-muted group-hover:bg-background flex items-center justify-center transition-colors">
                                 <Icon className="w-5 h-5 text-[#FF4F5A]" />
                               </div>
-                              {cat.name}
+                              {t(`categories.${cat.slug}`)}
                             </button>
                           );
                         })}
@@ -160,13 +179,60 @@ export function Navigation() {
                 }}
                 className="text-sm font-bold text-foreground/70 hover:text-[#FF4F5A] transition-colors"
               >
-                Comment ça marche
+                {t("nav.howItWorks")}
               </button>
             </div>
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Language Selector */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                className="w-10 h-10 rounded-2xl hover:bg-muted flex items-center justify-center text-foreground transition-all"
+                title="Language"
+              >
+                <Globe className="w-5 h-5" />
+              </button>
+
+              <AnimatePresence>
+                {showLangMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-14 w-44 bg-card rounded-2xl shadow-2xl border border-border/50 overflow-hidden p-1.5 z-50"
+                  >
+                    {(Object.keys(LOCALE_META) as Locale[]).map((loc) => {
+                      const meta = LOCALE_META[loc];
+                      return (
+                        <button
+                          key={loc}
+                          onClick={() => {
+                            setLocale(loc);
+                            setShowLangMenu(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all",
+                            locale === loc
+                              ? "bg-[#FF4F5A]/10 text-[#FF4F5A]"
+                              : "hover:bg-muted text-foreground"
+                          )}
+                        >
+                          <span className="text-lg">{meta.flag}</span>
+                          <span>{meta.label}</span>
+                          {locale === loc && (
+                            <span className="ms-auto w-2 h-2 rounded-full bg-[#FF4F5A]" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
@@ -176,13 +242,13 @@ export function Navigation() {
                 {role !== 'admin' && hasItems && (
                   <button onClick={() => navigate('/lender')} className="hidden lg:flex items-center gap-2 text-sm font-bold text-foreground hover:text-[#FF4F5A] transition-colors bg-card border border-border px-4 h-10 rounded-2xl shadow-sm">
                     <Package className="w-4 h-4" />
-                    Propriétaire
+                    {t("nav.owner")}
                   </button>
                 )}
                 {role === 'admin' && (
                   <button onClick={() => navigate('/admin')} className="hidden lg:flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-[#FF4F5A] to-[#FF6B74] hover:shadow-[0_0_20px_rgba(255,79,90,0.4)] transition-all px-4 h-10 rounded-2xl shadow-sm">
                     <Shield className="w-4 h-4" />
-                    Admin
+                    {t("nav.admin")}
                   </button>
                 )}
 
@@ -214,13 +280,13 @@ export function Navigation() {
                       >
                         <div className="p-6 border-b border-border/50 flex justify-between items-center">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-black text-xs uppercase tracking-widest">Notifications</h3>
+                            <h3 className="font-black text-xs uppercase tracking-widest">{t("nav.notifications")}</h3>
                             {unreadCount > 0 && (
                               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#FF4F5A] text-white text-[9px] font-black">{unreadCount}</span>
                             )}
                           </div>
                           {unreadCount > 0 && (
-                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-[#FF4F5A] hover:opacity-70 transition-opacity">Tout lire</button>
+                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-[#FF4F5A] hover:opacity-70 transition-opacity">{t("nav.readAll")}</button>
                           )}
                         </div>
                         <div className="max-h-[440px] overflow-y-auto no-scrollbar divide-y divide-border/30">
@@ -229,8 +295,8 @@ export function Navigation() {
                               <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
                                 <Bell className="w-5 h-5 text-muted-foreground" />
                               </div>
-                              <p className="text-sm font-bold text-muted-foreground">Aucune notification</p>
-                              <p className="text-xs text-muted-foreground/60">Vos notifications apparaîtront ici</p>
+                              <p className="text-sm font-bold text-muted-foreground">{t("nav.noNotifications")}</p>
+                              <p className="text-xs text-muted-foreground/60">{t("nav.notificationsAppearHere")}</p>
                             </div>
                           ) : (
                             notifications.map(notif => {
@@ -257,17 +323,6 @@ export function Navigation() {
                                 }
                               };
                               const { Icon, bg, color } = getNotifIcon();
-
-                              const getRelativeTime = (dateStr: string) => {
-                                const diff = Date.now() - new Date(dateStr).getTime();
-                                const mins = Math.floor(diff / 60000);
-                                const hours = Math.floor(diff / 3600000);
-                                const days = Math.floor(diff / 86400000);
-                                if (mins < 1) return "À l'instant";
-                                if (mins < 60) return `Il y a ${mins} min`;
-                                if (hours < 24) return `Il y a ${hours}h`;
-                                return `Il y a ${days}j`;
-                              };
 
                               return (
                                 <div
@@ -335,26 +390,26 @@ export function Navigation() {
                         className="absolute right-0 top-14 w-60 bg-card rounded-[2rem] shadow-2xl border border-border/50 overflow-hidden p-2"
                       >
                         <div className="px-5 py-4 border-b border-border/50 mb-1">
-                          <p className="font-black text-xs truncate">{user?.user_metadata?.full_name || "Utilisateur"}</p>
+                          <p className="font-black text-xs truncate">{user?.user_metadata?.full_name || t("common.user")}</p>
                           <p className="text-[10px] text-muted-foreground truncate font-medium mt-0.5">{user?.email}</p>
                         </div>
-                        <button onClick={() => { navigate(getDashboardPath()); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> Profil</button>
+                        <button onClick={() => { navigate(getDashboardPath()); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><User className="w-4 h-4" /> {t("nav.profile")}</button>
                         {(role === 'lender' || role === 'vendeur' || hasItems) && (
-                          <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> Publier</button>
+                          <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> {t("nav.publish")}</button>
                         )}
                         
                         {/* Mobile view roles */}
                         <div className="lg:hidden mt-1 mb-1 space-y-1">
                           {role !== 'admin' && hasItems && (
-                            <button onClick={() => { navigate('/lender'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><Package className="w-4 h-4" /> Propriétaire</button>
+                            <button onClick={() => { navigate('/lender'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><Package className="w-4 h-4" /> {t("nav.owner")}</button>
                           )}
                           {role === 'admin' && (
-                            <button onClick={() => { navigate('/admin'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-[#FF4F5A] transition-all"><Shield className="w-4 h-4" /> Admin</button>
+                            <button onClick={() => { navigate('/admin'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-[#FF4F5A] transition-all"><Shield className="w-4 h-4" /> {t("nav.admin")}</button>
                           )}
                         </div>
 
                         <div className="border-t border-border/50 mt-1 pt-1">
-                           <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-red-500 transition-all"><LogOut className="w-4 h-4" /> Déconnexion</button>
+                           <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-sm font-bold text-red-500 transition-all"><LogOut className="w-4 h-4" /> {t("nav.logout")}</button>
                         </div>
                       </motion.div>
                     )}
@@ -363,8 +418,8 @@ export function Navigation() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Button onClick={() => navigate('/login')} variant="ghost" className="rounded-2xl font-bold h-11 px-6">Connexion</Button>
-                <Button onClick={() => navigate('/signup')} className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-2xl font-bold h-11 px-6 shadow-lg shadow-[#FF4F5A]/20">S'inscrire</Button>
+                <Button onClick={() => navigate('/login')} variant="ghost" className="rounded-2xl font-bold h-11 px-6">{t("nav.login")}</Button>
+                <Button onClick={() => navigate('/signup')} className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-2xl font-bold h-11 px-6 shadow-lg shadow-[#FF4F5A]/20">{t("nav.signup")}</Button>
               </div>
             )}
 
@@ -389,29 +444,29 @@ export function Navigation() {
           >
             <div className="p-6 space-y-8">
                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">Navigation</p>
-                  <button onClick={() => { navigate('/explore'); setShowMobileMenu(false); }} className="block w-full text-left p-3 rounded-2xl font-bold hover:bg-muted">Explorer</button>
+                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">{t("nav.navigation")}</p>
+                 <button onClick={() => { navigate('/explore'); setShowMobileMenu(false); }} className="block w-full text-left p-3 rounded-2xl font-bold hover:bg-muted">{t("nav.explore")}</button>
                </div>
                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">Catégories</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {categories.map(cat => (
-                      <button 
-                        key={cat.id} 
-                        onClick={() => { navigate(`/explore?category=${cat.slug}`); setShowMobileMenu(false); }}
-                        className="flex items-center gap-2 p-3 rounded-2xl bg-muted/50 font-bold text-xs"
-                      >
-                         <LayoutGrid className="w-3.5 h-3.5 text-[#FF4F5A]" />
-                         {cat.name}
-                      </button>
-                    ))}
-                  </div>
+                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">{t("nav.categories")}</p>
+                 <div className="grid grid-cols-2 gap-2">
+                   {categories.map(cat => (
+                     <button 
+                       key={cat.id} 
+                       onClick={() => { navigate(`/explore?category=${cat.slug}`); setShowMobileMenu(false); }}
+                       className="flex items-center gap-2 p-3 rounded-2xl bg-muted/50 font-bold text-xs"
+                     >
+                        <LayoutGrid className="w-3.5 h-3.5 text-[#FF4F5A]" />
+                        {cat.name}
+                     </button>
+                   ))}
+                 </div>
                </div>
                {!isAuthenticated && (
-                  <div className="flex gap-4 pt-4 border-t border-border/50">
-                    <Button onClick={() => { navigate('/login'); setShowMobileMenu(false); }} variant="outline" className="flex-1 rounded-2xl h-14 font-bold">Connexion</Button>
-                    <Button onClick={() => { navigate('/signup'); setShowMobileMenu(false); }} className="flex-1 bg-[#FF4F5A] text-white rounded-2xl h-14 font-bold">S'inscrire</Button>
-                  </div>
+                 <div className="flex gap-4 pt-4 border-t border-border/50">
+                   <Button onClick={() => { navigate('/login'); setShowMobileMenu(false); }} variant="outline" className="flex-1 rounded-2xl h-14 font-bold">{t("nav.login")}</Button>
+                   <Button onClick={() => { navigate('/signup'); setShowMobileMenu(false); }} className="flex-1 bg-[#FF4F5A] text-white rounded-2xl h-14 font-bold">{t("nav.signup")}</Button>
+                 </div>
                )}
             </div>
           </motion.div>

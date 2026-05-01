@@ -15,6 +15,7 @@ const queryClient = new QueryClient({
 });
 
 import { ThemeProvider } from "./context/theme-context";
+import { LanguageProvider } from "./context/language-context";
 
 export default function App() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -26,6 +27,7 @@ export default function App() {
   }, [initialize]);
 
   return (
+    <LanguageProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
 
@@ -52,6 +54,7 @@ export default function App() {
       </div>
     </QueryClientProvider>
     </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

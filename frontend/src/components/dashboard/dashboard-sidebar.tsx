@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
 
 interface SidebarItem {
+  id: string;
   icon: LucideIcon;
   label: string;
   badge?: number;
@@ -59,7 +60,7 @@ export function DashboardSidebar({
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-background" />
             </div>
             <div>
-              <h3 className="font-bold text-foreground text-sm truncate max-w-[120px]">{userFullName || "Utilisateur"}</h3>
+              <h3 className="font-bold text-foreground text-sm truncate max-w-[120px]">{userFullName}</h3>
               <p className="text-xs text-muted-foreground">{activeTab}</p>
             </div>
           </div>
@@ -87,26 +88,26 @@ export function DashboardSidebar({
               <div className="bg-card/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-border p-3 flex flex-col gap-1">
                 {items.map((item, idx) => (
                   <motion.button
-                    key={item.label}
+                    key={item.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.04 }}
                     onClick={() => {
-                      setActiveTab(item.label);
+                      setActiveTab(item.id);
                       setIsMobileMenuOpen(false);
                     }}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all relative overflow-hidden",
-                      activeTab === item.label
+                      activeTab === item.id
                         ? "bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white shadow-lg"
                         : "text-foreground/70 hover:text-foreground hover:bg-muted/60"
                     )}
                   >
                     <div className={cn(
                       "p-1.5 rounded-lg transition-colors",
-                      activeTab === item.label ? "bg-white/15" : "bg-muted/80"
+                      activeTab === item.id ? "bg-white/15" : "bg-muted/80"
                     )}>
-                      <item.icon className={cn("w-4 h-4", activeTab === item.label ? "text-white" : "text-[#FF4F5A]")} />
+                      <item.icon className={cn("w-4 h-4", activeTab === item.id ? "text-white" : "text-[#FF4F5A]")} />
                     </div>
                     <span>{item.label}</span>
                     {item.badge && item.badge > 0 && (
@@ -176,7 +177,7 @@ export function DashboardSidebar({
               
               <div className="max-w-full">
                 <h3 className="font-bold text-base text-foreground truncate px-2">
-                  {userFullName || "Utilisateur"}
+                  {userFullName}
                 </h3>
                 <p className="text-xs text-muted-foreground truncate px-2 mt-0.5 opacity-60">{userEmail}</p>
               </div>
@@ -186,20 +187,20 @@ export function DashboardSidebar({
             <nav className="space-y-1">
               {items.map((item, idx) => (
                 <motion.button
-                  key={item.label}
+                  key={item.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05, duration: 0.3 }}
-                  onClick={() => setActiveTab(item.label)}
+                  onClick={() => setActiveTab(item.id)}
                   className={cn(
                     "w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-200 relative group/item overflow-hidden",
-                    activeTab === item.label
+                    activeTab === item.id
                       ? "bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white shadow-lg shadow-[#0F2A2E]/20"
                       : "text-foreground/60 hover:text-foreground hover:bg-muted/50"
                   )}
                 >
                   {/* Active left indicator */}
-                  {activeTab === item.label && (
+                  {activeTab === item.id && (
                     <motion.div
                       layoutId="sidebar-active-bar"
                       className="sidebar-active-indicator"
@@ -209,13 +210,13 @@ export function DashboardSidebar({
 
                   <div className={cn(
                     "p-2 rounded-xl transition-all duration-200 flex-shrink-0",
-                    activeTab === item.label
+                    activeTab === item.id
                       ? "bg-white/15"
                       : "bg-muted/60 group-hover/item:bg-background group-hover/item:shadow-sm"
                   )}>
                     <item.icon className={cn(
                       "w-4 h-4 transition-colors",
-                      activeTab === item.label ? "text-white" : "text-[#FF4F5A]"
+                      activeTab === item.id ? "text-white" : "text-[#FF4F5A]"
                     )} />
                   </div>
                   
@@ -228,7 +229,7 @@ export function DashboardSidebar({
                   ) : (
                     <ChevronRight className={cn(
                       "w-3.5 h-3.5 transition-all duration-200 flex-shrink-0",
-                      activeTab === item.label ? "text-white/60 translate-x-0.5" : "text-foreground/20 group-hover/item:text-foreground/40"
+                      activeTab === item.id ? "text-white/60 translate-x-0.5" : "text-foreground/20 group-hover/item:text-foreground/40"
                     )} />
                   )}
                 </motion.button>

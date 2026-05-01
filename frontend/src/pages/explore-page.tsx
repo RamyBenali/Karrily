@@ -14,6 +14,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Footer } from "../components/layout/footer";
 import { supabase } from "../lib/supabase";
 import { itemsService, categoriesService } from "../services/api.service";
+import { useTranslation } from "../context/language-context";
 import { CATEGORY_FILTERS, LISTING_TYPE_LABELS } from "../components/explore/explore-constants";
 import {
   ExploreHeader,
@@ -46,6 +47,7 @@ interface Item {
 export function ExplorePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const initialCategory = searchParams.get("category");
 
   const [categories, setCategories] = useState<ExploreCategoryLite[]>([]);
@@ -208,7 +210,7 @@ export function ExplorePage() {
     if (item.sale_price) {
         return `${Number(item.sale_price).toLocaleString()} DA`; 
     }
-    return "Prix sur demande";
+    return t("explore.priceOnRequest");
   };
 
   const filterProps = {
@@ -255,7 +257,7 @@ export function ExplorePage() {
         <main className="flex-1 min-w-0">
           <div className="mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                  {totalCount} {totalCount === 1 ? 'Annonce trouvée' : 'Annonces trouvées'}
+                  {totalCount} {totalCount === 1 ? t("explore.listingFound", { n: totalCount }) : t("explore.listingsFound", { n: totalCount })}
               </h2>
           </div>
 
@@ -266,15 +268,15 @@ export function ExplorePage() {
           ) : items.length === 0 ? (
             <div className="rounded-[2.5rem] border border-border bg-card py-24 text-center shadow-sm">
               <Search className="mx-auto mb-6 h-20 w-20 text-muted-foreground/30" />
-              <h3 className="mb-2 text-2xl font-bold text-foreground">Aucune annonce trouvée</h3>
+              <h3 className="mb-2 text-2xl font-bold text-foreground">{t("explore.noListings")}</h3>
               <p className="mb-8 text-muted-foreground max-w-md mx-auto">
-                Essayez de modifier (ou réinitialiser) vos filtres pour voir plus de résultats.
+                {t("explore.noListingsDesc")}
               </p>
               <Button
                 onClick={resetFilters}
                 className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-12 px-8 font-bold text-base"
               >
-                Réinitialiser les filtres
+                {t("explore.resetFilters")}
               </Button>
             </div>
           ) : (
@@ -319,7 +321,7 @@ export function ExplorePage() {
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="mb-2.5 flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-widest text-[#FF4F5A] truncate mr-2">
-                        {categories.find((c) => c.id === item.category_id)?.name || "Non classé"}
+                        {categories.find((c) => c.id === item.category_id)?.name || t("explore.uncategorized")}
                       </span>
                       {item.rating > 0 && (
                         <div className="flex items-center gap-1 shrink-0 bg-yellow-400/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
@@ -335,14 +337,14 @@ export function ExplorePage() {
 
                     <p className="mb-4 flex items-center gap-1.5 text-xs font-medium text-muted-foreground mt-auto">
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{item.location || "Non spécifié"}</span>
+                      <span className="truncate">{item.location || t("explore.unspecified")}</span>
                     </p>
 
                     <div className="flex items-center justify-between pt-3 border-t border-border/50">
                       <div className="flex items-center flex-wrap gap-2">
                         <span className="text-lg font-black text-foreground tracking-tight">{getItemPrice(item)}</span>
                         {item.is_negotiable && (
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">Nég.</span>
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">{t("explore.negotiable")}</span>
                         )}
                       </div>
                     </div>
@@ -361,7 +363,7 @@ export function ExplorePage() {
                 className="h-14 rounded-full border-border/60 px-10 text-foreground hover:bg-muted font-bold shadow-sm"
               >
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                Afficher plus de résultats ({items.length} sur {totalCount})
+                {t("explore.showMore", { current: items.length, total: totalCount })}
               </Button>
             </div>
           ) : null}

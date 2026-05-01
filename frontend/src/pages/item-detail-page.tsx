@@ -13,6 +13,7 @@ import { Footer } from "../components/layout/footer";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth.store";
+import { useTranslation } from "../context/language-context";
 import { bookingsService, trocService, favoritesService } from "../services/api.service";
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
@@ -20,21 +21,6 @@ import { ReviewDialog } from "../components/dashboard/ReviewDialog";
 import { ReportDialog } from "../components/dashboard/ReportDialog";
 import { reviewsService, reportsService } from "../services/api.service";
 import { cn } from "../components/ui/utils";
-
-const CONDITION_LABELS: Record<string, string> = {
-  new: "Neuf",
-  like_new: "Comme neuf",
-  good: "Bon état",
-  fair: "Correct",
-  poor: "Usé",
-};
-
-const LISTING_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
-  rent: { label: "Location", icon: Home, color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
-  sell: { label: "Vente", icon: ShoppingCart, color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  troc: { label: "Troc", icon: RefreshCw, color: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" },
-  rent_sell: { label: "Location & Vente", icon: HandCoins, color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-};
 
 const WILAYAS: Record<number, string> = {
   1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Béjaïa",
@@ -93,50 +79,65 @@ export function ItemDetailPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t, locale } = useTranslation();
   
-  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-  const [isTrocModalOpen, setIsTrocModalOpen] = useState(false);
-
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-
+  
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [bookingMessage, setBookingMessage] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookingError, setBookingError] = useState("");
-  const [creatingConversation, setCreatingConversation] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
-  
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [datesOverlapping, setDatesOverlapping] = useState(false);
+  
+  const [isLiked, setIsLiked] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState("");
+  
+  const [creatingConversation, setCreatingConversation] = useState(false);
   
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  
-  // Direct Review State
   const [reviewRating, setReviewRating] = useState(0);
-  const [hoveredRating, setHoveredRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
+  const [hoveredRating, setHoveredRating] = useState(0);
+
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [isTrocModalOpen, setIsTrocModalOpen] = useState(false);
   
-  // Report State
   const [reportConfig, setReportConfig] = useState<{
     isOpen: boolean;
     targetId: string;
-    targetType: "item" | "review";
+    targetType: 'item' | 'user' | 'review';
     targetTitle: string;
   }>({
     isOpen: false,
-    targetId: "",
-    targetType: "item",
-    targetTitle: ""
+    targetId: '',
+    targetType: 'item',
+    targetTitle: ''
   });
+
+  const CONDITION_LABELS: Record<string, string> = {
+    new: t("conditions.new"),
+    like_new: t("conditions.like_new"),
+    good: t("conditions.good"),
+    fair: t("conditions.fair"),
+    poor: t("conditions.poor"),
+  };
+
+  const LISTING_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
+    rent: { label: t("listingTypes.rent"), icon: Home, color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    sell: { label: t("listingTypes.sell"), icon: ShoppingCart, color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+    troc: { label: t("listingTypes.troc"), icon: RefreshCw, color: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" },
+    rent_sell: { label: t("listingTypes.rent_sell"), icon: HandCoins, color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+  };
 
   useEffect(() => {
     if (!startDate || !endDate) {
@@ -166,7 +167,7 @@ export function ItemDetailPage() {
           .single();
 
         if (fetchError || !data) {
-          setError("Annonce introuvable.");
+          setError(t("item.notFound"));
           setIsLoading(false);
           return;
         }
@@ -181,7 +182,7 @@ export function ItemDetailPage() {
 
         setIsLoading(false);
       } catch (err) {
-        setError("Une erreur est survenue lors du chargement.");
+        setError(t("common.error"));
         setIsLoading(false);
       }
     };
@@ -339,9 +340,9 @@ export function ItemDetailPage() {
     setCreatingConversation(false);
 
     if (!convError && newConv) {
-      navigate("/dashboard", { state: { tab: "Messages", convId: newConv.id } });
+      navigate("/dashboard", { state: { tab: t("dashboard.messages"), convId: newConv.id } });
     } else {
-      alert("Erreur lors de la création de la conversation.");
+      alert(t("common.error"));
     }
   };
 
@@ -391,7 +392,7 @@ export function ItemDetailPage() {
     : "?";
 
   const memberSince = item?.owner?.created_at
-    ? new Date(item.owner.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    ? t("item.memberSince", { date: new Date(item.owner.created_at).toLocaleDateString(locale === 'ar' ? 'ar-DZ' : 'fr-FR', { month: "long", year: "numeric" }) })
     : "";
 
   if (isLoading) {
@@ -400,7 +401,7 @@ export function ItemDetailPage() {
         
         <div className="flex flex-col items-center justify-center pt-40">
           <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mb-4" />
-          <p className="text-muted-foreground animate-pulse">Chargement de l'annonce...</p>
+          <p className="text-muted-foreground animate-pulse">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -414,15 +415,15 @@ export function ItemDetailPage() {
           <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
             <AlertCircle className="w-12 h-12 text-muted-foreground/40" />
           </div>
-          <h2 className="text-3xl font-bold text-foreground mb-3">Annonce introuvable</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-3">{t("item.notFound")}</h2>
           <p className="text-muted-foreground mb-8 max-w-md">
-            Désolé, cette annonce n'existe plus ou a été supprimée par son propriétaire.
+            {t("item.noLongerExists")}
           </p>
           <Button 
             onClick={() => navigate("/explore")} 
             className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full px-8 h-12 shadow-lg shadow-[#FF4F5A]/20"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" /> Retour à l'exploration
+            <ArrowLeft className="w-4 h-4 mr-2" /> {t("common.back")}
           </Button>
         </div>
       </div>
@@ -440,7 +441,7 @@ export function ItemDetailPage() {
           {/* Breadcrumb Épuré */}
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-2">
             <button onClick={() => navigate("/explore")} className="hover:text-foreground flex items-center gap-1 transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Explorer
+              <ArrowLeft className="w-4 h-4" /> {t("nav.explore")}
             </button>
             <span className="opacity-30">/</span>
             {item.category && (
@@ -531,7 +532,7 @@ export function ItemDetailPage() {
                     <div className="w-10 h-10 bg-muted rounded-2xl flex items-center justify-center">
                       <Info className="w-5 h-5 text-muted-foreground" />
                     </div>
-                    <h2 className="text-2xl font-bold tracking-tight">Description</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">{t("item.description")}</h2>
                   </div>
                   <div className="p-8 rounded-[2rem] bg-card border border-border/50 text-muted-foreground leading-relaxed whitespace-pre-line text-lg">
                     {item.description}
@@ -554,7 +555,7 @@ export function ItemDetailPage() {
                           <div className="flex flex-col">
                             <span className="text-xs uppercase tracking-widest text-muted-foreground/60 font-bold">{key.replace(/_/g, " ")}</span>
                             <span className="font-semibold text-foreground">
-                              {typeof value === "boolean" ? (value ? "Oui" : "Non") : value}
+                              {typeof value === "boolean" ? (value ? t("common.yes") : t("common.no")) : value}
                             </span>
                           </div>
                         </div>
@@ -597,7 +598,7 @@ export function ItemDetailPage() {
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-bold uppercase tracking-widest text-[#FF4F5A] px-3 py-1 bg-[#FF4F5A]/5 rounded-full">
-                      {item.category?.name || "Général"}
+                      {item.category?.name || t("explore.uncategorized")}
                     </span>
                     <div className="flex gap-2">
                        <button
@@ -633,7 +634,7 @@ export function ItemDetailPage() {
                     <div className="w-1 h-1 bg-muted-foreground/30 rounded-full" />
                     <div className="flex items-center gap-1">
                       <Eye className="w-3.5 h-3.5" />
-                      <span>{item.view_count} vues</span>
+                      <span>{item.view_count} {t("item.views")}</span>
                     </div>
                   </div>
                 </div>
@@ -644,14 +645,14 @@ export function ItemDetailPage() {
                   <div className="grid gap-2">
                     {item.price_per_day && (
                       <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-foreground">{Number(item.price_per_day).toLocaleString()} DA</span>
-                        <span className="text-muted-foreground font-medium">/ jour</span>
+                        <span className="text-4xl font-black text-foreground">{Number(item.price_per_day).toLocaleString()} {t("common.da")}</span>
+                        <span className="text-muted-foreground font-medium">/ {t("landing.day")}</span>
                       </div>
                     )}
                     {item.sale_price && (
                       <div className="pt-2">
-                        <span className="text-2xl font-bold text-emerald-600">{Number(item.sale_price).toLocaleString()} DA</span>
-                        <span className="text-sm text-muted-foreground ml-2">(Prix de vente)</span>
+                        <span className="text-2xl font-bold text-emerald-600">{Number(item.sale_price).toLocaleString()} {t("common.da")}</span>
+                        <span className="text-sm text-muted-foreground ml-2">({t("createItem.form.salePrice")})</span>
                       </div>
                     )}
                   </div>
@@ -699,7 +700,7 @@ export function ItemDetailPage() {
                           >
                             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                             <div className="text-sm font-medium">
-                              Ces dates sont indisponibles. Elles chevauchent une réservation existante. Veuillez sélectionner d'autres dates.
+                              {t("item.overlappingDates")}
                             </div>
                           </motion.div>
                         ) : bookingCalc && (
@@ -710,18 +711,18 @@ export function ItemDetailPage() {
                             className="p-6 rounded-3xl bg-muted/30 space-y-3"
                           >
                             <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">{bookingCalc.days} jour{bookingCalc.days > 1 ? "s" : ""}</span>
-                              <span className="font-bold">{bookingCalc.total.toLocaleString()} DA</span>
+                              <span className="text-muted-foreground">{bookingCalc.days} {bookingCalc.days === 1 ? t("item.days", { count: 1 }) : t("item.days_plural", { count: bookingCalc.days })}</span>
+                              <span className="font-bold">{bookingCalc.total.toLocaleString()} {t("common.da")}</span>
                             </div>
                             {bookingCalc.deposit > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Caution reversible</span>
-                                <span className="font-bold">{bookingCalc.deposit.toLocaleString()} DA</span>
+                                <span className="text-muted-foreground">{t("item.refundableDeposit")}</span>
+                                <span className="font-bold">{bookingCalc.deposit.toLocaleString()} {t("common.da")}</span>
                               </div>
                             )}
                             <div className="pt-3 border-t border-border/50 flex justify-between items-center">
-                              <span className="font-bold text-lg">Total</span>
-                              <span className="font-black text-xl text-[#FF4F5A]">{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} DA</span>
+                              <span className="font-bold text-lg">{t("item.total")}</span>
+                              <span className="font-black text-xl text-[#FF4F5A]">{(bookingCalc.total + bookingCalc.deposit).toLocaleString()} {t("common.da")}</span>
                             </div>
                           </motion.div>
                         )}
@@ -742,8 +743,8 @@ export function ItemDetailPage() {
                       <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/30">
                         <CheckCircle className="w-6 h-6" />
                       </div>
-                      <p className="font-bold text-emerald-900 dark:text-emerald-400 mb-4">Réservation envoyée !</p>
-                      <Button onClick={() => navigate("/dashboard")} className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700">Gérer mes réservations</Button>
+                      <p className="font-bold text-emerald-900 dark:text-emerald-400 mb-4">{t("item.bookingSuccess")}</p>
+                      <Button onClick={() => navigate("/dashboard")} className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700">{t("item.manageBookings")}</Button>
                     </div>
                   ) : (
                     <>
@@ -753,7 +754,7 @@ export function ItemDetailPage() {
                           disabled={!bookingCalc || isBooking}
                           className="w-full h-16 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-[1.25rem] text-lg font-bold shadow-2xl shadow-[#FF4F5A]/25 transition-transform active:scale-[0.98]"
                         >
-                          {isBooking ? <Loader2 className="w-6 h-6 animate-spin" /> : "Réserver maintenant"}
+                          {isBooking ? <Loader2 className="w-6 h-6 animate-spin" /> : t("item.bookNow")}
                         </Button>
                       )}
                       
@@ -763,7 +764,7 @@ export function ItemDetailPage() {
                             onClick={() => user ? setIsPurchaseModalOpen(true) : navigate("/login")}
                             className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold"
                           >
-                            <ShoppingCart className="w-4 h-4 mr-2" /> Acheter
+                            <ShoppingCart className="w-4 h-4 mr-2" /> {t("item.buyNow")}
                           </Button>
                         )}
                         {(item.listing_type === "troc" || item.listing_type === "rent_sell") && (
@@ -771,7 +772,7 @@ export function ItemDetailPage() {
                             onClick={() => user ? setIsTrocModalOpen(true) : navigate("/login")}
                             className="h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold"
                           >
-                            <RefreshCw className="w-4 h-4 mr-2" /> Troc
+                            <RefreshCw className="w-4 h-4 mr-2" /> {t("item.proposeExchange")}
                           </Button>
                         )}
                       </div>
@@ -784,7 +785,7 @@ export function ItemDetailPage() {
                     variant="outline"
                     className="w-full h-14 rounded-2xl border-2 border-border font-bold hover:bg-muted"
                   >
-                    {creatingConversation ? <Loader2 className="w-5 h-5 animate-spin" /> : "Contacter le propriétaire"}
+                    {creatingConversation ? <Loader2 className="w-5 h-5 animate-spin" /> : t("item.contactOwner")}
                   </Button>
                 </div>
 

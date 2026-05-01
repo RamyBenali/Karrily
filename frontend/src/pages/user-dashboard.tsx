@@ -13,31 +13,10 @@ import { api } from "../lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw, ShoppingBag, MessageCircle, Settings2, AlertCircle, CalendarCheck } from "lucide-react";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
+import { useTranslation } from "../context/language-context";
+import { WILAYAS } from "../components/explore/explore-constants";
 
-// Wilayas d'Algérie
-const WILAYAS = [
-  { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
-  { code: 4, name: "Oum El Bouaghi" }, { code: 5, name: "Batna" }, { code: 6, name: "Béjaïa" },
-  { code: 7, name: "Biskra" }, { code: 8, name: "Béchar" }, { code: 9, name: "Blida" },
-  { code: 10, name: "Bouira" }, { code: 11, name: "Tamanrasset" }, { code: 12, name: "Tébessa" },
-  { code: 13, name: "Tlemcen" }, { code: 14, name: "Tiaret" }, { code: 15, name: "Tizi Ouzou" },
-  { code: 16, name: "Alger" }, { code: 17, name: "Djelfa" }, { code: 18, name: "Jijel" },
-  { code: 19, name: "Sétif" }, { code: 20, name: "Saïda" }, { code: 21, name: "Skikda" },
-  { code: 22, name: "Sidi Bel Abbès" }, { code: 23, name: "Annaba" }, { code: 24, name: "Guelma" },
-  { code: 25, name: "Constantine" }, { code: 26, name: "Médéa" }, { code: 27, name: "Mostaganem" },
-  { code: 28, name: "M'Sila" }, { code: 29, name: "Mascara" }, { code: 30, name: "Ouargla" },
-  { code: 31, name: "Oran" }, { code: 32, name: "El Bayadh" }, { code: 33, name: "Illizi" },
-  { code: 34, name: "Bordj Bou Arréridj" }, { code: 35, name: "Boumerdès" },
-  { code: 36, name: "El Tarf" }, { code: 37, name: "Tindouf" }, { code: 38, name: "Tissemsilt" },
-  { code: 39, name: "El Oued" }, { code: 40, name: "Khenchela" }, { code: 41, name: "Souk Ahras" },
-  { code: 42, name: "Tipaza" }, { code: 43, name: "Mila" }, { code: 44, name: "Aïn Defla" },
-  { code: 45, name: "Naâma" }, { code: 46, name: "Aïn Témouchent" }, { code: 47, name: "Ghardaïa" },
-  { code: 48, name: "Relizane" }, { code: 49, name: "El M'Ghair" }, { code: 50, name: "El Meniaa" },
-  { code: 51, name: "Ouled Djellal" }, { code: 52, name: "Bordj Badji Mokhtar" },
-  { code: 53, name: "Béni Abbès" }, { code: 54, name: "Timimoun" }, { code: 55, name: "Touggourt" },
-  { code: 56, name: "Djanet" }, { code: 57, name: "In Salah" }, { code: 58, name: "In Guezzam" },
-];
-
+// Profile interface
 interface Profile {
   full_name: string;
   email: string;
@@ -47,17 +26,6 @@ interface Profile {
   wilaya_code: number | null;
   avatar_url: string;
 }
-
-const sidebarItems = [
-  { icon: BarChart3, label: "Vue d'ensemble" },
-  { icon: Package, label: "Locations actives" },
-  { icon: ShoppingCart, label: "Mes achats" },
-  { icon: RefreshCw, label: "Mes échanges" },
-  { icon: Calendar, label: "Historique" },
-  { icon: Heart, label: "Favoris" },
-  { icon: MessageSquare, label: "Messages" },
-  { icon: Settings, label: "Mon profil" },
-];
 
 interface Booking {
   id: string;
@@ -76,15 +44,6 @@ interface Booking {
   owner_id: string;
   items?: { title: string; thumbnail_url: string | null; location: string; } | null;
 }
-
-const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "En attente", color: "bg-amber-100 text-amber-700" },
-  confirmed: { label: "Confirmée", color: "bg-blue-100 text-blue-700" },
-  active: { label: "Active", color: "bg-green-100 text-green-700" },
-  completed: { label: "Terminée", color: "bg-muted text-foreground/80" },
-  cancelled: { label: "Annulée", color: "bg-red-100 text-red-700" },
-  rejected: { label: "Refusée", color: "bg-red-100 text-red-700" },
-};
 
 interface Conversation {
   id: string;
@@ -119,20 +78,52 @@ interface Notification {
 export function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const { user, role, hasItems } = useAuthStore();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || "Vue d'ensemble");
+  
+  const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
+    pending: { label: t("bookingStatus.pending"), color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400" },
+    confirmed: { label: t("bookingStatus.confirmed"), color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400" },
+    active: { label: t("bookingStatus.active"), color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400" },
+    completed: { label: t("bookingStatus.completed"), color: "bg-slate-50 text-slate-600 dark:bg-slate-950/30 dark:text-slate-400" },
+    cancelled: { label: t("bookingStatus.cancelled"), color: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400" },
+    rejected: { label: t("bookingStatus.rejected"), color: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400" },
+  };
+
+  const sidebarItems = [
+    { id: 'overview', icon: BarChart3, label: t("dashboard.overview") },
+    { id: 'bookings', icon: CalendarCheck, label: t("dashboard.activeBookings") },
+    { id: 'purchases', icon: ShoppingBag, label: t("dashboard.myPurchases") },
+    { id: 'trades', icon: RefreshCw, label: t("dashboard.myTrades") },
+    { id: 'favorites', icon: Heart, label: t("dashboard.favorites"), badge: 0 },
+    { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") },
+    { id: 'history', icon: Clock, label: t("dashboard.history") },
+    { id: 'profile', icon: UserIcon, label: t("dashboard.myProfile") },
+    { id: 'settings', icon: Settings2, label: t("dashboard.settings") },
+  ];
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = location.state?.tab?.toLowerCase();
+    if (tab === t("dashboard.overview").toLowerCase() || tab === 'overview') return 'overview';
+    if (tab === t("dashboard.messages").toLowerCase() || tab === 'messages') return 'messages';
+    if (tab === t("dashboard.activeBookings").toLowerCase() || tab === 'bookings') return 'bookings';
+    return tab || 'overview';
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Handle incoming routing state
   useEffect(() => {
-    if (location.state?.tab) setActiveTab(location.state.tab);
-    if (location.state?.convId && location.state?.tab === "Messages") {
-      // Need a slight timeout in case conversations haven't loaded yet? No, just set the ID, the fetch will subscribe.
+    if (location.state?.tab) {
+      const tab = location.state.tab.toLowerCase();
+      if (tab === t("dashboard.overview").toLowerCase() || tab === 'overview') setActiveTab('overview');
+      else if (tab === t("dashboard.messages").toLowerCase() || tab === 'messages') setActiveTab('messages');
+      else if (tab === t("dashboard.activeBookings").toLowerCase() || tab === 'bookings') setActiveTab('bookings');
+      else setActiveTab(tab);
+    }
+    if (location.state?.convId && (location.state?.tab?.toLowerCase() === "messages")) {
       setActiveConversationId(location.state.convId);
     }
   }, [location.state]);
 
-  // Profile state
   const [profile, setProfile] = useState<Profile>({
     full_name: "",
     email: "",
@@ -147,7 +138,6 @@ export function UserDashboard() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [profileError, setProfileError] = useState("");
 
-  // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [historyBookings, setHistoryBookings] = useState<Booking[]>([]);
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -158,7 +148,6 @@ export function UserDashboard() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Fetch bookings and subscribe to Realtime
   useEffect(() => {
     let channel: RealtimeChannel;
 
@@ -170,7 +159,6 @@ export function UserDashboard() {
         const { data } = await bookingsService.getMyBookings({ role: bookingTab });
         setBookings(data || []);
 
-        // Subscribe to changes
         channel = supabase
           .channel(`bookings:${user.id}`)
           .on(
@@ -178,7 +166,6 @@ export function UserDashboard() {
             { event: "*", schema: "public", table: "bookings", filter: `${bookingTab === 'renter' ? 'renter_id' : 'owner_id'}=eq.${user.id}` },
             (payload) => {
               if (payload.eventType === 'INSERT') {
-                // For new bookings, we might need to fetch the item details, easiest is to just re-fetch the list
                 fetchBookings();
               } else if (payload.eventType === 'UPDATE') {
                 setBookings(prev => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b));
@@ -196,19 +183,16 @@ export function UserDashboard() {
     };
     fetchBookings();
 
-    // Fetch My Sales
     const fetchSales = async () => {
       const res = await salesService.getMySales({ role: 'buyer' });
       setMySales(res.data || []);
     };
 
-    // Fetch My Troc
     const fetchTroc = async () => {
       const res = await trocService.getMyProposals({ role: 'proposer' });
       setMyTroc(res.data || []);
     };
 
-    // Fetch Favorites
     const fetchFavorites = async () => {
       if (!user) return;
       try {
@@ -217,16 +201,13 @@ export function UserDashboard() {
       } catch (err) { console.error(err); }
     };
 
-    // Fetch History
     const fetchHistory = async () => {
       try {
         const res = await api.get('/bookings');
-        // Filter history on client side for all roles
         setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
       } catch (err) { console.error(err); }
     }
 
-    // Fetch Notifications
     const fetchNotifications = async () => {
       if (!user) return;
       const { data } = await supabase
@@ -237,7 +218,6 @@ export function UserDashboard() {
         .limit(10);
       setNotifications(data || []);
 
-      // Count unread messages (placeholder logic, should check messages table)
       const { count } = await supabase
         .from("notifications")
         .select("*", { count: 'exact', head: true })
@@ -253,19 +233,16 @@ export function UserDashboard() {
     fetchNotifications();
 
     if (user) {
-      // Realtime for Notifications
       const notifChannel = supabase
         .channel(`user_notifs:${user.id}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
         .subscribe();
 
-      // Realtime for Sales
       const salesChannel = supabase
         .channel(`user_sales:${user.id}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
         .subscribe();
 
-      // Realtime for Troc
       const trocChannel = supabase
         .channel(`user_troc:${user.id}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
@@ -280,27 +257,24 @@ export function UserDashboard() {
     }
   }, [user, bookingTab]);
 
-  // Handle booking action (confirm/reject/cancel)
   const handleBookingAction = async (bookingId: string, newStatus: string) => {
     try {
       await bookingsService.updateStatus(bookingId, newStatus);
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
     } catch (err) {
-      alert("Erreur lors de la mise à jour de la demande.");
+      alert(t("dashboard.updateError"));
     }
   };
 
-  // Messaging state
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(location.state?.convId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
 
-  // Fetch conversations
   useEffect(() => {
     const fetchConversations = async () => {
-      if (!user || activeTab !== "Messages") return;
+      if (!user || activeTab !== 'messages') return;
 
       const { data } = await supabase
         .from("conversations")
@@ -309,7 +283,6 @@ export function UserDashboard() {
         .order("last_message_at", { ascending: false });
 
       if (data) {
-        // Format to easily extract "other_user" details
         const formatted = data.map(conv => {
           const isUserP1 = conv.participant_1 === user.id;
           return {
@@ -323,7 +296,6 @@ export function UserDashboard() {
     fetchConversations();
   }, [user, activeTab]);
 
-  // Fetch messages and subscribe to Realtime
   useEffect(() => {
     if (!user || !activeConversationId) return;
 
@@ -340,7 +312,6 @@ export function UserDashboard() {
       setMessages((data as Message[]) || []);
       setIsLoadingMsgs(false);
 
-      // Setup realtime subscription
       channel = supabase
         .channel(`messages:${activeConversationId}`)
         .on(
@@ -350,14 +321,12 @@ export function UserDashboard() {
             const newMsg = payload.new as Message;
             setMessages((prev) => [...prev, newMsg]);
 
-            // Mark conversation as recently updated
             setConversations(prev => {
               const convs = [...prev];
               const idx = convs.findIndex(c => c.id === activeConversationId);
               if (idx > -1) {
                 convs[idx].last_message_preview = newMsg.content;
                 convs[idx].last_message_at = newMsg.created_at;
-                // Move to top
                 const [moved] = convs.splice(idx, 1);
                 convs.unshift(moved);
               }
@@ -375,7 +344,6 @@ export function UserDashboard() {
     };
   }, [user, activeConversationId]);
 
-  // Send message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !activeConversationId || !newMessage.trim()) return;
@@ -391,14 +359,12 @@ export function UserDashboard() {
         content: content,
       });
 
-    // Update conversation last message (best effort)
     await supabase
       .from("conversations")
       .update({ last_message_preview: content, last_message_at: new Date().toISOString() })
       .eq("id", activeConversationId);
   };
 
-  // Profile data fetch
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
@@ -425,7 +391,6 @@ export function UserDashboard() {
     fetchProfile();
   }, [user]);
 
-  // Save profile
   const handleSaveProfile = async () => {
     if (!user) return;
     setIsSaving(true);
@@ -440,12 +405,11 @@ export function UserDashboard() {
         full_name: profile.full_name,
         phone: profile.phone,
         bio: profile.bio,
-        location: wilaya ? `${wilaya.name}, ${wilaya.code}` : profile.location,
+        location: wilaya ? `${wilaya}, ${profile.wilaya_code}` : profile.location,
         wilaya_code: profile.wilaya_code,
       })
       .eq("id", user.id);
 
-    // Also update auth metadata so initials in header refresh
     if (!profileError) {
       await supabase.auth.updateUser({
         data: { full_name: profile.full_name }
@@ -453,7 +417,7 @@ export function UserDashboard() {
     }
 
     if (profileError) {
-      setProfileError("Erreur lors de la sauvegarde. Réessayez.");
+      setProfileError(t("dashboard.saveError"));
     } else {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -461,7 +425,6 @@ export function UserDashboard() {
     setIsSaving(false);
   };
 
-  // Avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -506,15 +469,14 @@ export function UserDashboard() {
               <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Dashboard</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-3 leading-tight tracking-tight">
-              Mon <span className="gradient-text">Espace</span>
+              {t("dashboard.mySpaceTitle1")} <span className="gradient-text">{t("dashboard.mySpaceTitle2")}</span>
             </h1>
             <p className="text-base text-muted-foreground max-w-xl">
-              Gérez vos locations, suivez vos échanges et personnalisez votre expérience Karrily.
+              {t("dashboard.mySpaceSubtitle")}
             </p>
           </motion.div>
 
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
-            {/* Sidebar */}
             <DashboardSidebar
               items={sidebarItems}
               activeTab={activeTab}
@@ -526,27 +488,24 @@ export function UserDashboard() {
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
               extraAction={(role === 'lender' || role === 'vendeur' || hasItems) ? {
-                label: "Publier une annonce",
+                label: t("landing.publishListing"),
                 onClick: () => navigate('/create'),
                 variant: "premium"
               } : undefined}
             />
 
-            {/* Main Content */}
             <div className="lg:col-span-9 min-h-[60vh]">
-              {/* ─── Vue d'ensemble ─── */}
-              {activeTab === "Vue d'ensemble" && (
+              {activeTab === 'overview' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-6"
                 >
-                  {/* KPI Cards */}
                   <div className="grid md:grid-cols-3 gap-5">
                     {[
-                      { icon: Package, label: "Locations actives", value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: "En cours", color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: "Locations actives" },
-                      { icon: MessageSquare, label: "Messages", value: unreadCount, sub: "Non lus", color: "text-blue-500", bg: "bg-blue-500/10", tab: "Messages" },
-                      { icon: Heart, label: "Favoris", value: favorites.length, sub: "Épinglés", color: "text-rose-400", bg: "bg-rose-400/10", tab: "Favoris" },
+                      { icon: Package, label: t("dashboard.activeBookingsCount"), value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: t("dashboard.inProgress"), color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: 'bookings' },
+                      { icon: MessageSquare, label: t("dashboard.messages"), value: unreadCount, sub: t("dashboard.unread"), color: "text-blue-500", bg: "bg-blue-500/10", tab: 'messages' },
+                      { icon: Heart, label: t("dashboard.favorites"), value: favorites.length, sub: t("dashboard.pinned"), color: "text-rose-400", bg: "bg-rose-400/10", tab: 'favorites' },
                     ].map((s, i) => (
                       <motion.div
                         key={s.label}
@@ -568,11 +527,10 @@ export function UserDashboard() {
                     ))}
                   </div>
 
-                  {/* Recent Activity */}
                   <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     <div className="flex items-center justify-between px-7 py-5 border-b border-border/60">
-                      <h2 className="text-lg font-bold">Activité <span className="text-[#FF4F5A]">récente</span></h2>
-                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab("Messages")}>Voir tout →</Button>
+                      <h2 className="text-lg font-bold">{t("dashboard.recentActivity1")} <span className="text-[#FF4F5A]">{t("dashboard.recentActivity2")}</span></h2>
+                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab('messages')}>{t("dashboard.seeAll")} →</Button>
                     </div>
                     <div className="divide-y divide-border/50">
                       {notifications.length === 0 ? (
@@ -580,8 +538,8 @@ export function UserDashboard() {
                           <div className="w-14 h-14 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
                             <Clock className="w-7 h-7 text-muted-foreground/30" />
                           </div>
-                          <p className="text-sm text-muted-foreground font-medium">Aucune activité récente</p>
-                          <p className="text-xs text-muted-foreground/60 mt-1">Vos notifications apparaîtront ici</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t("dashboard.noRecentActivity")}</p>
+                          <p className="text-xs text-muted-foreground/60 mt-1">{t("dashboard.notifsAppearHere")}</p>
                         </div>
                       ) : (
                         notifications.slice(0, 5).map((notif) => {
@@ -629,7 +587,7 @@ export function UserDashboard() {
                                   navigate(dest);
                                 }}
                               >
-                                Voir →
+                                {t("dashboard.view")} →
                               </Button>
                             </div>
                           );
@@ -640,14 +598,12 @@ export function UserDashboard() {
                 </motion.div>
               )}
 
-              {/* ─── Locations Actives ─── */}
-              {activeTab === "Locations actives" && (
+              {activeTab === 'bookings' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-6"
                 >
-                  {/* Renter / Owner toggle */}
                   <div className="flex gap-1.5 p-1.5 bg-muted/60 rounded-xl w-fit">
                     {(["renter", "owner"] as const).map(tab => (
                       <button
@@ -658,17 +614,16 @@ export function UserDashboard() {
                           : "text-muted-foreground hover:text-foreground"
                           }`}
                       >
-                        {tab === "renter" ? "Mes réservations" : "Demandes reçues"}
+                        {tab === "renter" ? t("dashboard.myBookings") : t("dashboard.requestsReceived")}
                       </button>
                     ))}
                   </div>
 
-                  {/* Stats */}
                   <div className="grid md:grid-cols-3 gap-4">
                     {[
-                      { label: "En attente", value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b", bg: "bg-amber-500/10" },
-                      { label: "Actives", value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A", bg: "bg-[#FF4F5A]/10" },
-                      { label: "Terminées", value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#64748b", bg: "bg-slate-500/10" }
+                      { label: t("dashboard.pending"), value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b", bg: "bg-amber-500/10" },
+                      { label: t("dashboard.active"), value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A", bg: "bg-[#FF4F5A]/10" },
+                      { label: t("dashboard.completed"), value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#64748b", bg: "bg-slate-500/10" }
                     ].map((stat, index) => (
                       <motion.div
                         key={stat.label}
@@ -686,15 +641,13 @@ export function UserDashboard() {
                     ))}
                   </div>
 
-                  {/* Bookings List */}
                   <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     <div className="px-7 py-5 border-b border-border/60">
                       <h2 className="text-lg font-bold text-foreground">
-                        {bookingTab === "renter" ? "Mes réservations" : "Demandes reçues"}
+                        {bookingTab === "renter" ? t("dashboard.myBookings") : t("dashboard.requestsReceived")}
                       </h2>
                     </div>
                     <div className="p-7">
-
                       {isLoadingBookings ? (
                         <div className="flex justify-center py-12">
                           <Loader2 className="w-7 h-7 animate-spin text-[#FF4F5A]" />
@@ -704,8 +657,8 @@ export function UserDashboard() {
                           <div className="w-16 h-16 bg-muted rounded-2xl mx-auto mb-4 flex items-center justify-center">
                             <Calendar className="w-8 h-8 text-muted-foreground/30" />
                           </div>
-                          <p className="text-sm font-semibold text-muted-foreground mb-1">Aucune réservation pour le moment</p>
-                          <p className="text-xs text-muted-foreground/60">Vos demandes apparaîtront ici</p>
+                          <p className="text-sm font-semibold text-muted-foreground mb-1">{t("dashboard.noBookingsYet")}</p>
+                          <p className="text-xs text-muted-foreground/60">{t("dashboard.requestsAppearHere")}</p>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -731,15 +684,14 @@ export function UserDashboard() {
                                       className="text-xl font-bold text-foreground hover:text-[#FF4F5A] transition-colors cursor-pointer"
                                       onClick={() => navigate(`/item/${booking.item_id}`)}
                                     >
-                                      {(booking.items as any)?.title || "Annonce"}
+                                      {(booking.items as any)?.title || t("admin.article")}
                                     </h3>
                                     <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                                       <MapPin className="w-4 h-4" />
                                       {(booking.items as any)?.location || ""}
                                     </p>
                                   </div>
-                                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-muted text-foreground/80"
-                                    }`}>
+                                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${BOOKING_STATUS[booking.status]?.color || "bg-muted text-foreground/80"}`}>
                                     {BOOKING_STATUS[booking.status]?.label || booking.status}
                                   </span>
                                 </div>
@@ -753,10 +705,10 @@ export function UserDashboard() {
                                     </span>
                                   </div>
                                   <div className="font-semibold text-foreground">
-                                    {Number(booking.total_price).toLocaleString()} DA
+                                    {Number(booking.total_price).toLocaleString()} {t("common.da")}
                                   </div>
                                   {booking.deposit_amount > 0 && (
-                                    <span className="text-xs text-muted-foreground">+ {Number(booking.deposit_amount).toLocaleString()} DA caution</span>
+                                    <span className="text-xs text-muted-foreground">+ {Number(booking.deposit_amount).toLocaleString()} {t("common.da")} {t("createItem.form.deposit")}</span>
                                   )}
                                 </div>
                                 {booking.message && (
@@ -773,7 +725,7 @@ export function UserDashboard() {
                                             className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
                                             onClick={() => handleBookingAction(booking.id, "confirmed")}
                                           >
-                                            <Check className="w-4 h-4 mr-1" /> Accepter
+                                            <Check className="w-4 h-4 mr-1" /> {t("dashboard.accept")}
                                           </Button>
                                           <Button
                                             size="sm"
@@ -781,7 +733,7 @@ export function UserDashboard() {
                                             className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
                                             onClick={() => handleBookingAction(booking.id, "rejected")}
                                           >
-                                            Refuser
+                                            {t("dashboard.reject")}
                                           </Button>
                                         </>
                                       )}
@@ -791,7 +743,7 @@ export function UserDashboard() {
                                           className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full"
                                           onClick={() => handleBookingAction(booking.id, "active")}
                                         >
-                                          <Package className="w-4 h-4 mr-1" /> Confirmer la remise
+                                          <Package className="w-4 h-4 mr-1" /> {t("dashboard.confirmHandover")}
                                         </Button>
                                       )}
                                       {booking.status === "active" && (
@@ -836,14 +788,14 @@ export function UserDashboard() {
               )}
 
               {/* ─── Mes Achats ─── */}
-              {activeTab === "Mes achats" && (
+              {activeTab === 'purchases' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                      <ShoppingCart className="w-6 h-6" /> Mes demandes d'achat
+                      <ShoppingCart className="w-6 h-6" /> {t("dashboard.myPurchaseRequests")}
                     </h2>
 
                     <div className="space-y-4">
@@ -893,7 +845,7 @@ export function UserDashboard() {
                       {mySales.length === 0 && (
                         <div className="text-center py-12">
                           <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                          <p className="text-muted-foreground">Aucune demande d'achat en cours.</p>
+                          <p className="text-muted-foreground">{t("dashboard.noPurchasesYet")}</p>
                         </div>
                       )}
                     </div>
@@ -902,14 +854,14 @@ export function UserDashboard() {
               )}
 
               {/* ─── Mes Échanges ─── */}
-              {activeTab === "Mes échanges" && (
+              {activeTab === 'trades' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                      <RefreshCw className="w-6 h-6" /> Mes propositions de troc
+                      <RefreshCw className="w-6 h-6" /> {t("dashboard.myTradeProposals")}
                     </h2>
 
                     <div className="space-y-4">
@@ -948,7 +900,7 @@ export function UserDashboard() {
                       {myTroc.length === 0 && (
                         <div className="text-center py-12">
                           <RefreshCw className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                          <p className="text-muted-foreground">Aucune proposition d'échange envoyée.</p>
+                          <p className="text-muted-foreground">{t("dashboard.noTradesYet")}</p>
                         </div>
                       )}
                     </div>
@@ -957,24 +909,24 @@ export function UserDashboard() {
               )}
 
               {/* ─── Favoris ─── */}
-              {activeTab === "Favoris" && (
+              {activeTab === 'favorites' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-foreground mb-6">Mes favoris</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.myFavorites")}</h2>
 
                   {favorites.length === 0 ? (
                     <div className="text-center py-16 rounded-[2rem] bg-gradient-to-b from-muted to-transparent border border-dashed border-border/60">
                       <Heart className="w-16 h-16 text-[#FF4F5A]/40 mx-auto mb-4 animate-pulse" />
-                      <p className="text-muted-foreground mb-2 text-lg font-semibold">Aucun favori pour le moment</p>
-                      <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto">Explorez les annonces et cliquez sur le cœur pour les garder à portée de clic !</p>
+                      <p className="text-muted-foreground mb-2 text-lg font-semibold">{t("dashboard.noFavoritesYet")}</p>
+                      <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto">{t("dashboard.favoritesDesc")}</p>
                       <Button
                         onClick={() => navigate('/explore')}
                         className="mt-6 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full font-bold px-8 shadow-lg shadow-[#FF4F5A]/20 transition-all hover:scale-105"
                       >
-                        Explorer les annonces
+                        {t("dashboard.exploreListings")}
                       </Button>
                     </div>
                   ) : (
@@ -999,7 +951,7 @@ export function UserDashboard() {
                             </div>
                             <div className="flex items-end justify-between mt-3">
                               <p className="font-black text-lg text-foreground tracking-tight">
-                                {fav.item?.price_per_day} DA <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
+                                {fav.item?.price_per_day} {t("common.da")} <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
                               </p>
                             </div>
                           </div>
@@ -1011,7 +963,7 @@ export function UserDashboard() {
               )}
 
               {/* ─── Messages ─── */}
-              {activeTab === "Messages" && (
+              {activeTab === 'messages' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1021,15 +973,15 @@ export function UserDashboard() {
                   {/* Left Column: Conversations List */}
                   <div className="w-[280px] flex-shrink-0 border-r border-border flex flex-col bg-muted/20">
                     <div className="px-5 py-4 border-b border-border">
-                      <h2 className="text-base font-bold text-foreground">Messages</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</p>
+                      <h2 className="text-base font-bold text-foreground">{t("dashboard.messages")}</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} {conversations.length === 1 ? t("dashboard.conversation") : t("dashboard.conversations")}</p>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar">
                       {conversations.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
                           <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                          <p className="text-sm font-medium">Aucune conversation</p>
-                          <p className="text-xs mt-1 opacity-60">Contactez un vendeur pour commencer</p>
+                          <p className="text-sm font-medium">{t("dashboard.noConversations")}</p>
+                          <p className="text-xs mt-1 opacity-60">{t("dashboard.contactSellers")}</p>
                         </div>
                       ) : (
                         conversations.map((conv) => (
@@ -1075,7 +1027,7 @@ export function UserDashboard() {
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
                           <MessageSquare className="w-8 h-8 opacity-30" />
                         </div>
-                        <p className="text-sm font-medium">Sélectionnez une conversation</p>
+                        <p className="text-sm font-medium">{t("dashboard.selectConversation")}</p>
                       </div>
                     ) : (
                       <>
@@ -1134,7 +1086,7 @@ export function UserDashboard() {
                             <Input
                               value={newMessage}
                               onChange={e => setNewMessage(e.target.value)}
-                              placeholder="Écrivez votre message..."
+                              placeholder={t("dashboard.writeMessage")}
                               className="flex-1 rounded-xl h-10 bg-muted/50 border-border/60 focus-visible:ring-[#FF4F5A]/30 text-sm"
                             />
                             <Button
@@ -1153,18 +1105,18 @@ export function UserDashboard() {
               )}
 
               {/* ─── Historique ─── */}
-              {activeTab === "Historique" && (
+              {activeTab === 'history' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-foreground mb-6">Historique des locations</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.rentalHistory")}</h2>
                   {historyBookings.length === 0 ? (
                     <div className="text-center py-12">
                       <Clock className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-2">Aucune location passée</p>
-                      <Button variant="outline" className="mt-4 rounded-full" onClick={() => navigate('/explore')}>Explorer le catalogue</Button>
+                      <p className="text-muted-foreground mb-2">{t("dashboard.noPastRentals")}</p>
+                      <Button variant="outline" className="mt-4 rounded-full" onClick={() => navigate('/explore')}>{t("dashboard.exploreCatalog")}</Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -1184,7 +1136,7 @@ export function UserDashboard() {
                             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${BOOKING_STATUS[booking.status]?.color}`}>
                               {BOOKING_STATUS[booking.status]?.label || booking.status}
                             </span>
-                            <div className="font-bold text-lg">{booking.total_price} DA</div>
+                            <div className="font-bold text-lg">{booking.total_price} {t("common.da")}</div>
                           </div>
                         </div>
                       ))}
@@ -1194,7 +1146,7 @@ export function UserDashboard() {
               )}
 
               {/* ─── Mon Profil (Settings) ─── */}
-              {activeTab === "Mon profil" && (
+              {activeTab === 'profile' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1224,26 +1176,26 @@ export function UserDashboard() {
                             </label>
                           </div>
                         </div>
-                        <h3 className="text-xl font-black text-foreground truncate px-2">{profile.full_name || "Utilisateur"}</h3>
+                        <h3 className="text-xl font-black text-foreground truncate px-2">{profile.full_name}</h3>
                         <p className="text-sm text-muted-foreground truncate px-2 mb-4 opacity-70">{profile.email}</p>
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-muted rounded-full text-[10px] font-black uppercase tracking-widest text-[#FF4F5A] border border-border">
-                          <Check className="w-3 h-3" /> Membre vérifié
+                          <Check className="w-3 h-3" /> {t("dashboard.verifiedMember")}
                         </div>
                       </div>
 
                       <div className="bg-card rounded-[2rem] p-8 shadow-lg border border-border">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Statistiques</h4>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">{t("dashboard.statistics")}</h4>
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-foreground/70">Ancienneté</span>
-                            <span className="text-sm font-black">2 ans</span>
+                            <span className="text-sm font-bold text-foreground/70">{t("dashboard.seniority")}</span>
+                            <span className="text-sm font-black">2 {t("dashboard.years")}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-foreground/70">Locations</span>
+                            <span className="text-sm font-bold text-foreground/70">{t("dashboard.rentals")}</span>
                             <span className="text-sm font-black">14</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-foreground/70">Note moyenne</span>
+                            <span className="text-sm font-bold text-foreground/70">{t("dashboard.averageRating")}</span>
                             <div className="flex items-center gap-1 text-[#FF4F5A]">
                               <Star className="w-4 h-4 fill-current" />
                               <span className="text-sm font-black">4.9</span>
@@ -1257,7 +1209,7 @@ export function UserDashboard() {
                     <div className="lg:col-span-2">
                       <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
                         <div className="flex items-center justify-between mb-10">
-                          <h2 className="text-2xl font-black">Informations <span className="text-[#FF4F5A]">personnelles</span></h2>
+                          <h2 className="text-2xl font-black">{t("dashboard.personalInfo1")} <span className="text-[#FF4F5A]">{t("dashboard.personalInfo2")}</span></h2>
                           <div className="h-px flex-1 bg-border mx-8 hidden sm:block" />
                         </div>
 
@@ -1273,7 +1225,7 @@ export function UserDashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-6 py-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3"
                           >
-                            <CheckCircle className="w-5 h-5 flex-shrink-0" /> Profil mis à jour avec succès !
+                            <CheckCircle className="w-5 h-5 flex-shrink-0" /> {t("dashboard.profileUpdated")}
                           </motion.div>
                         )}
 
@@ -1285,16 +1237,16 @@ export function UserDashboard() {
                           <div className="space-y-8">
                             <div className="grid sm:grid-cols-2 gap-8">
                               <div className="space-y-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nom complet</label>
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("auth.fullName")}</label>
                                 <Input
                                   value={profile.full_name}
                                   onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
                                   className="h-14 bg-muted/30 border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold"
-                                  placeholder="Votre nom complet"
+                                  placeholder={t("auth.fullNamePlaceholder")}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Télephone</label>
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("dashboard.phone")}</label>
                                 <Input
                                   value={profile.phone}
                                   onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))}
@@ -1306,34 +1258,34 @@ export function UserDashboard() {
 
                             <div className="grid sm:grid-cols-2 gap-8">
                               <div className="space-y-2">
-                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Email <span className="opacity-50">(Lectue seule)</span></label>
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("auth.email")} <span className="opacity-50">({t("dashboard.readOnly")})</span></label>
                                 <Input value={profile.email} disabled className="h-14 bg-muted border-border rounded-2xl font-bold opacity-60" />
                               </div>
                               <div className="space-y-2 font-bold">
-                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Wilaya</label>
+                                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("explore.location")}</label>
                                 <select
                                   value={profile.wilaya_code || ""}
                                   onChange={(e) => setProfile(p => ({ ...p, wilaya_code: e.target.value ? Number(e.target.value) : null }))}
                                   className="w-full h-14 px-4 bg-muted/30 border border-border rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 appearance-none font-bold transition-all"
                                 >
-                                  <option value="">Sélectionnez votre wilaya</option>
+                                  <option value="">{t("dashboard.selectWilaya")}</option>
                                   {WILAYAS.map(w => <option key={w.code} value={w.code}>{w.code} - {w.name}</option>)}
                                 </select>
                               </div>
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Bio</label>
+                              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("dashboard.bio")}</label>
                               <textarea
                                 value={profile.bio}
                                 onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
                                 rows={5}
                                 className="w-full px-5 py-4 bg-muted/30 border border-border rounded-[2rem] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold transition-all"
-                                placeholder="Décrivez-vous en quelques mots..."
+                                placeholder={t("dashboard.bioPlaceholder")}
                                 maxLength={500}
                               />
                               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mt-2 text-right">
-                                {profile.bio.length} / 500 caractères
+                                {profile.bio.length} / 500 {t("dashboard.characters")}
                               </p>
                             </div>
 
@@ -1343,7 +1295,7 @@ export function UserDashboard() {
                                 disabled={isSaving}
                                 className="bg-gradient-to-r from-[#0F2A2E] to-[#1A4851] text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0F2A2E]/20 transition-all hover:-translate-y-1 active:translate-y-0"
                               >
-                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sauvegarder les modifications"}
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : t("dashboard.saveChanges")}
                               </Button>
                             </div>
                           </div>

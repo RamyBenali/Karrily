@@ -38,12 +38,12 @@ import { statsService, reportsService, itemsService, reviewsService } from "../s
 import { toast } from "react-hot-toast";
 
 const sidebarItems = [
-  { icon: BarChart3, label: "Vue d'ensemble" },
-  { icon: Users, label: "Utilisateurs" },
-  { icon: Package, label: "Annonces" },
-  { icon: Star, label: "Avis" },
-  { icon: Flag, label: "Signalements" },
-  { icon: ClipboardList, label: "Journal" },
+  { id: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
+  { id: 'users', icon: Users, label: "Utilisateurs" },
+  { id: 'items', icon: Package, label: "Annonces" },
+  { id: 'reviews', icon: Star, label: "Avis" },
+  { id: 'reports', icon: Flag, label: "Signalements" },
+  { id: 'logs', icon: ClipboardList, label: "Journal" },
 ];
 
 const REASON_LABELS: Record<string, string> = {
@@ -419,21 +419,9 @@ export function AdminPanel() {
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
             <DashboardSidebar
               items={sidebarItems}
-              activeTab={activeTab === "overview" ? "Vue d'ensemble" : 
-                         activeTab === "users" ? "Utilisateurs" :
-                         activeTab === "items" ? "Annonces" : 
-                         activeTab === "reviews" ? "Avis" : 
-                         activeTab === "reports" ? "Signalements" : "Journal"}
-              setActiveTab={(label) => {
-                const map: Record<string, any> = {
-                  "Vue d'ensemble": "overview",
-                  "Utilisateurs": "users",
-                  "Annonces": "items",
-                  "Avis": "reviews",
-                  "Signalements": "reports",
-                  "Journal": "logs"
-                };
-                setActiveTab(map[label]);
+              activeTab={activeTab}
+              setActiveTab={(id) => {
+                setActiveTab(id);
                 setIsMobileMenuOpen(false);
               }}
               userInitials="AD"

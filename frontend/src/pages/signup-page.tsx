@@ -6,9 +6,11 @@ import { useAuthStore } from "../store/auth.store";
 import { KarillyLogo } from "../components/brand/karilly-logo";
 import { Button } from "../components/ui/button";
 import { useTheme } from "../context/theme-context";
+import { useTranslation } from "../context/language-context";
 
 export function SignupPage() {
     const { isDark } = useTheme();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const signUp = useAuthStore((s) => s.signUp);
     const [fullName, setFullName] = useState("");
@@ -37,7 +39,7 @@ export function SignupPage() {
         setError("");
 
         if (password !== confirmPassword) {
-            setError("Les mots de passe ne correspondent pas.");
+            setError(t("auth.passwordMismatch"));
             return;
         }
 
@@ -46,7 +48,7 @@ export function SignupPage() {
             await signUp(email, password, fullName);
             setSuccess(true);
         } catch (err: any) {
-            setError(err?.message || "Erreur lors de l'inscription.");
+            setError(err?.message || t("auth.signupError"));
         } finally {
             setIsLoading(false);
         }
@@ -69,17 +71,16 @@ export function SignupPage() {
                         <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                     </motion.div>
                     <h2 className="mb-3 text-2xl font-bold text-foreground">
-                        Compte créé avec succès !
+                        {t("auth.signupTitle")}
                     </h2>
                     <p className="mb-6 text-muted-foreground">
-                        Un email de confirmation a été envoyé à <strong>{email}</strong>.
-                        Vérifiez votre boîte de réception pour activer votre compte.
+                        {t("auth.signupSubtitle")} <strong>{email}</strong>
                     </p>
                     <Button
                         onClick={() => navigate("/login")}
                         className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white px-8 h-12 rounded-xl font-semibold"
                     >
-                        Se connecter
+                        {t("auth.loginLink")}
                     </Button>
                 </motion.div>
             </div>
@@ -99,10 +100,10 @@ export function SignupPage() {
                     className="w-full max-w-md"
                 >
                     <h2 className="mt-8 mb-2 text-3xl font-bold text-foreground">
-                        Créer un compte
+                        {t("auth.signupTitle")}
                     </h2>
                     <p className="mb-8 text-muted-foreground">
-                        Rejoignez la communauté Karrily et commencez à louer, vendre ou échanger.
+                        {t("auth.signupSubtitle")}
                     </p>
 
                     {/* Error */}
@@ -120,13 +121,13 @@ export function SignupPage() {
                         {/* Full Name */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Nom complet
+                                {t("auth.fullName")}
                             </label>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                                 <input
                                     type="text"
-                                    placeholder="Votre nom complet"
+                                    placeholder={t("auth.fullNamePlaceholder")}
                                     value={fullName}
                                     onChange={(e) => {
                                         setFullName(e.target.value);
@@ -141,13 +142,13 @@ export function SignupPage() {
                         {/* Email */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Email
+                                {t("auth.email")}
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                                 <input
                                     type="email"
-                                    placeholder="votre@email.com"
+                                    placeholder={t("auth.emailPlaceholder")}
                                     value={email}
                                     onChange={(e) => {
                                         setEmail(e.target.value);
@@ -162,13 +163,13 @@ export function SignupPage() {
                         {/* Password */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Mot de passe
+                                {t("auth.password")}
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Minimum 8 caractères"
+                                    placeholder={t("auth.passwordPlaceholder")}
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
@@ -195,9 +196,9 @@ export function SignupPage() {
                                     className="mt-3 space-y-1.5"
                                 >
                                     {[
-                                        { check: passwordChecks.length, label: "8 caractères minimum" },
-                                        { check: passwordChecks.uppercase, label: "Une majuscule" },
-                                        { check: passwordChecks.number, label: "Un chiffre" },
+                                        { check: passwordChecks.length, label: t("auth.passwordLength") },
+                                        { check: passwordChecks.uppercase, label: t("auth.passwordUppercase") },
+                                        { check: passwordChecks.number, label: t("auth.passwordNumber") },
                                     ].map((item) => (
                                         <div key={item.label} className="flex items-center gap-2">
                                             <div
@@ -225,13 +226,13 @@ export function SignupPage() {
                         {/* Confirm Password */}
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Confirmer le mot de passe
+                                {t("auth.confirmPassword")}
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Retapez votre mot de passe"
+                                    placeholder={t("auth.confirmPasswordPlaceholder")}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     className={`h-12 w-full rounded-xl border bg-muted/40 pl-12 pr-4 text-foreground placeholder:text-muted-foreground transition-all focus:bg-card focus:outline-none ${confirmPassword.length > 0
@@ -248,13 +249,13 @@ export function SignupPage() {
 
                         {/* Terms */}
                         <p className="mt-2 text-xs text-muted-foreground">
-                            En créant un compte, vous acceptez nos{" "}
+                            {t("auth.termsPrefix")}{" "}
                             <a href="#" className="text-[#FF4F5A] hover:underline">
-                                Conditions d'utilisation
+                                {t("auth.termsLink")}
                             </a>{" "}
-                            et notre{" "}
+                            {t("auth.termsAnd")}{" "}
                             <a href="#" className="text-[#FF4F5A] hover:underline">
-                                Politique de confidentialité
+                                {t("auth.privacyLink")}
                             </a>.
                         </p>
 
@@ -268,8 +269,8 @@ export function SignupPage() {
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <>
-                                    Créer mon compte
-                                    <ArrowRight className="w-5 h-5" />
+                                    {t("auth.signupButton")}
+                                    <ArrowRight className="w-5 h-5 rtl-mirror" />
                                 </>
                             )}
                         </Button>
@@ -277,12 +278,12 @@ export function SignupPage() {
 
                     {/* Login link */}
                     <p className="mt-6 text-center text-muted-foreground">
-                        Déjà un compte ?{" "}
+                        {t("auth.alreadyHaveAccount")}{" "}
                         <Link
                             to="/login"
                             className="text-[#FF4F5A] font-semibold hover:text-[#FF4F5A]/80 transition-colors"
                         >
-                            Se connecter
+                            {t("auth.loginLink")}
                         </Link>
                     </p>
                 </motion.div>
@@ -303,30 +304,30 @@ export function SignupPage() {
                         className="text-center"
                     >
                         <h2 className="text-3xl font-bold text-white mb-6">
-                            Pourquoi Karrily ?
+                            {t("auth.whyTitle")}
                         </h2>
 
                         <div className="space-y-6">
                             {[
                                 {
                                     icon: Wallet,
-                                    title: "Économisez",
-                                    desc: "Louez au lieu d'acheter. Économisez jusqu'à 80% sur vos besoins ponctuels.",
+                                    title: t("auth.whySaveTitle"),
+                                    desc: t("auth.whySaveDesc"),
                                 },
                                 {
                                     icon: Globe,
-                                    title: "Éco-responsable",
-                                    desc: "Partagez les ressources et réduisez votre empreinte carbone.",
+                                    title: t("auth.whyEcoTitle"),
+                                    desc: t("auth.whyEcoDesc"),
                                 },
                                 {
                                     icon: Users,
-                                    title: "Communauté de confiance",
-                                    desc: "Profils vérifiés, avis authentiques, garantie Karrily.",
+                                    title: t("auth.whyTrustTitle"),
+                                    desc: t("auth.whyTrustDesc"),
                                 },
                                 {
                                     icon: RefreshCw,
-                                    title: "Troc innovant",
-                                    desc: "Échangez vos objets sans dépenser un dinar.",
+                                    title: t("auth.whyTrocTitle"),
+                                    desc: t("auth.whyTrocDesc"),
                                 },
                             ].map((item, i) => (
                                 <motion.div

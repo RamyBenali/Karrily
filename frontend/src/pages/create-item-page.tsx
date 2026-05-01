@@ -15,42 +15,8 @@ import { itemsService } from "../services/api.service";
 import { CATEGORY_FILTERS } from "../components/explore/explore-constants";
 import { Footer } from "../components/layout/footer";
 
-const WILAYAS = [
-    { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
-    { code: 4, name: "Oum El Bouaghi" }, { code: 5, name: "Batna" }, { code: 6, name: "Béjaïa" },
-    { code: 7, name: "Biskra" }, { code: 8, name: "Béchar" }, { code: 9, name: "Blida" },
-    { code: 10, name: "Bouira" }, { code: 11, name: "Tamanrasset" }, { code: 12, name: "Tébessa" },
-    { code: 13, name: "Tlemcen" }, { code: 14, name: "Tiaret" }, { code: 15, name: "Tizi Ouzou" },
-    { code: 16, name: "Alger" }, { code: 17, name: "Djelfa" }, { code: 18, name: "Jijel" },
-    { code: 19, name: "Sétif" }, { code: 20, name: "Saïda" }, { code: 21, name: "Skikda" },
-    { code: 22, name: "Sidi Bel Abbès" }, { code: 23, name: "Annaba" }, { code: 24, name: "Guelma" },
-    { code: 25, name: "Constantine" }, { code: 26, name: "Médéa" }, { code: 27, name: "Mostaganem" },
-    { code: 28, name: "M'Sila" }, { code: 29, name: "Mascara" }, { code: 30, name: "Ouargla" },
-    { code: 31, name: "Oran" }, { code: 32, name: "El Bayadh" }, { code: 33, name: "Illizi" },
-    { code: 34, name: "Bordj Bou Arréridj" }, { code: 35, name: "Boumerdès" },
-    { code: 36, name: "El Tarf" }, { code: 37, name: "Tindouf" }, { code: 38, name: "Tissemsilt" },
-    { code: 39, name: "El Oued" }, { code: 40, name: "Khenchela" }, { code: 41, name: "Souk Ahras" },
-    { code: 42, name: "Tipaza" }, { code: 43, name: "Mila" }, { code: 44, name: "Aïn Defla" },
-    { code: 45, name: "Naâma" }, { code: 46, name: "Aïn Témouchent" }, { code: 47, name: "Ghardaïa" },
-    { code: 48, name: "Relizane" },
-];
-
-const LISTING_TYPES = [
-    { value: "rent", label: "Location", icon: Home, desc: "Louer votre bien temporairement" },
-    { value: "sell", label: "Vente", icon: ShoppingCart, desc: "Vendre votre bien définitivement" },
-    { value: "troc", label: "Troc", icon: RefreshCw, desc: "Échanger contre un autre objet" },
-    { value: "rent_sell", label: "Mixte", icon: HandCoins, desc: "Location et vente possibles" },
-];
-
-const CONDITIONS = [
-    { value: "new", label: "Neuf", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
-    { value: "like_new", label: "Comme neuf", color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
-    { value: "good", label: "Bon état", color: "bg-slate-50 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400" },
-    { value: "fair", label: "Correct", color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-    { value: "poor", label: "Usé", color: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
-];
-
-const STEPS = ["Modalité", "Détails", "Photos", "Offre", "Récap"];
+import { useTranslation } from "../context/language-context";
+import { WILAYAS } from "../components/explore/explore-constants";
 
 interface FormData {
     listing_type: string;
@@ -84,11 +50,35 @@ interface Category {
 
 export function CreateItemPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { user } = useAuthStore();
     const [step, setStep] = useState(0);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    const LISTING_TYPES = [
+        { value: "rent", label: t("listingTypes.rent.label"), icon: Home, desc: t("listingTypes.rent.desc") },
+        { value: "sell", label: t("listingTypes.sell.label"), icon: ShoppingCart, desc: t("listingTypes.sell.desc") },
+        { value: "troc", label: t("listingTypes.troc.label"), icon: RefreshCw, desc: t("listingTypes.troc.desc") },
+        { value: "rent_sell", label: t("listingTypes.rent_sell.label"), icon: HandCoins, desc: t("listingTypes.rent_sell.desc") },
+    ];
+
+    const CONDITIONS = [
+        { value: "new", label: t("conditions.new"), color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+        { value: "like_new", label: t("conditions.like_new"), color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+        { value: "good", label: t("conditions.good"), color: "bg-slate-50 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400" },
+        { value: "fair", label: t("conditions.fair"), color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+        { value: "poor", label: t("conditions.poor"), color: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
+    ];
+
+    const STEPS = [
+        t("createItem.steps.type"),
+        t("createItem.steps.details"),
+        t("createItem.steps.photos"),
+        t("createItem.steps.offer"),
+        t("createItem.steps.recap")
+    ];
 
     const [form, setForm] = useState<FormData>({
         listing_type: "",
@@ -132,7 +122,7 @@ export function CreateItemPage() {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (form.images.length + files.length > 8) {
-            setError("Maximum 8 images autorisées.");
+            setError(t("createItem.errors.maxImages"));
             return;
         }
         const newPreviews = files.map(f => URL.createObjectURL(f));
@@ -181,7 +171,7 @@ export function CreateItemPage() {
                     .from("item-images")
                     .upload(fileName, file);
 
-                if (uploadError) throw new Error("Erreur upload image: " + uploadError.message);
+                if (uploadError) throw new Error(t("createItem.errors.uploadError") + ": " + uploadError.message);
 
                 const { data: urlData } = supabase.storage.from("item-images").getPublicUrl(fileName);
                 imageUrls.push(urlData.publicUrl);
@@ -215,7 +205,7 @@ export function CreateItemPage() {
 
             navigate(`/item/${response.data.id}`);
         } catch (err: any) {
-            setError(err.message || "Erreur lors de la publication.");
+            setError(err.message || t("createItem.errors.publishError"));
             setIsSubmitting(false);
         }
     };
@@ -234,14 +224,14 @@ export function CreateItemPage() {
                             onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
                         >
-                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                            <span>{step > 0 ? "Étape précédente" : "Retour"}</span>
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform rtl-mirror" />
+                            <span>{step > 0 ? t("common.prevStep") : t("common.back")}</span>
                         </motion.button>
                         
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div>
-                                <h1 className="text-4xl font-extrabold tracking-tight mb-2">Publiez votre annonce</h1>
-                                <p className="text-muted-foreground text-lg">Donnez une seconde vie à vos objets en quelques clics.</p>
+                                <h1 className="text-4xl font-extrabold tracking-tight mb-2">{t("createItem.title")}</h1>
+                                <p className="text-muted-foreground text-lg">{t("createItem.subtitle")}</p>
                             </div>
                             <div className="flex gap-1.5">
                                 {STEPS.map((s, i) => (
@@ -310,17 +300,17 @@ export function CreateItemPage() {
                                 >
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Titre de l'annonce</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.titleLabel")}</label>
                                             <Input
                                                 value={form.title}
                                                 onChange={e => updateForm({ title: e.target.value })}
-                                                placeholder="Ex: Appareil Photo Sony Alpha 7 IV"
+                                                placeholder={t("createItem.form.titlePlaceholder")}
                                                 className="h-16 text-lg rounded-3xl bg-muted/30 border-none px-6 focus:ring-2 ring-[#FF4F5A]/20"
                                             />
                                         </div>
 
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Catégorie</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.categoryLabel")}</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {categories.map(cat => (
                                                     <button
@@ -339,18 +329,18 @@ export function CreateItemPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Description</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.descriptionLabel")}</label>
                                             <textarea
                                                 value={form.description}
                                                 onChange={e => updateForm({ description: e.target.value })}
                                                 rows={6}
-                                                placeholder="Décrivez votre objet en détail..."
+                                                placeholder={t("createItem.form.descriptionPlaceholder")}
                                                 className="w-full px-6 py-5 bg-muted/30 border-none rounded-3xl text-lg resize-none focus:ring-2 ring-[#FF4F5A]/20 transition-all"
                                             />
                                         </div>
 
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">État de l'objet</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.conditionLabel")}</label>
                                             <div className="flex flex-wrap gap-3">
                                                 {CONDITIONS.map(c => (
                                                     <button
@@ -392,7 +382,7 @@ export function CreateItemPage() {
                                                         <X className="w-5 h-5" />
                                                     </button>
                                                 </div>
-                                                {i === 0 && <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-black uppercase tracking-wider">Couverture</span>}
+                                                {i === 0 && <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-black uppercase tracking-wider">{t("createItem.form.coverImage")}</span>}
                                             </div>
                                         ))}
                                         
@@ -401,7 +391,7 @@ export function CreateItemPage() {
                                                 <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                                     <Plus className="w-6 h-6 text-muted-foreground" />
                                                 </div>
-                                                <span className="text-xs font-bold text-muted-foreground">Ajouter</span>
+                                                <span className="text-xs font-bold text-muted-foreground">{t("common.add")}</span>
                                                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                                             </label>
                                         )}
@@ -422,11 +412,11 @@ export function CreateItemPage() {
                                         {(form.listing_type === "rent" || form.listing_type === "rent_sell") && (
                                             <div className="space-y-6">
                                                 <h3 className="text-xl font-bold flex items-center gap-2">
-                                                    <Home className="w-5 h-5 text-[#FF4F5A]" /> Prix de Location
+                                                    <Home className="w-5 h-5 text-[#FF4F5A]" /> {t("createItem.form.rentalPrice")}
                                                 </h3>
                                                 <div className="space-y-4">
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA / Jour</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("common.da")} / {t("common.day")}</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.price_per_day}
@@ -435,7 +425,7 @@ export function CreateItemPage() {
                                                         />
                                                     </div>
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">Caution DA</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("createItem.form.deposit")} {t("common.da")}</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.deposit_amount}
@@ -450,11 +440,11 @@ export function CreateItemPage() {
                                         {(form.listing_type === "sell" || form.listing_type === "rent_sell") && (
                                             <div className="space-y-6">
                                                 <h3 className="text-xl font-bold flex items-center gap-2">
-                                                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> Prix de Vente
+                                                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> {t("createItem.form.salePrice")}
                                                 </h3>
                                                 <div className="space-y-4">
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA Total</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("common.da")} Total</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.sale_price}
@@ -469,7 +459,7 @@ export function CreateItemPage() {
                                                             onChange={e => updateForm({ is_negotiable: e.target.checked })}
                                                             className="w-5 h-5 accent-[#FF4F5A]" 
                                                         />
-                                                        <span className="text-sm font-bold">Prix négociable</span>
+                                                        <span className="text-sm font-bold">{t("createItem.form.negotiable")}</span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -478,14 +468,14 @@ export function CreateItemPage() {
 
                                     <div className="pt-8 border-t border-border">
                                         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                            <MapPin className="w-5 h-5 text-blue-600" /> Localisation
+                                            <MapPin className="w-5 h-5 text-blue-600" /> {t("common.location")}
                                         </h3>
                                         <select
                                             value={form.wilaya_code}
                                             onChange={e => updateForm({ wilaya_code: e.target.value })}
                                             className="w-full h-16 px-6 bg-muted/30 border-none rounded-2xl font-bold text-lg focus:ring-2 ring-[#FF4F5A]/20"
                                         >
-                                            <option value="">Sélectionnez votre Wilaya</option>
+                                            <option value="">{t("createItem.form.selectWilaya")}</option>
                                             {WILAYAS.map(w => (
                                                 <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
                                             ))}
@@ -520,14 +510,14 @@ export function CreateItemPage() {
                                             <div className="p-6 bg-muted/30 rounded-3xl space-y-3">
                                                 {form.price_per_day && (
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-muted-foreground font-medium">Prix journalier</span>
-                                                        <span className="text-xl font-black">{Number(form.price_per_day).toLocaleString()} DA</span>
+                                                        <span className="text-muted-foreground font-medium">{t("createItem.form.rentalPrice")}</span>
+                                                        <span className="text-xl font-black">{Number(form.price_per_day).toLocaleString()} {t("common.da")}</span>
                                                     </div>
                                                 )}
                                                 {form.sale_price && (
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-muted-foreground font-medium">Prix de vente</span>
-                                                        <span className="text-xl font-black text-emerald-600">{Number(form.sale_price).toLocaleString()} DA</span>
+                                                        <span className="text-muted-foreground font-medium">{t("createItem.form.salePrice")}</span>
+                                                        <span className="text-xl font-black text-emerald-600">{Number(form.sale_price).toLocaleString()} {t("common.da")}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -547,7 +537,7 @@ export function CreateItemPage() {
                             onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
                             className="rounded-2xl h-14 px-8 font-bold"
                         >
-                            {step === 0 ? "Annuler" : "Retour"}
+                            {step === 0 ? t("common.cancel") : t("common.back")}
                         </Button>
 
                         <Button
@@ -561,8 +551,8 @@ export function CreateItemPage() {
                                 <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 <>
-                                    {step === 4 ? "Publier l'annonce" : "Continuer"}
-                                    <ChevronRight className="w-5 h-5 ml-2" />
+                                    {step === 4 ? t("createItem.form.publish") : t("common.continue")}
+                                    <ChevronRight className="w-5 h-5 ml-2 rtl-mirror" />
                                 </>
                             )}
                         </Button>

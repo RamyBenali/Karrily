@@ -8,12 +8,7 @@ import { KarillyLogo } from "../components/brand/karilly-logo";
 import { FloatingCTA } from "../components/ui/floating-cta";
 import { useState } from "react";
 import { cn } from "../components/ui/utils";
-
-const LISTING_TYPES = [
-  { value: "rent", label: "Louer", icon: Home },
-  { value: "sell", label: "Acheter", icon: ShoppingCart },
-  { value: "troc", label: "Troquer", icon: RefreshCw },
-];
+import { useTranslation } from "../context/language-context";
 
 import { useEffect } from "react";
 import { itemsService, statsService } from "../services/api.service";
@@ -22,6 +17,13 @@ import { useAuthStore } from "../store/auth.store";
 export function LandingPage() {
   const navigate = useNavigate();
   const { getDashboardPath, isAuthenticated } = useAuthStore();
+  const { t } = useTranslation();
+
+  const LISTING_TYPES = [
+    { value: "rent", label: t("landing.rent"), icon: Home },
+    { value: "sell", label: t("landing.buy"), icon: ShoppingCart },
+    { value: "troc", label: t("landing.trade"), icon: RefreshCw },
+  ];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
@@ -46,12 +48,12 @@ export function LandingPage() {
   };
 
   const [categories, setCategories] = useState([
-    { icon: Home, label: "Immobilier", count: "...", color: "#0F2A2E" },
-    { icon: Car, label: "Véhicules", count: "...", color: "#FF4F5A" },
-    { icon: Laptop, label: "Électronique", count: "...", color: "#0F2A2E" },
-    { icon: Wrench, label: "Outillage", count: "...", color: "#FF4F5A" },
-    { icon: Armchair, label: "Mobilier", count: "...", color: "#0F2A2E" },
-    { icon: Camera, label: "Photo & Vidéo", count: "...", color: "#FF4F5A" },
+    { icon: Home, label: t("categories.realEstate"), count: "...", color: "#0F2A2E" },
+    { icon: Car, label: t("categories.vehicles"), count: "...", color: "#FF4F5A" },
+    { icon: Laptop, label: t("categories.electronics"), count: "...", color: "#0F2A2E" },
+    { icon: Wrench, label: t("categories.tools"), count: "...", color: "#FF4F5A" },
+    { icon: Armchair, label: t("categories.furniture"), count: "...", color: "#0F2A2E" },
+    { icon: Camera, label: t("categories.photoVideo"), count: "...", color: "#FF4F5A" },
   ]);
 
   const [globalStats, setGlobalStats] = useState({ totalCities: 47, activeUsers: 1200 });
@@ -66,10 +68,10 @@ export function LandingPage() {
           const formatted = res.data.map((item: any, i: number) => ({
             id: item.id,
             title: item.title,
-            category: item.category?.name || "Non classé",
+            category: item.category?.name || t("explore.uncategorized"),
             price: item.price_per_day || item.sale_price || 0,
-            period: item.listing_type === 'sell' ? 'achat' : 'jour',
-            rating: item.rating ? Number(item.rating).toFixed(1) : "Nouveau",
+            period: item.listing_type === 'sell' ? t("landing.purchase") : t("landing.day"),
+            rating: item.rating ? Number(item.rating).toFixed(1) : t("explore.new"),
             reviews: item.total_reviews || 0,
             image: item.thumbnail_url || item.images?.[0] || "",
             featured: i < 2
@@ -110,33 +112,17 @@ export function LandingPage() {
   }, []);
 
   const features = [
-    {
-      icon: Shield,
-      title: "Propriétaires vérifiés",
-      description: "Chaque annonce et propriétaire passe par notre processus de vérification"
-    },
-    {
-      icon: Clock,
-      title: "Durée flexible",
-      description: "Louez à l'heure, à la journée, à la semaine ou au mois"
-    },
-    {
-      icon: TrendingUp,
-      title: "Gagnez de l'argent",
-      description: "Transformez vos objets inutilisés en revenu régulier"
-    },
-    {
-      icon: Zap,
-      title: "Réservation instantanée",
-      description: "Réservez instantanément ou demandez des arrangements personnalisés"
-    }
+    { icon: Shield, title: t("landing.verifiedOwners"), description: t("landing.verifiedDesc") },
+    { icon: Clock, title: t("landing.flexibleDuration"), description: t("landing.flexibleDesc") },
+    { icon: TrendingUp, title: t("landing.earnMoney"), description: t("landing.earnDesc") },
+    { icon: Zap, title: t("landing.instantBooking"), description: t("landing.instantDesc") }
   ];
 
   const steps = [
-    { number: "01", title: "Chercher", description: "Trouvez ce dont vous avez besoin parmi des milliers d'annonces vérifiées" },
-    { number: "02", title: "Réserver", description: "Choisissez vos dates et finalisez le paiement sécurisé" },
-    { number: "03", title: "Recevoir", description: "Faites-vous livrer ou récupérez sur place" },
-    { number: "04", title: "Retourner", description: "Renvoyez quand vous avez terminé. Simple." }
+    { number: "01", title: t("landing.step1Title"), description: t("landing.step1Desc") },
+    { number: "02", title: t("landing.step2Title"), description: t("landing.step2Desc") },
+    { number: "03", title: t("landing.step3Title"), description: t("landing.step3Desc") },
+    { number: "04", title: t("landing.step4Title"), description: t("landing.step4Desc") }
   ];
 
   return (
@@ -191,15 +177,15 @@ export function LandingPage() {
                 className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/20 shadow-lg shadow-[#FF4F5A]/10"
               >
                 <span className="w-2 h-2 bg-[#FF4F5A] rounded-full animate-pulse shadow-[0_0_10px_rgba(255,79,90,0.8)]" />
-                <span className="text-white text-sm font-medium">Déjà actif dans {globalStats.totalCities} villes</span>
+                <span className="text-white text-sm font-medium">{t("landing.activeIn", { n: globalStats.totalCities })}</span>
                 <Sparkles className="w-4 h-4 text-[#FF4F5A]" />
               </motion.div>
 
               <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 leading-[0.95]">
-                Louez<br />
-                Tout.<br />
+                {t("landing.heroTitle1")}<br />
+                {t("landing.heroTitle2")}<br />
                 <span className="text-[#FF4F5A] relative inline-block">
-                  Partout.
+                  {t("landing.heroTitle3")}
                   <motion.span
                     className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#FF4F5A] to-transparent rounded-full"
                     initial={{ width: 0 }}
@@ -210,7 +196,7 @@ export function LandingPage() {
               </h1>
 
               <p className="text-xl text-white/80 mb-12 max-w-lg leading-relaxed">
-                La façon la plus intelligente d&apos;accéder à ce dont vous avez besoin. De l&apos;immobilier aux véhicules, de l&apos;outillage à la tech — louez tout en un seul endroit.
+                {t("landing.heroSubtitle")}
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -218,14 +204,14 @@ export function LandingPage() {
                   onClick={() => navigate('/explore')}
                   className="inline-flex items-center gap-2 bg-[#FF4F5A] hover:bg-[#e8404a] text-white px-8 h-14 text-base rounded-full shadow-2xl shadow-[#FF4F5A]/40 hover:shadow-[#FF4F5A]/60 hover:scale-105 active:scale-95 transition-all font-bold group"
                 >
-                  Explorer maintenant
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {t("landing.exploreNow")}
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform rtl-mirror" />
                 </button>
                 <button
                   onClick={() => navigate('/lender')}
                   className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white px-8 h-14 text-base rounded-full border border-white/30 hover:border-white/50 transition-all hover:scale-105 active:scale-95 font-bold"
                 >
-                  Publier une annonce
+                  {t("landing.publishListing")}
                 </button>
               </div>
             </motion.div>
@@ -241,7 +227,7 @@ export function LandingPage() {
 
               <div className="relative rounded-3xl border border-border bg-card/95 p-8 shadow-2xl backdrop-blur-xl hover:shadow-[0_20px_60px_rgba(255,79,90,0.2)] transition-shadow duration-500 dark:border-white/10 dark:bg-[#121a1c]/95">
                 <h3 className="mb-5 flex items-center gap-2 text-2xl font-bold text-foreground">
-                  Trouvez ce que vous cherchez
+                  {t("landing.findWhat")}
                   <motion.div
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -279,7 +265,7 @@ export function LandingPage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="De quoi avez-vous besoin ?"
+                      placeholder={t("landing.whatDoYouNeed")}
                       className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20"
                     />
                   </div>
@@ -293,7 +279,7 @@ export function LandingPage() {
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Localisation"
+                        placeholder={t("landing.location")}
                         className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20"
                       />
                     </div>
@@ -318,7 +304,7 @@ export function LandingPage() {
                     className="w-full h-14 inline-flex items-center justify-center gap-2 bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-2xl text-base font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
                   >
                     <Search className="w-5 h-5" />
-                    Rechercher
+                    {t("landing.search")}
                   </button>
                 </div>
 
@@ -326,10 +312,10 @@ export function LandingPage() {
                 <div className="mt-6 border-t border-border pt-5">
                   <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     <Tag className="w-3 h-3" />
-                    Recherches populaires
+                    {t("landing.popularSearches")}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {["Appartements", "Voitures", "Caméras", "Outillage", "PC Portables"].map((tag) => (
+                    {[t("categories.realEstate"), t("categories.vehicles"), t("categories.photoVideo"), t("categories.tools"), t("categories.electronics")].map((tag) => (
                       <button
                         key={tag}
                         type="button"
@@ -356,16 +342,16 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="mb-3 text-5xl font-bold text-foreground">Parcourir par catégorie</h2>
-              <p className="text-xl text-muted-foreground">Découvrez des milliers d&apos;articles dans toutes les catégories</p>
+              <h2 className="mb-3 text-5xl font-bold text-foreground">{t("landing.browseByCategory")}</h2>
+              <p className="text-xl text-muted-foreground">{t("landing.discoverItems")}</p>
             </motion.div>
           </div>
           <button
             onClick={() => navigate('/explore')}
             className="group hidden items-center gap-2 text-foreground transition-colors hover:text-[#FF4F5A] lg:flex font-semibold"
           >
-            Voir tout
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {t("landing.viewAll")}
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform rtl-mirror" />
           </button>
         </div>
 
@@ -391,7 +377,7 @@ export function LandingPage() {
                   />
                 </div>
                 <h3 className="mb-1 font-semibold text-foreground">{category.label}</h3>
-                <p className="text-sm text-muted-foreground">{category.count} annonces</p>
+                <p className="text-sm text-muted-foreground">{category.count} {t("landing.listings")}</p>
               </div>
               <div
                 className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -413,8 +399,8 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="mb-12"
           >
-            <h2 className="mb-3 text-5xl font-bold text-foreground">Tendances du moment</h2>
-            <p className="text-xl text-muted-foreground">Les locations les plus populaires cette semaine</p>
+            <h2 className="mb-3 text-5xl font-bold text-foreground">{t("landing.trendingNow")}</h2>
+            <p className="text-xl text-muted-foreground">{t("landing.mostPopular")}</p>
           </motion.div>
 
           <div className="grid lg:grid-cols-12 gap-6">
@@ -435,7 +421,7 @@ export function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-6 left-6">
                     <span className="px-4 py-2 bg-[#FF4F5A] text-white text-sm font-bold rounded-full shadow-lg">
-                      En vedette
+                      {t("landing.featured")}
                     </span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -479,7 +465,7 @@ export function LandingPage() {
                     {item.featured && (
                       <div className="absolute top-4 left-4">
                         <span className="px-3 py-1 bg-[#FF4F5A] text-white text-xs font-bold rounded-full">
-                          Populaire
+                          {t("landing.popular")}
                         </span>
                       </div>
                     )}
@@ -510,8 +496,8 @@ export function LandingPage() {
               onClick={() => navigate('/explore')}
               className="inline-flex items-center gap-2 bg-[#0F2A2E] hover:bg-[#1A4851] text-white px-8 h-12 rounded-full font-bold transition-all hover:scale-105 active:scale-95 group"
             >
-              Explorer toutes les annonces
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {t("landing.exploreAll")}
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform rtl-mirror" />
             </button>
           </div>
         </div>
@@ -529,9 +515,9 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="mb-4 text-5xl font-bold text-white">Comment fonctionne Karrily</h2>
+            <h2 className="mb-4 text-5xl font-bold text-white">{t("landing.howKarillyWorks")}</h2>
             <p className="mx-auto max-w-2xl text-xl text-white/70">
-              La location n&apos;a jamais été aussi simple. Quatre étapes pour accéder à tout.
+              {t("landing.howSubtitle")}
             </p>
           </motion.div>
 
@@ -551,7 +537,7 @@ export function LandingPage() {
 
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2">
-                    <ArrowRight className="h-6 w-6 text-white/20" />
+                    <ArrowRight className="h-6 w-6 text-white/20 rtl-mirror" />
                   </div>
                 )}
               </motion.div>
@@ -569,9 +555,9 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="mb-4 text-5xl font-bold text-foreground">Pourquoi faire confiance à Karrily</h2>
+            <h2 className="mb-4 text-5xl font-bold text-foreground">{t("landing.whyTrust")}</h2>
             <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-              Conçu pour la sécurité, la flexibilité et la tranquillité d&apos;esprit
+              {t("landing.whySubtitle")}
             </p>
           </motion.div>
 
@@ -606,15 +592,15 @@ export function LandingPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-5xl lg:text-6xl font-bold text-white mb-6">
-                Transformez vos objets inutilisés en revenus
+                {t("landing.turnItemsIntoRevenue")}
               </h2>
               <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                Rejoignez les milliers de loueurs qui génèrent un revenu passif en louant leurs objets inutilisés. C&apos;est gratuit de publier, et vous gardez toujours le contrôle.
+                {t("landing.joinLenders")}
               </p>
               <div className="flex flex-wrap gap-4 mb-8">
                 {[
-                  { title: "Gratuit à publier", sub: "Aucun frais initial" },
-                  { title: "Protection complète", sub: "Assurance incluse" }
+                  { title: t("landing.freeToPublish"), sub: t("landing.noUpfrontFees") },
+                  { title: t("landing.fullProtection"), sub: t("landing.insuranceIncluded") }
                 ].map((item) => (
                   <div key={item.title} className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center flex-shrink-0">
@@ -631,8 +617,8 @@ export function LandingPage() {
                 onClick={() => navigate('/lender')}
                 className="inline-flex items-center gap-2 bg-white hover:bg-white/90 text-[#FF4F5A] px-8 h-14 text-lg rounded-full font-bold shadow-xl transition-all hover:scale-105 active:scale-95 group"
               >
-                Commencer à gagner
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {t("landing.startEarning")}
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform rtl-mirror" />
               </button>
             </motion.div>
 
@@ -644,9 +630,9 @@ export function LandingPage() {
             >
               <div className="space-y-6">
                 {[
-                  { Icon: TrendingUp, title: "892 DA en moyenne/mois", desc: "Revenus typiques des loueurs actifs" },
-                  { Icon: Shield, title: "Protection totale", desc: "Chaque location est entièrement assurée" },
-                  { Icon: Clock, title: "5 minutes de configuration", desc: "Publiez votre première annonce en quelques minutes" }
+                  { Icon: TrendingUp, title: t("landing.avgPerMonth"), desc: t("landing.avgDesc") },
+                  { Icon: Shield, title: t("landing.totalProtection"), desc: t("landing.totalProtectionDesc") },
+                  { Icon: Clock, title: t("landing.fiveMinSetup"), desc: t("landing.fiveMinDesc") }
                 ].map(({ Icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -673,7 +659,7 @@ export function LandingPage() {
                 <KarillyLogo className="h-8" variant="white" />
               </div>
               <p className="text-white/70 mb-6 leading-relaxed">
-                La marketplace universelle de location et de troc en Algérie. Louez tout, partout, tout le temps.
+              {t("footer.description")}
               </p>
               <div className="flex gap-3">
                 {["Twitter", "Instagram", "LinkedIn"].map((social) => (
@@ -688,9 +674,9 @@ export function LandingPage() {
             </div>
 
             {[
-              { title: "Explorer", links: ["Toutes les catégories", "Immobilier", "Véhicules", "Électronique", "Outillage"] },
-              { title: "L'entreprise", links: ["À propos", "Comment ça marche", "Confiance & Sécurité", "Carrières"] },
-              { title: "Support", links: ["Centre d'aide", "Nous contacter", "FAQ", "Assurance"] }
+              { title: t("footer.explore"), links: [t("footer.allCategories"), t("categories.realEstate"), t("categories.vehicles"), t("categories.electronics"), t("categories.tools")] },
+              { title: t("footer.company"), links: [t("footer.about"), t("footer.howItWorks"), t("footer.trustSafety"), t("footer.careers")] },
+              { title: t("footer.support"), links: [t("footer.helpCenter"), t("footer.contactUs"), t("footer.faq"), t("footer.insurance")] }
             ].map((column) => (
               <div key={column.title}>
                 <h4 className="font-semibold text-lg mb-4">{column.title}</h4>
@@ -708,10 +694,10 @@ export function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-white/50 text-sm">© 2026 Karrily. Tous droits réservés.</p>
+            <p className="text-white/50 text-sm">© 2026 Karrily. {t("footer.allRightsReserved")}</p>
             <div className="flex gap-6">
-              <button className="text-white/50 hover:text-white text-sm transition-colors">Politique de confidentialité</button>
-              <button className="text-white/50 hover:text-white text-sm transition-colors">Conditions d&apos;utilisation</button>
+              <button className="text-white/50 hover:text-white text-sm transition-colors">{t("footer.privacyPolicy")}</button>
+              <button className="text-white/50 hover:text-white text-sm transition-colors">{t("footer.terms")}</button>
             </div>
           </div>
         </div>
