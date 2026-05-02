@@ -278,7 +278,7 @@ export function ItemDetailPage() {
   const handleBooking = async () => {
     if (!user || !item || !bookingCalc) return;
     if (user.id === item.owner_id) {
-      setBookingError("Vous ne pouvez pas réserver votre propre annonce.");
+      setBookingError(t("item.cannotBookOwn"));
       return;
     }
 
@@ -296,7 +296,7 @@ export function ItemDetailPage() {
       setBookingSuccess(true);
     } catch (err: any) {
       setIsBooking(false);
-      setBookingError("Erreur lors de la réservation : " + err.message);
+      setBookingError(t("item.bookingError") + " : " + err.message);
     }
   };
 
@@ -307,7 +307,7 @@ export function ItemDetailPage() {
     }
     if (!item) return;
     if (user.id === item.owner_id) {
-      alert("C'est votre propre annonce.");
+      alert(t("item.ownListing"));
       return;
     }
 
@@ -332,7 +332,7 @@ export function ItemDetailPage() {
         item_id: item.id,
         participant_1: user.id,
         participant_2: item.owner_id,
-        last_message_preview: "Nouvelle conversation",
+        last_message_preview: t("dashboard.newConversation"),
       })
       .select("id")
       .single();
@@ -352,15 +352,15 @@ export function ItemDetailPage() {
       return;
     }
     if (item && user.id === item.owner_id) {
-      setReviewError("Vous ne pouvez pas laisser d'avis sur votre propre annonce.");
+      setReviewError(t("item.cannotReviewOwn"));
       return;
     }
     if (reviewRating === 0) {
-      setReviewError("Veuillez sélectionner une note.");
+      setReviewError(t("item.selectRating"));
       return;
     }
     if (reviewComment.length < 5) {
-      setReviewError("Veuillez laisser un commentaire d'au moins 5 caractères.");
+      setReviewError(t("item.commentTooShort"));
       return;
     }
 
@@ -381,7 +381,7 @@ export function ItemDetailPage() {
       const { data } = await reviewsService.getByItem(itemId || "");
       if (data) setReviews(data);
     } catch (err: any) {
-      setReviewError(err.message || "Erreur lors de l'envoi.");
+      setReviewError(err.message || t("common.sendError"));
     } finally {
       setIsSubmittingReview(false);
     }
@@ -546,7 +546,7 @@ export function ItemDetailPage() {
                       <div className="w-10 h-10 bg-muted rounded-2xl flex items-center justify-center">
                         <Tag className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <h2 className="text-2xl font-bold tracking-tight">Caractéristiques</h2>
+                      <h2 className="text-2xl font-bold tracking-tight">{t("item.characteristics")}</h2>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {Object.entries(item.metadata).map(([key, value]) => (
@@ -571,7 +571,7 @@ export function ItemDetailPage() {
                       <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center">
                         <RefreshCw className="w-6 h-6 text-purple-600" />
                       </div>
-                      <h2 className="text-2xl font-bold text-purple-900 dark:text-purple-300">Offre de troc</h2>
+                      <h2 className="text-2xl font-bold text-purple-900 dark:text-purple-300">{t("item.trocOffer")}</h2>
                     </div>
                     <p className="text-purple-800 dark:text-purple-400/80 text-lg mb-6 leading-relaxed">
                       {item.troc_description}
@@ -579,7 +579,7 @@ export function ItemDetailPage() {
                     {item.troc_estimated_value && (
                       <div className="flex items-center gap-2 text-purple-600/70 font-medium">
                         <HandCoins className="w-4 h-4" />
-                        Valeur estimée : <strong>{Number(item.troc_estimated_value).toLocaleString()} DA</strong>
+                        {t("item.estimatedValue")} : <strong>{Number(item.troc_estimated_value).toLocaleString()} {t("common.da")}</strong>
                       </div>
                     )}
                   </section>
@@ -619,7 +619,7 @@ export function ItemDetailPage() {
                           targetTitle: item.title 
                         })}
                         className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-200"
-                        title="Signaler cette annonce"
+                        title={t("item.reportItemTitle")}
                       >
                         <Flag className="w-4 h-4" />
                       </button>
@@ -662,7 +662,7 @@ export function ItemDetailPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">Début</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">{t("common.start")}</label>
                           <div className="relative">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
                             <input
@@ -675,7 +675,7 @@ export function ItemDetailPage() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">Fin</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2">{t("common.end")}</label>
                           <div className="relative">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
                             <input
@@ -812,7 +812,7 @@ export function ItemDetailPage() {
                           <span className="font-bold text-foreground/80">{Number(item.owner.rating || 0).toFixed(1)}</span>
                         </div>
                         <span className="opacity-30">|</span>
-                        <span>{item.owner.total_reviews} avis</span>
+                        <span>{item.owner.total_reviews} {t("common.reviews")}</span>
                       </div>
                     </div>
                   </div>
@@ -825,8 +825,8 @@ export function ItemDetailPage() {
                   <Shield className="w-7 h-7 text-[#FF4F5A]" />
                 </div>
                 <div>
-                  <h4 className="font-bold leading-tight">Garantie Karrily</h4>
-                  <p className="text-xs text-white/60 mt-1 leading-relaxed">Paiement sécurisé et protection de vos biens à chaque étape.</p>
+                  <h4 className="font-bold leading-tight">{t("item.karillyWarranty")}</h4>
+                  <p className="text-xs text-white/60 mt-1 leading-relaxed">{t("item.karillyWarrantySubtitle")}</p>
                 </div>
               </div>
             </div>
@@ -839,8 +839,8 @@ export function ItemDetailPage() {
                 <Star className="w-6 h-6 text-[#FF4F5A]" />
               </div>
               <div>
-                <h2 className="text-3xl font-black tracking-tight text-foreground">Avis <span className="text-[#FF4F5A]">clients</span></h2>
-                <p className="text-muted-foreground font-medium">Ce que les autres utilisateurs pensent de cet article.</p>
+                <h2 className="text-3xl font-black tracking-tight text-foreground">{t("item.reviews")} <span className="text-[#FF4F5A]">{t("item.clients")}</span></h2>
+                <p className="text-muted-foreground font-medium">{t("item.itemReviewsSubtitle")}</p>
               </div>
             </div>
 
@@ -853,11 +853,11 @@ export function ItemDetailPage() {
                     animate={{ opacity: 1, x: 0 }}
                     className="bg-card rounded-[2.5rem] p-8 border border-border shadow-xl shadow-black/5 sticky top-28"
                   >
-                    <h3 className="text-xl font-bold mb-6">Laissez votre <span className="text-[#FF4F5A]">avis</span></h3>
+                    <h3 className="text-xl font-bold mb-6">{t("item.leaveYourReview").split(' ').slice(0, 2).join(' ')} <span className="text-[#FF4F5A]">{t("item.leaveYourReview").split(' ').slice(2).join(' ')}</span></h3>
                     
                     <div className="space-y-6">
                       <div className="flex flex-col gap-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Note globale</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t("item.globalRating")}</p>
                         <div className="flex gap-1.5">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -882,11 +882,11 @@ export function ItemDetailPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Commentaire détaillé</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t("item.detailedComment")}</label>
                         <textarea
                           value={reviewComment}
                           onChange={(e) => setReviewComment(e.target.value)}
-                          placeholder="Partagez votre expérience avec cet article..."
+                          placeholder={t("item.shareExperiencePlaceholder")}
                           className="w-full min-h-[120px] p-4 rounded-2xl bg-muted/30 border border-border focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold text-sm outline-none transition-all"
                         />
                       </div>
@@ -902,7 +902,7 @@ export function ItemDetailPage() {
                         disabled={isSubmittingReview}
                         className="w-full bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-[1.25rem] h-14 font-black text-xs uppercase tracking-widest shadow-xl shadow-[#FF4F5A]/20 transition-all active:scale-[0.98]"
                       >
-                        {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : "Publier mon avis"}
+                        {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : t("item.publishMyReview")}
                       </Button>
                     </div>
                   </motion.div>
@@ -911,13 +911,13 @@ export function ItemDetailPage() {
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                       <Star className="w-8 h-8 text-muted-foreground/20" />
                     </div>
-                    <h3 className="text-xl font-bold mb-4">Connectez-vous pour laisser un avis</h3>
-                    <p className="text-muted-foreground text-sm mb-8">Partagez votre expérience avec la communauté Karrily.</p>
+                    <h3 className="text-xl font-bold mb-4">{t("item.loginToReview")}</h3>
+                    <p className="text-muted-foreground text-sm mb-8">{t("item.shareExperienceCommunity")}</p>
                     <Button 
                       onClick={() => navigate("/login")}
                       className="w-full rounded-2xl bg-foreground text-background font-bold h-12"
                     >
-                      Se connecter
+                      {t("auth.loginButton")}
                     </Button>
                   </div>
                 )}
@@ -934,8 +934,8 @@ export function ItemDetailPage() {
                     <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                       <MessageCircle className="w-10 h-10 text-muted-foreground/30" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">Pas encore d'avis</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">Soyez la première personne à donner son avis sur cet article !</p>
+                    <h3 className="text-xl font-bold mb-2">{t("item.noReviewsYet")}</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">{t("item.beTheFirstToReview")}</p>
                   </div>
                 ) : (
                   <div className="grid gap-6">
@@ -959,7 +959,7 @@ export function ItemDetailPage() {
                             </div>
                             <div>
                               <h4 className="font-bold text-lg text-foreground">{review.reviewer?.full_name}</h4>
-                              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{new Date(review.created_at).toLocaleDateString(locale === 'ar' ? 'ar-DZ' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -973,10 +973,10 @@ export function ItemDetailPage() {
                                 isOpen: true, 
                                 targetId: review.id, 
                                 targetType: "review", 
-                                targetTitle: `l'avis de ${review.reviewer?.full_name}` 
+                                targetTitle: `${t("item.reportReviewTargetPrefix")} ${review.reviewer?.full_name}` 
                               })}
                               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 text-muted-foreground/40 hover:text-red-500 transition-colors"
-                              title="Signaler cet avis"
+                              title={t("item.reportReviewTitle")}
                             >
                               <Flag className="w-3.5 h-3.5" />
                             </button>

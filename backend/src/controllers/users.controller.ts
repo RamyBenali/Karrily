@@ -98,4 +98,71 @@ export class UsersController {
             next(error);
         }
     };
+    /**
+     * PUT /api/users/:id/role — Update user role (admin only)
+     */
+    updateRole = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            if (req.user?.role !== 'admin') {
+                throw new ApiError(403, "Access denied");
+            }
+            const { id } = req.params;
+            const { role } = req.body;
+
+            console.log(`Admin ${req.user.id} updating role for user ${id} to ${role}`);
+
+            // 1. Update Profile table
+            const { data: profile, error: profileError } = await supabaseAdmin
+                .from("profiles")
+                .update({ role })
+                .eq("id", id)
+                .select()
+                .single();
+
+            if (profileError) {
+                console.error("Error updating profile role:", profileError);
+                throw profileError;
+            }
+
+            // 2. Update Auth Metadata (optional but recommended for consistency)
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
+                user_metadata: { role }
+            });
+
+            if (authError) {
+                console.warn("Could not update auth metadata, but profile was updated:", authError.message);
+            }
+
+            res.json({ success: true, data: profile });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    /**
+     * DELETE /api/users/:id — Delete user (admin only)
+     */
+    deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            if (req.user?.role !== 'admin') {
+                throw new ApiError(403, "Access denied");
+            }
+            const { id } = req.params;
+
+            // Delete from Auth (this cascades to profiles if setup correctly, but doing both is safe)
+            const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id as string);
+            if (authError) console.error("Error deleting auth user:", authError);
+
+            const { error: profileError } = await supabaseAdmin
+                .from("profiles")
+                .delete()
+                .eq("id", id);
+            
+            if (profileError) throw profileError;
+
+            res.json({ success: true });
+        } catch (error) {
+            next(error);
+        }
+    };
 }

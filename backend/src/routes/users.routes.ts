@@ -16,3 +16,9 @@ usersRoutes.get("/:id/items", controller.getUserItems);
 
 // GET /api/users/:id/reviews — Get reviews for a user
 usersRoutes.get("/:id/reviews", controller.getUserReviews);
+
+// PUT /api/users/:id/role — Update user role (admin only)
+usersRoutes.put("/:id/role", authMiddleware, controller.updateRole);
+
+// DELETE /api/users/:id — Delete user (admin only)
+usersRoutes.delete("/:id", authMiddleware, controller.deleteUser);

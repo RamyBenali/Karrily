@@ -5,6 +5,7 @@ import { Textarea } from "../ui/textarea";
 import { Star, Loader2 } from "lucide-react";
 import { reviewsService } from "../../services/api.service";
 import { cn } from "../ui/utils";
+import { useTranslation } from "../../context/language-context";
 
 interface ReviewDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface ReviewDialogProps {
 }
 
 export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, onSuccess }: ReviewDialogProps) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -24,11 +26,11 @@ export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, on
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      setError("Veuillez sélectionner une note.");
+      setError(t("item.selectRating"));
       return;
     }
     if (comment.length < 5) {
-      setError("Veuillez laisser un commentaire d'au moins 5 caractères.");
+      setError(t("item.commentTooShort"));
       return;
     }
 
@@ -48,7 +50,7 @@ export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, on
       setRating(0);
       setComment("");
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de l'envoi de l'avis.");
+      setError(err.message || t("item.reviewError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -58,15 +60,15 @@ export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-border bg-card/95 backdrop-blur-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">Laisser un <span className="text-[#FF4F5A]">avis</span></DialogTitle>
+          <DialogTitle className="text-2xl font-black">{t("item.leaveAReview")}</DialogTitle>
           <DialogDescription className="text-muted-foreground font-medium">
-            Partagez votre expérience concernant la location de <strong>{itemTitle}</strong>.
+            <span dangerouslySetInnerHTML={{ __html: t("item.reviewDescription", { title: itemTitle }) }} />
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-6 space-y-6">
           <div className="flex flex-col items-center gap-3">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Votre note</p>
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t("item.yourRating")}</p>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -91,11 +93,11 @@ export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, on
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Votre commentaire</label>
+            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{t("item.yourComment")}</label>
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Qu'avez-vous pensé de l'objet et du propriétaire ?"
+              placeholder={t("item.reviewPlaceholder")}
               className="min-h-[120px] rounded-2xl bg-muted/30 border-border focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold"
             />
           </div>
@@ -113,14 +115,14 @@ export function ReviewDialog({ isOpen, onClose, itemId, bookingId, itemTitle, on
             onClick={onClose}
             className="rounded-xl font-bold"
           >
-            Annuler
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-xl px-8 font-black text-xs uppercase tracking-widest shadow-lg shadow-[#FF4F5A]/20"
           >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publier l'avis"}
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("item.publishReview")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -13,6 +13,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw } from "lucide-react";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { cn } from "../components/ui/utils";
+import { useTranslation } from "../context/language-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +26,14 @@ import {
 } from "../components/ui/alert-dialog";
 import { Input } from "../components/ui/input";
 
-const sidebarItems = [
-  { id: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
-  { id: 'listings', icon: Package, label: "Mes annonces" },
-  { id: 'bookings', icon: Calendar, label: "Locations" },
-  { id: 'sales', icon: ShoppingCart, label: "Ventes" },
-  { id: 'troc', icon: RefreshCw, label: "Troc" },
-  { id: 'earnings', icon: DollarSign, label: "Revenus" },
-  { id: 'reviews', icon: Star, label: "Avis" },
+const getSidebarItems = (t: any) => [
+  { id: 'overview', icon: BarChart3, label: t("lender.overview") },
+  { id: 'listings', icon: Package, label: t("lender.myListings") },
+  { id: 'bookings', icon: Calendar, label: t("lender.rentals") },
+  { id: 'sales', icon: ShoppingCart, label: t("dashboard.sales") },
+  { id: 'troc', icon: RefreshCw, label: t("dashboard.trades") },
+  { id: 'earnings', icon: DollarSign, label: t("lender.earnings") },
+  { id: 'reviews', icon: Star, label: t("dashboard.reviews") },
 ];
 
 const WILAYAS: Record<number, string> = {
@@ -48,8 +49,10 @@ const WILAYAS: Record<number, string> = {
 };
 
 export function LenderDashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const sidebarItems = getSidebarItems(t);
   const [activeView, setActiveView] = useState<"overview" | "listings" | "bookings" | "sales" | "troc" | "earnings" | "reviews">("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -161,9 +164,9 @@ export function LenderDashboard() {
   const handleDeleteItem = (id: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: "Supprimer cette annonce ?",
-      description: "Cette action est irréversible.",
-      actionLabel: "Supprimer",
+      title: t("lender.deleteListingTitle"),
+      description: t("lender.deleteListingDesc"),
+      actionLabel: t("lender.supprimer"),
       variant: "destructive",
       onConfirm: async () => {
         try {
@@ -187,8 +190,8 @@ export function LenderDashboard() {
     if (status === 'accepted') {
       setPromptConfig({
         isOpen: true,
-        title: "Détails de livraison",
-        description: "Lieu de RDV, mode d'envoi, etc. :",
+        title: t("lender.deliveryDetails"),
+        description: t("lender.deliveryDetailsDesc"),
         value: "",
         onConfirm: async (info) => {
           if (!info) return;
@@ -216,13 +219,13 @@ export function LenderDashboard() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
-                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Espace Propriétaire</span>
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">{t("lender.ownerSpace")}</span>
               </div>
-              <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-2 leading-tight">Mon <span className="gradient-text">Centre</span></h1>
-              <p className="text-base text-muted-foreground max-w-xl">Gérez votre inventaire et vos transactions.</p>
+              <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-2 leading-tight">{t("lender.myCenter").split(" ")[0]} <span className="gradient-text">{t("lender.myCenter").split(" ")[1]}</span></h1>
+              <p className="text-base text-muted-foreground max-w-xl">{t("lender.manageInventorySubtitle")}</p>
             </div>
             <Button onClick={() => navigate("/create")} className="bg-[#FF4F5A] text-white px-7 h-11 rounded-xl font-bold text-sm shadow-lg shadow-[#FF4F5A]/20">
-              <Plus className="w-4 h-4 mr-2" /> Publier une annonce
+              <Plus className="w-4 h-4 mr-2" /> {t("lender.publishListing")}
             </Button>
           </motion.div>
 
@@ -239,7 +242,7 @@ export function LenderDashboard() {
               userEmail={user?.email || ""}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
-              extraAction={{ label: "Mode client", onClick: () => navigate('/dashboard'), variant: "default" }}
+              extraAction={{ label: t("lender.clientMode"), onClick: () => navigate('/dashboard'), variant: "default" }}
             />
 
             <div className="lg:col-span-9">
@@ -247,10 +250,10 @@ export function LenderDashboard() {
                 <div className="space-y-8">
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
                     {[
-                      { label: "Chiffre d'Affaire", value: `${stats.totalEarnings.toLocaleString()} DA`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                      { label: "Annonces", value: stats.activeListings, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10" },
-                      { label: "Réservations", value: stats.totalBookings, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-500/10" },
-                      { label: "Satisfaction", value: stats.averageRating ? stats.averageRating.toFixed(1) : "N/A", icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" }
+                      { label: t("lender.revenue"), value: `${stats.totalEarnings.toLocaleString()} ${t("common.da")}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+                      { label: t("lender.myListings"), value: stats.activeListings, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10" },
+                      { label: t("lender.rentals"), value: stats.totalBookings, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-500/10" },
+                      { label: t("lender.satisfaction"), value: stats.averageRating ? stats.averageRating.toFixed(1) : t("lender.notAvailable"), icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" }
                     ].map((s) => (
                       <div key={s.label} className="bg-card rounded-2xl p-5 border border-border">
                         <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-4`}>
@@ -282,10 +285,10 @@ export function LenderDashboard() {
                       <div className="w-32 h-32 rounded-2xl overflow-hidden"><img src={item.thumbnail_url} className="w-full h-full object-cover" /></div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold">{item.title}</h3>
-                        <p className="text-[#FF4F5A] font-bold">{item.price_per_day} DA/j</p>
+                        <p className="text-[#FF4F5A] font-bold">{item.price_per_day} {t("common.da")}/j</p>
                         <div className="flex gap-2 mt-4">
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/edit-item/${item.id}`)}>Modifier</Button>
-                          <Button size="sm" variant="outline" className="text-red-500" onClick={() => handleDeleteItem(item.id)}>Supprimer</Button>
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/edit-item/${item.id}`)}>{t("lender.modifier")}</Button>
+                          <Button size="sm" variant="outline" className="text-red-500" onClick={() => handleDeleteItem(item.id)}>{t("lender.supprimer")}</Button>
                         </div>
                       </div>
                     </div>
@@ -303,7 +306,7 @@ export function LenderDashboard() {
                         <p className="text-xs text-muted-foreground">{new Date(b.start_date).toLocaleDateString()} - {new Date(b.end_date).toLocaleDateString()}</p>
                       </div>
                       <div className="flex gap-2">
-                        {b.status === 'pending' && <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}>Accepter</Button>}
+                        {b.status === 'pending' && <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}>{t("dashboard.accept")}</Button>}
                         <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{b.status}</span>
                       </div>
                     </div>
@@ -317,7 +320,7 @@ export function LenderDashboard() {
                     <div key={s.id} className="p-6 bg-muted/50 rounded-3xl flex justify-between items-center">
                       <div><p className="font-bold">{s.buyer?.full_name}</p><p className="text-sm">{s.items?.title}</p></div>
                       <div>
-                        {s.status === 'pending' && <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')}>Accepter</Button>}
+                        {s.status === 'pending' && <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')}>{t("dashboard.accept")}</Button>}
                         <span className="ml-2 text-xs font-bold uppercase">{s.status}</span>
                       </div>
                     </div>
@@ -329,10 +332,10 @@ export function LenderDashboard() {
                 <div className="space-y-4">
                   {trocProposals.map(p => (
                     <div key={p.id} className="p-6 bg-muted/50 rounded-3xl">
-                      <p className="font-bold">{p.proposer?.full_name} propose un troc</p>
-                      <p className="text-sm">Pour : {p.requested_item?.title}</p>
+                      <p className="font-bold">{p.proposer?.full_name} {t("lender.proposesATroc")}</p>
+                      <p className="text-sm">{t("lender.for")} {p.requested_item?.title}</p>
                       <div className="mt-4 flex gap-2">
-                        {p.status === 'pending' && <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')}>Accepter</Button>}
+                        {p.status === 'pending' && <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')}>{t("dashboard.accept")}</Button>}
                         <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{p.status}</span>
                       </div>
                     </div>
@@ -362,7 +365,7 @@ export function LenderDashboard() {
       <AlertDialog open={confirmConfig.isOpen} onOpenChange={(o) => setConfirmConfig(p => ({ ...p, isOpen: o }))}>
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader><AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle><AlertDialogDescription>{confirmConfig.description}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={confirmConfig.onConfirm} className={confirmConfig.variant === "destructive" ? "bg-red-500" : ""}>Confirmer</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel><AlertDialogAction onClick={confirmConfig.onConfirm} className={confirmConfig.variant === "destructive" ? "bg-red-500" : ""}>{t("dashboard.confirm")}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -370,7 +373,7 @@ export function LenderDashboard() {
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader><AlertDialogTitle>{promptConfig.title}</AlertDialogTitle><AlertDialogDescription>{promptConfig.description}</AlertDialogDescription></AlertDialogHeader>
           <div className="py-4"><Input value={promptConfig.value} onChange={(e) => setPromptConfig(p => ({ ...p, value: e.target.value }))} className="rounded-xl" /></div>
-          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={() => promptConfig.onConfirm(promptConfig.value)}>Confirmer</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel><AlertDialogAction onClick={() => promptConfig.onConfirm(promptConfig.value)}>{t("dashboard.confirm")}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

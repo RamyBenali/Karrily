@@ -127,6 +127,16 @@ export const usersService = {
         const response = await api.get(`/users/${userId}/reviews`);
         return { data: response.data.data, success: true };
     },
+
+    updateRole: async (userId: string, role: string) => {
+        const response = await api.put(`/users/${userId}/role`, { role });
+        return { data: response.data.data, success: true };
+    },
+
+    delete: async (userId: string) => {
+        const response = await api.delete(`/users/${userId}`);
+        return { success: true };
+    },
 };
 
 // ─── Sales Service ───────────────────────────────────

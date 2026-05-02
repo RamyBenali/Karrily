@@ -2,19 +2,11 @@ import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
-export interface ImpersonatedUser {
-    id: string;
-    full_name: string;
-    email: string;
-}
-
 interface AuthState {
     user: User | null;
     session: Session | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    impersonatedUserId: string | null;
-    impersonatedUser: ImpersonatedUser | null;
     role: string;
     hasItems: boolean;
 
@@ -25,9 +17,6 @@ interface AuthState {
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
     setSession: (session: Session | null) => void;
-    setImpersonation: (userId: string, userDetails: ImpersonatedUser) => void;
-    clearImpersonation: () => void;
-    getEffectiveUser: () => { id: string; email?: string } | null;
     getDashboardPath: () => string;
     fetchUserMetadata: (userId: string) => Promise<{ role: string; hasItems: boolean }>;
 }
@@ -37,8 +26,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     session: null,
     isLoading: true,
     isAuthenticated: false,
-    impersonatedUserId: null,
-    impersonatedUser: null,
     role: "user",
     hasItems: false,
 
@@ -194,30 +181,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     setUser: (user) => set({ user, isAuthenticated: !!user }),
     setSession: (session) => set({ session }),
 
-    setImpersonation: (userId, userDetails) => set({
-        impersonatedUserId: userId,
-        impersonatedUser: userDetails
-    }),
-
-    clearImpersonation: () => set({
-        impersonatedUserId: null,
-        impersonatedUser: null
-    }),
-
     getDashboardPath: () => {
         const state = get();
         if (state.role === "admin") return "/admin";
         if (state.role === "lender" || state.role === "vendeur" || state.hasItems) return "/lender";
         return "/dashboard";
-    },
-
-    getEffectiveUser: () => {
-        const state = get();
-        if (state.impersonatedUserId && state.impersonatedUser) {
-            return {
-                ...state.impersonatedUser
-            };
-        }
-        return state.user ? { id: state.user.id, email: state.user.email } : null;
     },
 }));

@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuthStore } from "../../store/auth.store";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "../../context/language-context";
 
 /**
  * ProtectedRoute — Wraps routes that require authentication.
@@ -8,13 +9,14 @@ import { Loader2 } from "lucide-react";
  */
 export function ProtectedRoute() {
     const { isAuthenticated, isLoading } = useAuthStore();
+    const { t } = useTranslation();
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto mb-4" />
-                    <p className="text-gray-500">Chargement...</p>
+                    <p className="text-gray-500">{t("common.loading")}</p>
                 </div>
             </div>
         );
@@ -33,13 +35,14 @@ export function ProtectedRoute() {
  */
 export function GuestRoute() {
     const { isAuthenticated, isLoading } = useAuthStore();
+    const { t } = useTranslation();
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto mb-4" />
-                    <p className="text-gray-500">Chargement...</p>
+                    <p className="text-gray-500">{t("common.loading")}</p>
                 </div>
             </div>
         );
@@ -59,13 +62,14 @@ export function GuestRoute() {
  */
 export function AdminRoute() {
     const { isAuthenticated, isLoading, role } = useAuthStore();
+    const { t } = useTranslation();
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto mb-4" />
-                    <p className="text-gray-500">Vérification des droits...</p>
+                    <p className="text-gray-500">{t("admin.verifyingRights")}</p>
                 </div>
             </div>
         );
@@ -88,13 +92,14 @@ export function AdminRoute() {
  */
 export function LenderRoute() {
     const { isAuthenticated, isLoading, role, hasItems } = useAuthStore();
+    const { t } = useTranslation();
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto mb-4" />
-                    <p className="text-gray-500">Vérification...</p>
+                    <p className="text-gray-500">{t("common.verifying")}</p>
                 </div>
             </div>
         );
@@ -123,13 +128,14 @@ export function LenderRoute() {
  */
 export function ClientRoute() {
     const { isAuthenticated, isLoading, role, hasItems } = useAuthStore();
+    const { t } = useTranslation();
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#FF4F5A] mx-auto mb-4" />
-                    <p className="text-gray-500">Vérification...</p>
+                    <p className="text-gray-500">{t("common.verifying")}</p>
                 </div>
             </div>
         );

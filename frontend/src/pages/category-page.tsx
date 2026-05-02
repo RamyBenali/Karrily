@@ -7,6 +7,8 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Footer } from "../components/layout/footer";
 import { useState } from "react";
 
+import { useTranslation } from "../context/language-context";
+
 const categoryData: Record<string, {
   title: string;
   description: string;
@@ -126,6 +128,7 @@ const categoryData: Record<string, {
 };
 
 export function CategoryPage() {
+  const { t, locale } = useTranslation();
   const { categoryName } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
   const [likedItems, setLikedItems] = useState<number[]>([]);
@@ -159,14 +162,14 @@ export function CategoryPage() {
                 onClick={() => navigate('/explore')}
                 className="text-white/70 hover:text-white transition-colors"
               >
-                All Categories
+                {t("nav.categories")}
               </button>
               <span className="text-white/50">/</span>
-              <span className="text-white font-medium">{category.title}</span>
+              <span className="text-white font-medium">{t(`categories.${categoryName}`)}</span>
             </div>
 
-            <h1 className="text-6xl lg:text-7xl font-bold text-white mb-6">{category.title}</h1>
-            <p className="text-2xl text-white/90 max-w-2xl mb-8">{category.description}</p>
+            <h1 className="text-6xl lg:text-7xl font-bold text-white mb-6">{t(`categories.${categoryName}`)}</h1>
+            <p className="text-2xl text-white/90 max-w-2xl mb-8">{t(`category_desc.${categoryName}`)}</p>
 
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
@@ -175,13 +178,13 @@ export function CategoryPage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-white">{category.items.length}+</div>
-                  <div className="text-sm text-white/70">Disponibles</div>
+                  <div className="text-sm text-white/70">{t("item.available")}</div>
                 </div>
               </div>
               <div className="w-px h-12 bg-white/20" />
               <div>
                 <div className="text-2xl font-bold text-white">4.8</div>
-                <div className="text-sm text-white/70">Note Moy.</div>
+                <div className="text-sm text-white/70">{t("item.avgRating")}</div>
               </div>
             </div>
           </motion.div>
@@ -229,7 +232,7 @@ export function CategoryPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="font-semibold text-foreground">{item.rating}</span>
-                  <span className="text-sm text-muted-foreground">({item.reviews} avis)</span>
+                  <span className="text-sm text-muted-foreground">({item.reviews} {t("common.reviews")})</span>
                 </div>
 
                 <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-[#FF4F5A] transition-colors">
@@ -243,8 +246,8 @@ export function CategoryPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div>
-                    <span className="text-3xl font-bold text-foreground">${item.price}</span>
-                    <span className="text-muted-foreground ml-1">/ {item.period}</span>
+                    <span className="text-3xl font-bold text-foreground">{item.price} {t("common.da")}</span>
+                    <span className="text-muted-foreground ml-1">/ {t(`landing.${item.period}`)}</span>
                   </div>
                   <Button
                     onClick={(e) => {
@@ -253,8 +256,8 @@ export function CategoryPage() {
                     }}
                     className="bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-full px-5 h-10 group/btn"
                   >
-                    Book Now
-                    <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                    {t("item.bookNow")}
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform rtl-mirror" />
                   </Button>
                 </div>
               </div>
@@ -270,16 +273,16 @@ export function CategoryPage() {
           className="mt-16 bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] rounded-3xl p-12 text-center"
         >
           <h2 className="text-4xl font-bold text-white mb-4">
-            Vous ne trouvez pas ce que vous cherchez ?
+            {t("category_cta.title")}
           </h2>
           <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-            Nous ajoutons constamment de nouveaux articles. Revenez bientôt ou parcourez toutes les catégories.
+            {t("category_cta.subtitle")}
           </p>
           <Button
             onClick={() => navigate('/explore')}
             className="bg-card hover:bg-white/90 text-foreground px-8 h-12 rounded-full text-lg font-medium"
           >
-            Parcourir toutes les catégories
+            {t("category_cta.button")}
           </Button>
         </motion.div>
       </div>

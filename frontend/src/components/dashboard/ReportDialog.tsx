@@ -18,6 +18,7 @@ import {
 import { reportsService } from "../../services/api.service";
 import { cn } from "../ui/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "../../context/language-context";
 
 interface ReportDialogProps {
   isOpen: boolean;
@@ -27,16 +28,18 @@ interface ReportDialogProps {
   targetTitle: string;
 }
 
-const REPORT_REASONS = [
-  { id: "inappropriate", label: "Contenu inapproprié", icon: ShieldAlert, color: "text-red-500", bg: "bg-red-500/10" },
-  { id: "fraud", label: "Arnaque ou fraude", icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10" },
-  { id: "spam", label: "Spam ou doublon", icon: Ban, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { id: "counterfeit", label: "Objet contrefait", icon: Info, color: "text-purple-500", bg: "bg-purple-500/10" },
-  { id: "harassment", label: "Harcèlement", icon: MessageSquareWarning, color: "text-orange-500", bg: "bg-orange-500/10" },
-  { id: "other", label: "Autre raison", icon: Flag, color: "text-slate-500", bg: "bg-slate-500/10" }
-];
-
 export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitle }: ReportDialogProps) {
+  const { t } = useTranslation();
+  
+  const REPORT_REASONS = [
+    { id: "inappropriate", label: t("report.reasons.inappropriate"), icon: ShieldAlert, color: "text-red-500", bg: "bg-red-500/10" },
+    { id: "fraud", label: t("report.reasons.fraud"), icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { id: "spam", label: t("report.reasons.spam"), icon: Ban, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { id: "counterfeit", label: t("report.reasons.counterfeit"), icon: Info, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { id: "harassment", label: t("report.reasons.harassment"), icon: MessageSquareWarning, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { id: "other", label: t("report.reasons.other"), icon: Flag, color: "text-slate-500", bg: "bg-slate-500/10" }
+  ];
+
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +48,7 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
 
   const handleSubmit = async () => {
     if (!reason) {
-      setError("Veuillez sélectionner un motif.");
+      setError(t("report.selectReasonError"));
       return;
     }
 
@@ -69,7 +72,7 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
         setDescription("");
       }, 2500);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de l'envoi du signalement.");
+      setError(err.message || t("report.reportError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -98,9 +101,9 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
                 <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping" />
               </div>
               <div>
-                <h3 className="text-2xl font-black mb-2">Merci pour votre vigilance</h3>
+                <h3 className="text-2xl font-black mb-2">{t("report.thankYouVigilance")}</h3>
                 <p className="text-muted-foreground font-medium max-w-[280px] mx-auto">
-                  Votre signalement concernant <strong>{targetTitle}</strong> a bien été envoyé à notre équipe de modération.
+                  <span dangerouslySetInnerHTML={{ __html: t("report.reportSentSubtitle", { title: targetTitle }) }} />
                 </p>
               </div>
             </motion.div>
@@ -118,12 +121,12 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
                     <ShieldAlert className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black tracking-tight">Signalement</h3>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#FF4F5A] opacity-80">Sécurité plateforme</p>
+                    <h3 className="text-xl font-black tracking-tight">{t("report.reportTitle")}</h3>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[#FF4F5A] opacity-80">{t("report.platformSecurity")}</p>
                   </div>
                 </div>
                 <p className="text-muted-foreground text-xs font-medium leading-relaxed">
-                  Pourquoi signalez-vous cet élément ? Votre aide nous est précieuse.
+                  {t("report.reportInstruction")}
                 </p>
               </div>
 
@@ -132,9 +135,9 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
                 {/* Reasons Grid */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">Motif du signalement</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">{t("report.reportReasonLabel")}</p>
                     {reason && (
-                      <button onClick={() => setReason("")} className="text-[9px] font-black uppercase text-[#FF4F5A] hover:underline transition-all">Effacer</button>
+                      <button onClick={() => setReason("")} className="text-[9px] font-black uppercase text-[#FF4F5A] hover:underline transition-all">{t("report.clear")}</button>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -170,12 +173,12 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
 
                 {/* Additional Details */}
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">Détails de l'incident</label>
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">{t("report.incidentDetails")}</label>
                   <div className="relative">
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Décrivez brièvement le problème..."
+                      placeholder={t("report.reportPlaceholder")}
                       className="min-h-[80px] rounded-xl bg-muted/30 border-border/60 focus:ring-2 focus:ring-[#FF4F5A]/20 resize-none font-bold text-xs p-4 transition-all placeholder:opacity-30"
                     />
                   </div>
@@ -208,17 +211,17 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
                   {isSubmitting ? (
                     <div className="flex items-center gap-3">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Envoi en cours...</span>
+                      <span>{t("report.sendingInProgress")}</span>
                     </div>
                   ) : !reason ? (
                     <div className="flex items-center gap-3">
                       <Info className="w-4 h-4" />
-                      <span>Choisir un motif</span>
+                      <span>{t("report.chooseReason")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
                       <Flag className="w-4 h-4" />
-                      <span>Envoyer le signalement</span>
+                      <span>{t("report.sendReport")}</span>
                     </div>
                   )}
                 </Button>
@@ -226,7 +229,7 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
                   onClick={onClose}
                   className="w-full mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Annuler et fermer
+                  {t("report.cancelAndClose")}
                 </button>
               </div>
             </motion.div>

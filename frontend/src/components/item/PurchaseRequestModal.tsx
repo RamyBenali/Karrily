@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button";
 import { ShoppingCart, Loader2, CheckCircle2, ShieldCheck, Info } from "lucide-react";
 import { salesService } from "../../services/api.service";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "../../context/language-context";
 
 interface PurchaseRequestModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface PurchaseRequestModalProps {
 }
 
 export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: PurchaseRequestModalProps) {
+  const { t } = useTranslation();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,7 +36,7 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
         setMessage("");
       }, 3000);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la demande.");
+      setError(err.message || t("item.purchaseRequestError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -48,9 +50,9 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
           <DialogHeader>
             <DialogTitle className="text-3xl font-black flex items-center gap-3">
               <ShoppingCart className="w-8 h-8 text-emerald-400" />
-              Demande d'achat
+              {t("item.purchaseRequest")}
             </DialogTitle>
-            <p className="text-emerald-100/60 font-medium">Envoyez une demande sécurisée au vendeur</p>
+            <p className="text-emerald-100/60 font-medium">{t("item.purchaseRequestSubtitle")}</p>
           </DialogHeader>
         </div>
 
@@ -66,9 +68,9 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground">Demande envoyée !</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{t("item.requestSent")}</h3>
                   <p className="text-muted-foreground mt-2 max-w-[280px] mx-auto text-sm">
-                    Le vendeur a été notifié. Vous recevrez une réponse dans votre tableau de bord.
+                    {t("item.requestSentSubtitle")}
                   </p>
                 </div>
               </motion.div>
@@ -90,7 +92,7 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-lg text-foreground truncate">{item.title}</h4>
                     <p className="text-[#FF4F5A] text-xl font-black mt-1">
-                      {Number(item.sale_price).toLocaleString()} DA
+                      {Number(item.sale_price).toLocaleString()} {t("common.da")}
                     </p>
                   </div>
                 </div>
@@ -98,12 +100,12 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
                 {/* Message Input */}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">
-                    Votre message
+                    {t("item.yourMessage")}
                   </label>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Bonjour, je suis très intéressé par cet article..."
+                    placeholder={t("item.messagePlaceholder")}
                     className="w-full px-6 py-5 bg-muted/30 border-none rounded-3xl text-sm resize-none focus:ring-2 ring-emerald-500/20 min-h-[120px] transition-all"
                   />
                 </div>
@@ -124,13 +126,13 @@ export function PurchaseRequestModal({ isOpen, onClose, item, onSuccess }: Purch
                     {isSubmitting ? (
                       <Loader2 className="w-6 h-6 animate-spin" />
                     ) : (
-                      "Confirmer l'achat"
+                      t("item.confirmPurchase")
                     )}
                   </Button>
                   
                   <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                     <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                    Paiement sécurisé Garanti
+                    {t("item.securePaymentGuaranteed")}
                   </div>
                 </div>
               </motion.div>

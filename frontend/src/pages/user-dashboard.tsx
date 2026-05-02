@@ -80,7 +80,7 @@ export function UserDashboard() {
   const location = useLocation();
   const { t } = useTranslation();
   const { user, role, hasItems } = useAuthStore();
-  
+
   const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
     pending: { label: t("bookingStatus.pending"), color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400" },
     confirmed: { label: t("bookingStatus.confirmed"), color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400" },
@@ -90,23 +90,13 @@ export function UserDashboard() {
     rejected: { label: t("bookingStatus.rejected"), color: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400" },
   };
 
-  const sidebarItems = [
-    { id: 'overview', icon: BarChart3, label: t("dashboard.overview") },
-    { id: 'bookings', icon: CalendarCheck, label: t("dashboard.activeBookings") },
-    { id: 'purchases', icon: ShoppingBag, label: t("dashboard.myPurchases") },
-    { id: 'trades', icon: RefreshCw, label: t("dashboard.myTrades") },
-    { id: 'favorites', icon: Heart, label: t("dashboard.favorites"), badge: 0 },
-    { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") },
-    { id: 'history', icon: Clock, label: t("dashboard.history") },
-    { id: 'profile', icon: UserIcon, label: t("dashboard.myProfile") },
-    { id: 'settings', icon: Settings2, label: t("dashboard.settings") },
-  ];
+
 
   const [activeTab, setActiveTab] = useState(() => {
     const tab = location.state?.tab?.toLowerCase();
-    if (tab === t("dashboard.overview").toLowerCase() || tab === 'overview') return 'overview';
-    if (tab === t("dashboard.messages").toLowerCase() || tab === 'messages') return 'messages';
-    if (tab === t("dashboard.activeBookings").toLowerCase() || tab === 'bookings') return 'bookings';
+    if (tab === 'messages') return 'messages';
+    if (tab === 'bookings') return 'bookings';
+    if (tab === 'favorites') return 'favorites';
     return tab || 'overview';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -147,6 +137,18 @@ export function UserDashboard() {
   const [bookingTab, setBookingTab] = useState<"renter" | "owner">("renter");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const sidebarItems = [
+    { id: 'overview', icon: BarChart3, label: t("dashboard.overview") !== "dashboard.overview" ? t("dashboard.overview") : "Aperçu" },
+    { id: 'bookings', icon: CalendarCheck, label: t("dashboard.activeBookings") !== "dashboard.activeBookings" ? t("dashboard.activeBookings") : "Mes Locations" },
+    { id: 'purchases', icon: ShoppingBag, label: t("dashboard.myPurchases") !== "dashboard.myPurchases" ? t("dashboard.myPurchases") : "Mes Achats" },
+    { id: 'trades', icon: RefreshCw, label: t("dashboard.myTrades") !== "dashboard.myTrades" ? t("dashboard.myTrades") : "Mes Trocs" },
+    { id: 'favorites', icon: Heart, label: t("dashboard.favorites") !== "dashboard.favorites" ? t("dashboard.favorites") : "Favoris", badge: favorites.length },
+    { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", badge: unreadCount },
+    { id: 'history', icon: Clock, label: t("dashboard.history") !== "dashboard.history" ? t("dashboard.history") : "Historique" },
+    { id: 'profile', icon: UserIcon, label: t("dashboard.myProfile") !== "dashboard.myProfile" ? t("dashboard.myProfile") : "Mon Profil" },
+    { id: 'settings', icon: Settings2, label: t("dashboard.settings") !== "dashboard.settings" ? t("dashboard.settings") : "Paramètres" },
+  ];
 
   useEffect(() => {
     let channel: RealtimeChannel;
@@ -255,7 +257,7 @@ export function UserDashboard() {
         supabase.removeChannel(notifChannel);
       };
     }
-  }, [user, bookingTab]);
+  }, [user?.id, bookingTab]);
 
   const handleBookingAction = async (bookingId: string, newStatus: string) => {
     try {
@@ -294,7 +296,7 @@ export function UserDashboard() {
       }
     };
     fetchConversations();
-  }, [user, activeTab]);
+  }, [user?.id, activeTab]);
 
   useEffect(() => {
     if (!user || !activeConversationId) return;
@@ -342,7 +344,7 @@ export function UserDashboard() {
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [user, activeConversationId]);
+  }, [user?.id, activeConversationId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -389,7 +391,7 @@ export function UserDashboard() {
       setIsLoadingProfile(false);
     };
     fetchProfile();
-  }, [user]);
+  }, [user?.id]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -405,7 +407,7 @@ export function UserDashboard() {
         full_name: profile.full_name,
         phone: profile.phone,
         bio: profile.bio,
-        location: wilaya ? `${wilaya}, ${profile.wilaya_code}` : profile.location,
+        location: wilaya ? `${wilaya.name}, ${profile.wilaya_code}` : profile.location,
         wilaya_code: profile.wilaya_code,
       })
       .eq("id", user.id);
@@ -437,7 +439,7 @@ export function UserDashboard() {
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
-      setProfileError("Erreur lors de l'upload de l'avatar.");
+      setProfileError(t("dashboard.avatarUploadError"));
       return;
     }
 
@@ -466,7 +468,7 @@ export function UserDashboard() {
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
-              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Dashboard</span>
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">{t("dashboard.dashboard")}</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-3 leading-tight tracking-tight">
               {t("dashboard.mySpaceTitle1")} <span className="gradient-text">{t("dashboard.mySpaceTitle2")}</span>
@@ -503,9 +505,9 @@ export function UserDashboard() {
                 >
                   <div className="grid md:grid-cols-3 gap-5">
                     {[
-                      { icon: Package, label: t("dashboard.activeBookingsCount"), value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: t("dashboard.inProgress"), color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: 'bookings' },
-                      { icon: MessageSquare, label: t("dashboard.messages"), value: unreadCount, sub: t("dashboard.unread"), color: "text-blue-500", bg: "bg-blue-500/10", tab: 'messages' },
-                      { icon: Heart, label: t("dashboard.favorites"), value: favorites.length, sub: t("dashboard.pinned"), color: "text-rose-400", bg: "bg-rose-400/10", tab: 'favorites' },
+                      { icon: Package, label: t("dashboard.activeBookingsCount") !== "dashboard.activeBookingsCount" ? t("dashboard.activeBookingsCount") : "Locations Actives", value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: t("dashboard.inProgress") !== "dashboard.inProgress" ? t("dashboard.inProgress") : "En cours", color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: 'bookings' },
+                      { icon: MessageSquare, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", value: unreadCount, sub: t("dashboard.unread") !== "dashboard.unread" ? t("dashboard.unread") : "non lus", color: "text-blue-500", bg: "bg-blue-500/10", tab: 'messages' },
+                      { icon: Heart, label: t("dashboard.favorites") !== "dashboard.favorites" ? t("dashboard.favorites") : "Favoris", value: favorites.length, sub: t("dashboard.pinned") !== "dashboard.pinned" ? t("dashboard.pinned") : "épinglés", color: "text-rose-400", bg: "bg-rose-400/10", tab: 'favorites' },
                     ].map((s, i) => (
                       <motion.div
                         key={s.label}
@@ -529,8 +531,8 @@ export function UserDashboard() {
 
                   <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     <div className="flex items-center justify-between px-7 py-5 border-b border-border/60">
-                      <h2 className="text-lg font-bold">{t("dashboard.recentActivity1")} <span className="text-[#FF4F5A]">{t("dashboard.recentActivity2")}</span></h2>
-                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab('messages')}>{t("dashboard.seeAll")} →</Button>
+                      <h2 className="text-lg font-bold">{(t("dashboard.recentActivity1") !== "dashboard.recentActivity1" ? t("dashboard.recentActivity1") : "Activités")} <span className="text-[#FF4F5A]">{(t("dashboard.recentActivity2") !== "dashboard.recentActivity2" ? t("dashboard.recentActivity2") : "Récentes")}</span></h2>
+                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-muted-foreground hover:text-foreground" onClick={() => setActiveTab('messages')}>{t("dashboard.seeAll") !== "dashboard.seeAll" ? t("dashboard.seeAll") : "Voir tout"} →</Button>
                     </div>
                     <div className="divide-y divide-border/50">
                       {notifications.length === 0 ? (
@@ -614,16 +616,16 @@ export function UserDashboard() {
                           : "text-muted-foreground hover:text-foreground"
                           }`}
                       >
-                        {tab === "renter" ? t("dashboard.myBookings") : t("dashboard.requestsReceived")}
+                        {tab === "renter" ? (t("dashboard.myBookings") !== "dashboard.myBookings" ? t("dashboard.myBookings") : "Mes Locations") : (t("dashboard.requestsReceived") !== "dashboard.requestsReceived" ? t("dashboard.requestsReceived") : "Demandes Reçues")}
                       </button>
                     ))}
                   </div>
 
                   <div className="grid md:grid-cols-3 gap-4">
                     {[
-                      { label: t("dashboard.pending"), value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b", bg: "bg-amber-500/10" },
-                      { label: t("dashboard.active"), value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A", bg: "bg-[#FF4F5A]/10" },
-                      { label: t("dashboard.completed"), value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#64748b", bg: "bg-slate-500/10" }
+                      { label: t("dashboard.pending") !== "dashboard.pending" ? t("dashboard.pending") : "En attente", value: bookings.filter(b => b.status === "pending").length, icon: Clock, color: "#f59e0b", bg: "bg-amber-500/10" },
+                      { label: t("dashboard.active") !== "dashboard.active" ? t("dashboard.active") : "En cours", value: bookings.filter(b => ["confirmed", "active"].includes(b.status)).length, icon: Package, color: "#FF4F5A", bg: "bg-[#FF4F5A]/10" },
+                      { label: t("dashboard.completed") !== "dashboard.completed" ? t("dashboard.completed") : "Terminé", value: bookings.filter(b => ["completed", "cancelled", "rejected"].includes(b.status)).length, icon: Calendar, color: "#64748b", bg: "bg-slate-500/10" }
                     ].map((stat, index) => (
                       <motion.div
                         key={stat.label}
@@ -644,7 +646,7 @@ export function UserDashboard() {
                   <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                     <div className="px-7 py-5 border-b border-border/60">
                       <h2 className="text-lg font-bold text-foreground">
-                        {bookingTab === "renter" ? t("dashboard.myBookings") : t("dashboard.requestsReceived")}
+                        {bookingTab === "renter" ? (t("dashboard.myBookings") !== "dashboard.myBookings" ? t("dashboard.myBookings") : "Mes Locations") : (t("dashboard.requestsReceived") !== "dashboard.requestsReceived" ? t("dashboard.requestsReceived") : "Demandes Reçues")}
                       </h2>
                     </div>
                     <div className="p-7">
@@ -752,7 +754,7 @@ export function UserDashboard() {
                                           className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
                                           onClick={() => handleBookingAction(booking.id, "completed")}
                                         >
-                                          <Check className="w-4 h-4 mr-1" /> Confirmer le retour
+                                          <Check className="w-4 h-4 mr-1" /> {t("dashboard.confirmReturn")}
                                         </Button>
                                       )}
                                     </>
@@ -765,7 +767,7 @@ export function UserDashboard() {
                                       className="rounded-full border-red-300 text-red-600 hover:bg-red-50"
                                       onClick={() => handleBookingAction(booking.id, "cancelled")}
                                     >
-                                      Annuler la demande
+                                      {t("dashboard.cancelRequest")}
                                     </Button>
                                   )}
                                   <Button
@@ -774,7 +776,7 @@ export function UserDashboard() {
                                     className="rounded-full"
                                     onClick={() => navigate(`/item/${booking.item_id}`)}
                                   >
-                                    Voir l'annonce
+                                    {t("dashboard.viewListing")}
                                   </Button>
                                 </div>
                               </div>
@@ -795,7 +797,7 @@ export function UserDashboard() {
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                      <ShoppingCart className="w-6 h-6" /> {t("dashboard.myPurchaseRequests")}
+                      <ShoppingCart className="w-6 h-6" /> {t("dashboard.myPurchaseRequests") !== "dashboard.myPurchaseRequests" ? t("dashboard.myPurchaseRequests") : "Mes Demandes d'Achat"}
                     </h2>
 
                     <div className="space-y-4">
@@ -816,10 +818,10 @@ export function UserDashboard() {
                                   sale.status === 'completed' ? 'bg-green-100 text-green-700' :
                                     'bg-red-100 text-red-700'
                                 }`}>
-                                {sale.status === 'pending' ? 'En attente' :
-                                  sale.status === 'accepted' ? 'Acceptée' :
-                                    sale.status === 'completed' ? 'Terminée' :
-                                      sale.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                                {sale.status === 'pending' ? t("bookingStatus.pending") :
+                                  sale.status === 'accepted' ? t("bookingStatus.confirmed") :
+                                    sale.status === 'completed' ? t("bookingStatus.completed") :
+                                      sale.status === 'rejected' ? t("bookingStatus.rejected") : t("bookingStatus.cancelled")}
                               </span>
                             </div>
                             <p className="text-2xl font-bold text-foreground mb-2">{sale.price} DZD</p>
@@ -831,11 +833,11 @@ export function UserDashboard() {
                                     <MessageSquare className="w-5 h-5" />
                                   </div>
                                   <p className="text-sm text-blue-700 font-semibold">
-                                    Instructions de livraison du vendeur :
+                                    {t("dashboard.deliveryInstructions")}
                                   </p>
                                 </div>
                                 <div className="bg-white/50 p-3 rounded-xl border border-blue-100 text-sm text-blue-800">
-                                  {sale.delivery_info || "Contactez le vendeur pour organiser la livraison."}
+                                  {sale.delivery_info || t("dashboard.contactSellerForDelivery")}
                                 </div>
                               </div>
                             )}
@@ -861,7 +863,7 @@ export function UserDashboard() {
                 >
                   <div className="bg-card rounded-3xl p-8 shadow-lg border border-border">
                     <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                      <RefreshCw className="w-6 h-6" /> {t("dashboard.myTradeProposals")}
+                      <RefreshCw className="w-6 h-6" /> {t("dashboard.myTradeProposals") !== "dashboard.myTradeProposals" ? t("dashboard.myTradeProposals") : "Mes Propositions de Troc"}
                     </h2>
 
                     <div className="space-y-4">
@@ -869,7 +871,7 @@ export function UserDashboard() {
                         <div key={proposal.id} className="p-6 bg-muted/50 rounded-3xl border border-border">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">Objet souhaité</p>
+                              <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">{t("dashboard.requestedItem")}</p>
                               <h3 className="text-lg font-bold text-foreground cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${proposal.requested_item_id}`)}>{proposal.requested_item?.title}</h3>
                             </div>
                             <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${proposal.status === 'pending' ? 'bg-purple-100 text-purple-700' :
@@ -877,10 +879,10 @@ export function UserDashboard() {
                                 proposal.status === 'completed' ? 'bg-green-100 text-green-700' :
                                   'bg-red-100 text-red-700'
                               }`}>
-                              {proposal.status === 'pending' ? 'Envoyée' :
-                                proposal.status === 'accepted' ? 'Acceptée' :
-                                  proposal.status === 'completed' ? 'Finalisé' :
-                                    proposal.status === 'rejected' ? 'Refusée' : 'Annulée'}
+                              {proposal.status === 'pending' ? t("bookingStatus.pending") :
+                                proposal.status === 'accepted' ? t("bookingStatus.confirmed") :
+                                  proposal.status === 'completed' ? t("bookingStatus.completed") :
+                                    proposal.status === 'rejected' ? t("bookingStatus.rejected") : t("bookingStatus.cancelled")}
                             </span>
                           </div>
 
@@ -889,9 +891,9 @@ export function UserDashboard() {
                               <RefreshCw className="w-5 h-5 rotate-45" />
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-purple-600 uppercase">Votre proposition :</p>
+                              <p className="text-xs font-bold text-purple-600 uppercase">{t("dashboard.yourProposal")}</p>
                               <p className="font-bold text-foreground">
-                                {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || "Objet personnel")}
+                                {proposal.offered_item ? proposal.offered_item.title : (proposal.offered_item_data?.title || t("dashboard.personalItem"))}
                               </p>
                             </div>
                           </div>
@@ -915,7 +917,7 @@ export function UserDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.myFavorites")}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.myFavorites") !== "dashboard.myFavorites" ? t("dashboard.myFavorites") : "Mes Favoris"}</h2>
 
                   {favorites.length === 0 ? (
                     <div className="text-center py-16 rounded-[2rem] bg-gradient-to-b from-muted to-transparent border border-dashed border-border/60">
@@ -926,7 +928,7 @@ export function UserDashboard() {
                         onClick={() => navigate('/explore')}
                         className="mt-6 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-full font-bold px-8 shadow-lg shadow-[#FF4F5A]/20 transition-all hover:scale-105"
                       >
-                        {t("dashboard.exploreListings")}
+                        {t("dashboard.exploreListings") !== "dashboard.exploreListings" ? t("dashboard.exploreListings") : "Explorer les annonces"}
                       </Button>
                     </div>
                   ) : (
@@ -946,12 +948,12 @@ export function UserDashboard() {
                               </div>
                               <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
                                 <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" />
-                                <span className="truncate max-w-[120px]">{fav.item?.location || "Non spécifié"}</span>
+                                <span className="truncate max-w-[120px]">{fav.item?.location || t("common.notSpecified")}</span>
                               </p>
                             </div>
                             <div className="flex items-end justify-between mt-3">
                               <p className="font-black text-lg text-foreground tracking-tight">
-                                {fav.item?.price_per_day} {t("common.da")} <span className="text-xs font-bold text-muted-foreground tracking-normal">/j</span>
+                                {fav.item?.price_per_day} {t("common.da")} <span className="text-xs font-bold text-muted-foreground tracking-normal">/ {t("landing.day")}</span>
                               </p>
                             </div>
                           </div>
@@ -973,8 +975,8 @@ export function UserDashboard() {
                   {/* Left Column: Conversations List */}
                   <div className="w-[280px] flex-shrink-0 border-r border-border flex flex-col bg-muted/20">
                     <div className="px-5 py-4 border-b border-border">
-                      <h2 className="text-base font-bold text-foreground">{t("dashboard.messages")}</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} {conversations.length === 1 ? t("dashboard.conversation") : t("dashboard.conversations")}</p>
+                      <h2 className="text-base font-bold text-foreground">{t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages"}</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} {conversations.length === 1 ? (t("dashboard.conversation") !== "dashboard.conversation" ? t("dashboard.conversation") : "conversation") : (t("dashboard.conversations") !== "dashboard.conversations" ? t("dashboard.conversations") : "conversations")}</p>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar">
                       {conversations.length === 0 ? (
@@ -1027,7 +1029,7 @@ export function UserDashboard() {
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
                           <MessageSquare className="w-8 h-8 opacity-30" />
                         </div>
-                        <p className="text-sm font-medium">{t("dashboard.selectConversation")}</p>
+                        <p className="text-sm font-medium">{t("dashboard.selectConversation") !== "dashboard.selectConversation" ? t("dashboard.selectConversation") : "Sélectionnez une conversation"}</p>
                       </div>
                     ) : (
                       <>
@@ -1111,7 +1113,7 @@ export function UserDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-3xl p-8 shadow-lg border border-border"
                 >
-                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.rentalHistory")}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.rentalHistory") !== "dashboard.rentalHistory" ? t("dashboard.rentalHistory") : "Historique de location"}</h2>
                   {historyBookings.length === 0 ? (
                     <div className="text-center py-12">
                       <Clock className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
@@ -1209,7 +1211,7 @@ export function UserDashboard() {
                     <div className="lg:col-span-2">
                       <div className="bg-card rounded-[2.5rem] p-10 shadow-xl border border-border">
                         <div className="flex items-center justify-between mb-10">
-                          <h2 className="text-2xl font-black">{t("dashboard.personalInfo1")} <span className="text-[#FF4F5A]">{t("dashboard.personalInfo2")}</span></h2>
+                          <h2 className="text-2xl font-black">{(t("dashboard.personalInfo1") !== "dashboard.personalInfo1" ? t("dashboard.personalInfo1") : "Informations").split(" ")[0]} <span className="text-[#FF4F5A]">{(t("dashboard.personalInfo2") !== "dashboard.personalInfo2" ? t("dashboard.personalInfo2") : "Personnelles")}</span></h2>
                           <div className="h-px flex-1 bg-border mx-8 hidden sm:block" />
                         </div>
 
@@ -1301,6 +1303,44 @@ export function UserDashboard() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ─── Paramètres ─── */}
+              {activeTab === 'settings' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card rounded-3xl p-8 shadow-lg border border-border"
+                >
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{t("dashboard.settings") !== "dashboard.settings" ? t("dashboard.settings") : "Paramètres"}</h2>
+                  <div className="space-y-6">
+                    <div className="p-6 bg-muted/20 rounded-2xl border border-border">
+                      <h3 className="font-bold text-lg mb-2">{t("dashboard.language") !== "dashboard.language" ? t("dashboard.language") : "Langue"}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{t("dashboard.languageDesc") !== "dashboard.languageDesc" ? t("dashboard.languageDesc") : "Choisissez votre langue d'affichage préférée."}</p>
+                      <div className="flex gap-3">
+                        {['fr', 'en', 'ar'].map(lang => (
+                          <Button 
+                            key={lang}
+                            variant="outline" 
+                            className="rounded-xl px-6"
+                            onClick={() => {
+                              window.location.reload(); 
+                            }}
+                          >
+                            {lang.toUpperCase()}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-6 bg-muted/20 rounded-2xl border border-border">
+                      <h3 className="font-bold text-lg mb-2">{t("dashboard.notifications") !== "dashboard.notifications" ? t("dashboard.notifications") : "Notifications"}</h3>
+                      <p className="text-sm text-muted-foreground">{t("dashboard.notifDesc") !== "dashboard.notifDesc" ? t("dashboard.notifDesc") : "Gérez vos préférences de notifications par email et SMS."}</p>
+                      <Button variant="outline" className="mt-4 rounded-xl opacity-50 cursor-not-allowed">
+                        {t("common.comingSoon") !== "common.comingSoon" ? t("common.comingSoon") : "Bientôt disponible"}
+                      </Button>
                     </div>
                   </div>
                 </motion.div>

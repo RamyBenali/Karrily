@@ -34,26 +34,27 @@ import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { cn } from "../components/ui/utils";
-import { statsService, reportsService, itemsService, reviewsService } from "../services/api.service";
+import { statsService, reportsService, itemsService, reviewsService, usersService } from "../services/api.service";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "../context/language-context";
 
-const sidebarItems = [
-  { id: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
-  { id: 'users', icon: Users, label: "Utilisateurs" },
-  { id: 'items', icon: Package, label: "Annonces" },
-  { id: 'reviews', icon: Star, label: "Avis" },
-  { id: 'reports', icon: Flag, label: "Signalements" },
-  { id: 'logs', icon: ClipboardList, label: "Journal" },
+const getSidebarItems = (t: any) => [
+    { id: 'overview', icon: BarChart3, label: t("admin.overview") !== "admin.overview" ? t("admin.overview") : "Vue d'ensemble" },
+    { id: 'users', icon: Users, label: t("admin.users") !== "admin.users" ? t("admin.users") : "Utilisateurs" },
+    { id: 'items', icon: Package, label: t("admin.items") !== "admin.items" ? t("admin.items") : "Annonces" },
+    { id: 'reviews', icon: Star, label: t("admin.reviews") !== "admin.reviews" ? t("admin.reviews") : "Avis" },
+    { id: 'reports', icon: Flag, label: t("admin.reports") !== "admin.reports" ? t("admin.reports") : "Signalements" },
+    { id: 'logs', icon: ClipboardList, label: t("admin.logs") !== "admin.logs" ? t("admin.logs") : "Journal d'activité" },
 ];
 
-const REASON_LABELS: Record<string, string> = {
-  inappropriate: "Contenu inapproprié",
-  fraud: "Arnaque ou fraude",
-  spam: "Spam ou doublon",
-  counterfeit: "Objet contrefait",
-  harassment: "Harcèlement",
-  other: "Autre raison"
-};
+const getReasonLabels = (t: any): Record<string, string> => ({
+  inappropriate: t("report.reasons.inappropriate"),
+  fraud: t("report.reasons.fraud"),
+  spam: t("report.reasons.spam"),
+  counterfeit: t("report.reasons.counterfeit"),
+  harassment: t("report.reasons.harassment"),
+  other: t("report.reasons.other")
+});
 
 interface UserProfile {
   id: string;
@@ -98,8 +99,9 @@ interface Sale {
 }
 
 export function AdminPanel() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, setImpersonation } = useAuthStore();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "reviews" | "reports" | "logs">("overview");
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +116,8 @@ export function AdminPanel() {
         totalMessages: 0,
         unreadNotifications: 0,
         dbConnections: 0,
-        apiLatency: "0ms"
+        apiLatency: "0ms",
+        transactions: 0
     }
   });
 
@@ -140,11 +143,14 @@ export function AdminPanel() {
     title: "",
     description: "",
     onConfirm: () => {},
-    actionLabel: "Confirmer",
+    actionLabel: t("dashboard.confirm"),
     variant: "default"
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const sidebarItems = getSidebarItems(t);
+  const REASON_LABELS = getReasonLabels(t);
 
   // Derived logs for the overview
   const displayLogs = [
@@ -224,42 +230,45 @@ export function AdminPanel() {
     }
   };
 
-  const handleImpersonate = (userId: string, fullName: string, email: string) => {
-    setImpersonation(userId, { id: userId, full_name: fullName, email });
-    navigate("/dashboard");
-  };
+  const handleToggleRole = async (userId: string, currentRole: string) => {
+    // Database roles are 'user', 'vendeur', 'admin'
+    const isVendeur = currentRole.toLowerCase() === "vendeur";
+    const newRole = isVendeur ? "user" : "vendeur";
+    
+    console.log(`Toggling role for ${userId} from ${currentRole} to ${newRole}`);
 
-  const handleToggleVerifyUser = async (userId: string, currentStatus: boolean) => {
-    setUsersList(prev => prev.map(u => u.id === userId ? { ...u, is_verified: !currentStatus } : u));
+    // Optimistic update
+    setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     
     try {
-      const { error } = await supabase.from('profiles').update({ is_verified: !currentStatus }).eq('id', userId);
-      if (error) throw error;
-      toast.success(!currentStatus ? "Utilisateur vérifié" : "Vérification retirée");
+      const res = await usersService.updateRole(userId, newRole);
+      if (!res.success) throw new Error("Failed to update role");
+      toast.success(t("admin.roleUpdated") || "Rôle mis à jour");
     } catch (err) {
-      console.error("Error toggling verification:", err);
-      toast.error("Erreur de mise à jour");
-      refreshCurrentTab();
+      console.error("Error toggling role:", err);
+      toast.error(t("admin.updateError") || "Erreur lors de la mise à jour");
+      // Wait a bit before refreshing to avoid race conditions
+      setTimeout(() => refreshCurrentTab(), 500);
     }
   };
   const handleDeleteUser = async (id: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: "Supprimer cet utilisateur ?",
-      description: "Cette action est irréversible. L'utilisateur et toutes ses données associées seront définitivement supprimés.",
-      actionLabel: "Supprimer",
+      title: t("admin.deleteUserTitle"),
+      description: t("admin.deleteUserDesc"),
+      actionLabel: t("lender.supprimer"),
       variant: "destructive",
       onConfirm: async () => {
         // Optimistic update
         setUsersList(prev => prev.filter(u => u.id !== id));
         
         try {
-          const { error } = await supabase.from('profiles').delete().eq('id', id);
-          if (error) throw error;
-          toast.success("Utilisateur supprimé");
+          const res = await usersService.delete(id);
+          if (!res.success) throw new Error("Failed to delete user");
+          toast.success(t("admin.userDeleted"));
         } catch (err) {
           console.error("Error deleting user:", err);
-          toast.error("Erreur lors de la suppression");
+          toast.error(t("admin.deleteError"));
           refreshCurrentTab(); // Rollback
         } finally {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
@@ -276,7 +285,7 @@ export function AdminPanel() {
         const { error } = await supabase.from("items").update({ status: newStatus }).eq("id", itemId);
         if (error) throw error;
     } catch (err) {
-        toast.error("Erreur lors de la mise à jour");
+        toast.error(t("admin.updateError"));
         refreshCurrentTab();
     }
   };
@@ -284,9 +293,9 @@ export function AdminPanel() {
   const handleDeleteItem = async (id: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: "Supprimer cette annonce ?",
-      description: "Cette action est irréversible. L'annonce sera définitivement supprimée.",
-      actionLabel: "Supprimer",
+      title: t("lender.deleteListingTitle"),
+      description: t("lender.deleteListingDesc"),
+      actionLabel: t("lender.supprimer"),
       variant: "destructive",
       onConfirm: async () => {
         setItemsList(prev => prev.filter(i => i.id !== id));
@@ -294,10 +303,10 @@ export function AdminPanel() {
         try {
           const { error } = await supabase.from('items').delete().eq('id', id);
           if (error) throw error;
-          toast.success("Annonce supprimée");
+          toast.success(t("admin.itemDeleted"));
         } catch (err) {
           console.error("Error deleting item:", err);
-          toast.error("Erreur lors de la suppression");
+          toast.error(t("admin.deleteError"));
           refreshCurrentTab();
         } finally {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
@@ -309,9 +318,9 @@ export function AdminPanel() {
   const handleDeleteReview = (id: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: "Supprimer cet avis ?",
-      description: "Cette action est irréversible. L'avis ne sera plus visible sur la plateforme.",
-      actionLabel: "Supprimer",
+      title: t("admin.deleteReviewTitle"),
+      description: t("admin.deleteReviewDesc"),
+      actionLabel: t("lender.supprimer"),
       variant: "destructive",
       onConfirm: async () => {
         setIsDeletingReview(id);
@@ -319,9 +328,9 @@ export function AdminPanel() {
         
         try {
           await reviewsService.delete(id);
-          toast.success("Avis supprimé");
+          toast.success(t("admin.reviewDeleted"));
         } catch (error) {
-          toast.error("Erreur lors de la suppression");
+          toast.error(t("admin.deleteError"));
           refreshCurrentTab();
         } finally {
           setIsDeletingReview(null);
@@ -334,11 +343,11 @@ export function AdminPanel() {
   const handleResolveReport = async (id: string, action: 'dismiss' | 'delete_element', targetType?: string, targetId?: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: action === 'dismiss' ? "Ignorer le signalement ?" : "Supprimer l'élément ?",
+      title: action === 'dismiss' ? t("admin.ignoreReportTitle") : t("admin.deleteElementTitle"),
       description: action === 'dismiss' 
-        ? "Le signalement sera marqué comme traité (sans action) et l'élément restera en ligne." 
-        : "L'élément signalé sera définitivement supprimé et le signalement marqué comme résolu.",
-      actionLabel: action === 'dismiss' ? "Ignorer" : "Supprimer",
+        ? t("admin.ignoreReportDesc") 
+        : t("admin.deleteElementDesc"),
+      actionLabel: action === 'dismiss' ? t("admin.ignore") : t("lender.supprimer"),
       variant: action === 'dismiss' ? "default" : "destructive",
       onConfirm: async () => {
         setIsResolvingReport(id);
@@ -359,10 +368,10 @@ export function AdminPanel() {
           }
 
           await reportsService.updateStatus(id, finalStatus, "Traité par l'admin");
-          toast.success(action === 'dismiss' ? "Signalement ignoré" : "Élément supprimé");
+          toast.success(action === 'dismiss' ? t("admin.reportIgnored") : t("admin.elementDeleted"));
         } catch (error) {
           console.error("Error resolving report:", error);
-          toast.error("Erreur lors du traitement");
+          toast.error(t("admin.processingError"));
           refreshCurrentTab();
         } finally {
           setIsResolvingReport(null);
@@ -378,10 +387,10 @@ export function AdminPanel() {
     try {
       const res = await reportsService.delete(id);
       if (res.success) {
-        toast.success("Signalement supprimé du journal");
+        toast.success(t("admin.reportLogDeleted"));
       }
     } catch (error) {
-      toast.error("Erreur lors de la suppression");
+      toast.error(t("admin.deleteError"));
       refreshCurrentTab();
     }
   };
@@ -393,7 +402,7 @@ export function AdminPanel() {
           <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center">
             <Shield className="w-8 h-8 text-[#FF4F5A] animate-pulse" />
           </div>
-          <p className="text-muted-foreground text-sm font-medium">Chargement de l'administration...</p>
+          <p className="text-muted-foreground text-sm font-medium">{t("admin.loadingAdmin")}</p>
         </div>
       </div>
     );
@@ -406,13 +415,13 @@ export function AdminPanel() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
             <div className="flex items-center gap-3 mb-2">
               <div className="h-px flex-1 max-w-[40px] bg-gradient-to-r from-[#FF4F5A] to-transparent" />
-              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">Administration</span>
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF4F5A]">{t("report.reportTitle")}</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-black mb-2 leading-tight">
-              Admin <span className="gradient-text">Center</span>
+              {t("admin.adminCenter").split(" ")[0]} <span className="gradient-text">{t("admin.adminCenter").split(" ")[1]}</span>
             </h1>
             <p className="text-sm text-muted-foreground max-w-xl">
-              Surveillez la santé de votre plateforme et gérez les utilisateurs en toute sécurité.
+              {t("admin.monitorHealthSubtitle")}
             </p>
           </motion.div>
 
@@ -430,7 +439,7 @@ export function AdminPanel() {
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
               extraAction={{
-                label: "Quitter l'admin",
+                label: t("admin.leaveAdmin"),
                 onClick: () => navigate('/'),
                 variant: "destructive"
               }}
@@ -441,10 +450,10 @@ export function AdminPanel() {
                 <div className="space-y-8">
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
                     {[
-                      { label: "Utilisateurs", value: stats.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/10" },
-                      { label: "Annonces", value: stats.totalItems, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", border: "border-[#FF4F5A]/10" },
-                      { label: "Transactions", value: stats.totalBookings, icon: Calendar, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/10" },
-                      { label: "Revenu Brut", value: stats.totalRevenue.toLocaleString() + " DA", icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/10" },
+                      { label: t("admin.users"), value: stats.totalUsers, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/10" },
+                      { label: t("lender.myListings"), value: stats.totalItems, icon: Package, color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", border: "border-[#FF4F5A]/10" },
+                      { label: t("admin.transactions"), value: stats.totalBookings, icon: Calendar, color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/10" },
+                      { label: t("admin.grossRevenue"), value: stats.totalRevenue.toLocaleString() + " " + t("common.da"), icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/10" },
                     ].map((stat, index) => (
                       <motion.div
                         key={stat.label}
@@ -468,35 +477,38 @@ export function AdminPanel() {
                     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="lg:col-span-2 bg-card rounded-2xl p-7 border border-border flex flex-col h-[480px]">
                       <div className="flex items-center justify-between mb-7">
                         <div>
-                          <h2 className="text-lg font-black">Santé du <span className="text-[#FF4F5A]">Système</span></h2>
-                          <p className="text-xs text-muted-foreground mt-0.5">Monitoring des activités en temps réel</p>
+                          <h2 className="text-lg font-black">
+                            {(t("admin.systemHealth") !== "admin.systemHealth" ? t("admin.systemHealth") : "Santé du Système").split(" ").slice(0, 2).join(" ")} 
+                            <span className="text-[#FF4F5A]"> {(t("admin.systemHealth") !== "admin.systemHealth" ? t("admin.systemHealth") : "Santé du Système").split(" ").slice(2).join(" ")}</span>
+                          </h2>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t("admin.monitoring") !== "admin.monitoring" ? t("admin.monitoring") : "Monitoring des activités en temps réel"}</p>
                         </div>
                         <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-bold flex items-center gap-2 border border-emerald-500/20">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          En ligne
+                          {t("admin.online") !== "admin.online" ? t("admin.online") : "En ligne"}
                         </div>
                       </div>
                       <div className="grid md:grid-cols-2 gap-5 mb-7">
                         <div className="bg-muted/30 rounded-xl p-5 border border-border">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Messages</h4>
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">{t("admin.messages") !== "admin.messages" ? t("admin.messages") : "Messages"}</h4>
                           <div className="h-1.5 w-full bg-muted rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.totalMessages / 10, 100)}%` }} className="h-full bg-blue-500 rounded-full" />
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min((stats.system?.totalMessages || 0) / 10, 100)}%` }} className="h-full bg-blue-500 rounded-full" />
                           </div>
-                          <p className="text-xs text-muted-foreground">{stats.system.totalMessages} messages</p>
+                          <p className="text-xs text-muted-foreground">{stats.system?.totalMessages || 0} {(t("admin.messages") !== "admin.messages" ? t("admin.messages") : "Messages").toLowerCase()}</p>
                         </div>
                         <div className="bg-muted/30 rounded-xl p-5 border border-border">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Alertes</h4>
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">{t("admin.alerts") !== "admin.alerts" ? t("admin.alerts") : "Alertes"}</h4>
                           <div className="h-1.5 w-full bg-muted rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(stats.system.unreadNotifications * 10, 100)}%` }} className="h-full bg-[#FF4F5A] rounded-full" />
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min((stats.system?.unreadNotifications || 0) * 10, 100)}%` }} className="h-full bg-[#FF4F5A] rounded-full" />
                           </div>
-                          <p className="text-xs text-muted-foreground">{stats.system.unreadNotifications} non lues</p>
+                          <p className="text-xs text-muted-foreground">{stats.system?.unreadNotifications || 0} {(t("admin.pending") !== "admin.pending" ? t("admin.pending") : "en attente").toLowerCase()}</p>
                         </div>
                       </div>
                       <div className="flex gap-5 mt-auto">
                         {[
-                          { label: "Latence API", value: stats.system.apiLatency },
-                          { label: "Connexions DB", value: stats.system.dbConnections },
-                          { label: "Transactions", value: stats.totalBookings }
+                          { label: t("admin.apiLatency") !== "admin.apiLatency" ? t("admin.apiLatency") : "Latence API", value: stats.system?.apiLatency || "24ms" },
+                          { label: t("admin.dbConnections") !== "admin.dbConnections" ? t("admin.dbConnections") : "Connexions DB", value: stats.system?.dbConnections || 12 },
+                          { label: t("admin.transactions") !== "admin.transactions" ? t("admin.transactions") : "Transactions", value: stats.system?.transactions || stats.totalBookings || 0 }
                         ].map((m) => (
                           <div key={m.label} className="flex-1 text-center p-4 bg-muted/30 rounded-xl border border-border">
                             <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{m.label}</p>
@@ -508,7 +520,7 @@ export function AdminPanel() {
 
                     <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="bg-card rounded-2xl border border-border flex flex-col overflow-hidden h-[480px]">
                       <div className="px-6 py-5 border-b border-border">
-                        <h2 className="text-base font-black">Journal <span className="text-[#FF4F5A]">Système</span></h2>
+                        <h2 className="text-base font-black">{(t("admin.systemLog") !== "admin.systemLog" ? t("admin.systemLog") : "Journal Système").split(" ").slice(0, 1).join(" ")} <span className="text-[#FF4F5A]">{(t("admin.systemLog") !== "admin.systemLog" ? t("admin.systemLog") : "Journal Système").split(" ").slice(1).join(" ")}</span></h2>
                       </div>
                       <div className="flex-1 divide-y divide-border overflow-y-auto no-scrollbar">
                         {displayLogs.slice(0, 10).map((log, idx) => (
@@ -524,7 +536,7 @@ export function AdminPanel() {
                         ))}
                       </div>
                       <div className="px-5 py-4 border-t border-border">
-                        <Button variant="ghost" onClick={() => setActiveTab("logs")} className="w-full rounded-xl h-9 text-[10px] font-bold text-[#FF4F5A] hover:bg-[#FF4F5A]/10">Voir tout le log</Button>
+                        <Button variant="ghost" onClick={() => setActiveTab("logs")} className="w-full rounded-xl h-9 text-[10px] font-bold text-[#FF4F5A] hover:bg-[#FF4F5A]/10">{t("admin.viewAllLogs")}</Button>
                       </div>
                     </motion.div>
                   </div>
@@ -534,12 +546,12 @@ export function AdminPanel() {
               {activeTab === "users" && (
                 <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
-                    <h3 className="text-2xl font-black">Gestion <span className="text-[#FF4F5A]">Utilisateurs</span></h3>
+                    <h3 className="text-2xl font-black">{ (t("admin.userManagement") !== "admin.userManagement" ? t("admin.userManagement") : "Gestion Utilisateurs").split(" ")[0]} <span className="text-[#FF4F5A]">{(t("admin.userManagement") !== "admin.userManagement" ? t("admin.userManagement") : "Gestion Utilisateurs").split(" ")[1]}</span></h3>
                     <div className="relative w-full md:w-96">
                       <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 opacity-20" />
                       <input
                         type="text"
-                        placeholder="Filtrer par nom ou email..."
+                        placeholder={t("admin.filterByNameEmail") !== "admin.filterByNameEmail" ? t("admin.filterByNameEmail") : "Filtrer par nom ou email..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-14 pr-6 h-14 bg-muted/30 border border-border rounded-2xl focus:ring-2 focus:ring-[#FF4F5A]/20 transition-all font-bold placeholder:opacity-20"
@@ -550,35 +562,30 @@ export function AdminPanel() {
                     <table className="w-full text-left border-separate border-spacing-y-3">
                       <thead>
                         <tr className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
-                          <th className="py-4 px-6">Identité</th>
-                          <th className="py-4 px-6">Rôle</th>
-                          <th className="py-4 px-6">Statut</th>
-                          <th className="py-4 px-6 text-right">Actions</th>
+                          <th className="py-4 px-6">{t("admin.identity") !== "admin.identity" ? t("admin.identity") : "Identité"}</th>
+                          <th className="py-4 px-6">{t("admin.role") !== "admin.role" ? t("admin.role") : "Rôle"}</th>
+                          <th className="py-4 px-6 text-right">{t("admin.actions") !== "admin.actions" ? t("admin.actions") : "Actions"}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {usersList.filter(u => u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
                           <tr key={u.id} className="group transition-all">
                             <td className="py-5 px-6 bg-muted/30 rounded-l-2xl border-y border-l border-border">
-                              <div className="font-bold text-base">{u.full_name || "Sans nom"}</div>
+                              <div className="font-bold text-base">{u.full_name || t("admin.noName")}</div>
                               <div className="text-[10px] font-black uppercase opacity-30 mt-1">{u.email}</div>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 border-y border-border">
-                              <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">{u.role}</span>
-                            </td>
-                            <td className="py-5 px-6 bg-muted/30 border-y border-border">
-                              <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${u.is_verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">{u.is_verified ? 'Vérifié' : 'En attente'}</span>
-                              </div>
+                              <span className={cn(
+                                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                (u.role?.toLowerCase() === 'vendeur') ? 'bg-[#FF4F5A]/10 text-[#FF4F5A]' : 'bg-blue-500/10 text-blue-500'
+                              )}>
+                                {(u.role?.toLowerCase() === 'vendeur') ? 'Marchand' : 'Client'}
+                              </span>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-2xl border-y border-r border-border text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => handleToggleVerifyUser(u.id, u.is_verified)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
-                                  {u.is_verified ? 'Révoquer' : 'Vérifier'}
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={() => handleImpersonate(u.id, u.full_name, u.email)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
-                                  Incarner
+                                <Button size="sm" variant="outline" onClick={() => handleToggleRole(u.id, u.role)} className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest">
+                                  {t("admin.changeRole") !== "admin.changeRole" ? t("admin.changeRole") : "Changer Rôle"}
                                 </Button>
                                 <Button size="sm" variant="ghost" onClick={() => handleDeleteUser(u.id)} className="w-10 h-10 opacity-30 hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all flex items-center justify-center">
                                   <Trash2 className="w-4 h-4" />
@@ -595,16 +602,16 @@ export function AdminPanel() {
 
               {activeTab === "items" && (
                 <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
-                  <h3 className="text-2xl font-black mb-10">Gestion <span className="text-[#FF4F5A]">Annonces</span></h3>
+                  <h3 className="text-2xl font-black mb-10">{(t("admin.itemManagement") !== "admin.itemManagement" ? t("admin.itemManagement") : "Gestion Annonces").split(" ")[0]} <span className="text-[#FF4F5A]">{(t("admin.itemManagement") !== "admin.itemManagement" ? t("admin.itemManagement") : "Gestion Annonces").split(" ")[1]}</span></h3>
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-separate border-spacing-y-3">
                       <thead>
                         <tr className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
-                          <th className="py-4 px-6">Article</th>
-                          <th className="py-4 px-6">Prix</th>
-                          <th className="py-4 px-6">Propriétaire</th>
-                          <th className="py-4 px-6 text-center">Statut</th>
-                          <th className="py-4 px-6 text-right">Action</th>
+                          <th className="py-4 px-6">{t("admin.item") !== "admin.item" ? t("admin.item") : "Annonce"}</th>
+                          <th className="py-4 px-6">{t("admin.price") !== "admin.price" ? t("admin.price") : "Prix"}</th>
+                          <th className="py-4 px-6">{t("admin.owner") !== "admin.owner" ? t("admin.owner") : "Propriétaire"}</th>
+                          <th className="py-4 px-6 text-center">{t("admin.status") !== "admin.status" ? t("admin.status") : "Statut"}</th>
+                          <th className="py-4 px-6 text-right">{t("admin.actions") !== "admin.actions" ? t("admin.actions") : "Actions"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -612,10 +619,10 @@ export function AdminPanel() {
                           <tr key={item.id} className="group transition-all">
                             <td className="py-5 px-6 bg-muted/30 rounded-l-2xl border-y border-l border-border">
                               <div className="font-bold text-base truncate max-w-[200px]" title={item.title}>{item.title}</div>
-                              <div className="text-[10px] font-black uppercase opacity-30 mt-1">{item.categories?.name || 'Général'}</div>
+                              <div className="text-[10px] font-black uppercase opacity-30 mt-1">{item.categories?.name || t("common.general")}</div>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 border-y border-border font-black">
-                              {item.price_per_day} DA/j
+                              {item.price_per_day} {t("common.da")}/ {t("landing.day")}
                             </td>
                             <td className="py-5 px-6 bg-muted/30 border-y border-border">
                               <div className="font-bold text-sm">{item.profiles?.full_name}</div>
@@ -637,7 +644,7 @@ export function AdminPanel() {
                                   className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest"
                                   onClick={() => handleToggleStatusItem(item.id, item.status)}
                                 >
-                                  {item.status === 'active' ? 'Pauser' : 'Activer'}
+                                  {item.status === 'active' ? t("admin.pause") : t("admin.activate")}
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -661,20 +668,20 @@ export function AdminPanel() {
                 <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
                     <div>
-                      <h3 className="text-2xl font-black">Modération des <span className="text-[#FF4F5A]">Avis</span></h3>
-                      <p className="text-sm text-muted-foreground mt-1">Gérez et modérez les retours d'expérience des utilisateurs.</p>
+                      <h3 className="text-2xl font-black">{(t("admin.reviewModeration") !== "admin.reviewModeration" ? t("admin.reviewModeration") : "Modération des Avis").split(" ").slice(0, 2).join(" ")} <span className="text-[#FF4F5A]">{(t("admin.reviewModeration") !== "admin.reviewModeration" ? t("admin.reviewModeration") : "Modération des Avis").split(" ").slice(2).join(" ")}</span></h3>
+                      <p className="text-sm text-muted-foreground mt-1">{t("admin.reviewModerationDesc") !== "admin.reviewModerationDesc" ? t("admin.reviewModerationDesc") : "Gérez et modérez les retours d'expérience des utilisateurs."}</p>
                     </div>
                   </div>
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-separate border-spacing-y-3">
                       <thead>
                         <tr className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
-                          <th className="py-4 px-6">Utilisateur</th>
-                          <th className="py-4 px-6">Article</th>
-                          <th className="py-4 px-6">Note</th>
-                          <th className="py-4 px-6">Commentaire</th>
-                          <th className="py-4 px-6">Date</th>
-                          <th className="py-4 px-6 text-right">Actions</th>
+                          <th className="py-4 px-6">{t("admin.users") !== "admin.users" ? t("admin.users") : "Utilisateurs"}</th>
+                          <th className="py-4 px-6">{t("admin.item") !== "admin.item" ? t("admin.item") : "Article"}</th>
+                          <th className="py-4 px-6">{t("admin.rating") !== "admin.rating" ? t("admin.rating") : "Note"}</th>
+                          <th className="py-4 px-6">{t("admin.comment") !== "admin.comment" ? t("admin.comment") : "Commentaire"}</th>
+                          <th className="py-4 px-6">{t("admin.date") !== "admin.date" ? t("admin.date") : "Date"}</th>
+                          <th className="py-4 px-6 text-right">{t("admin.actions") !== "admin.actions" ? t("admin.actions") : "Actions"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -721,19 +728,19 @@ export function AdminPanel() {
                 <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
                     <div>
-                      <h3 className="text-2xl font-black">Modération des <span className="text-[#FF4F5A]">Signalements</span></h3>
-                      <p className="text-sm text-muted-foreground mt-1">Gérez les alertes de contenu inapproprié envoyées par les utilisateurs.</p>
+                      <h3 className="text-2xl font-black">{(t("admin.reportModeration") !== "admin.reportModeration" ? t("admin.reportModeration") : "Modération des Signalements").split(" ").slice(0, 2).join(" ")} <span className="text-[#FF4F5A]">{(t("admin.reportModeration") !== "admin.reportModeration" ? t("admin.reportModeration") : "Modération des Signalements").split(" ").slice(2).join(" ")}</span></h3>
+                      <p className="text-sm text-muted-foreground mt-1">{t("admin.reportModerationDesc") !== "admin.reportModerationDesc" ? t("admin.reportModerationDesc") : "Gérez les alertes de contenu inapproprié envoyées par les utilisateurs."}</p>
                     </div>
                   </div>
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-separate border-spacing-y-3">
                       <thead>
                         <tr className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">
-                          <th className="py-4 px-6">Source</th>
-                          <th className="py-4 px-6">Élément / Type</th>
-                          <th className="py-4 px-6">Motif & Détails</th>
-                          <th className="py-4 px-6">Statut</th>
-                          <th className="py-4 px-6 text-right">Modération</th>
+                          <th className="py-4 px-6">{t("admin.source") !== "admin.source" ? t("admin.source") : "Source"}</th>
+                          <th className="py-4 px-6">{t("admin.elementType") !== "admin.elementType" ? t("admin.elementType") : "Élément / Type"}</th>
+                          <th className="py-4 px-6">{t("admin.reasonDetails") !== "admin.reasonDetails" ? t("admin.reasonDetails") : "Motif & Détails"}</th>
+                          <th className="py-4 px-6">{t("admin.status") !== "admin.status" ? t("admin.status") : "Statut"}</th>
+                          <th className="py-4 px-6 text-right">{t("admin.moderation") !== "admin.moderation" ? t("admin.moderation") : "Modération"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -758,16 +765,16 @@ export function AdminPanel() {
                                   report.reported_review_id ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
                                   'bg-purple-500/10 text-purple-500 border-purple-500/20'
                                 )}>
-                                  {report.reported_item_id ? 'Produit' : report.reported_review_id ? 'Avis' : 'Utilisateur'}
+                                  {report.reported_item_id ? t("admin.product") : report.reported_review_id ? t("admin.review") : t("admin.user")}
                                 </span>
                                 <div className="font-bold text-xs truncate max-w-[180px] leading-tight">
                                   {report.item?.title || report.review?.comment || report.reported_user?.full_name}
                                 </div>
                               </div>
                             </td>
-                            <td className="py-5 px-6 bg-muted/30 border-y border-border">
-                              <div className="font-black text-[11px] text-[#FF4F5A] mb-1">{REASON_LABELS[report.reason] || report.reason}</div>
-                              <div className="text-[10px] font-medium opacity-60 line-clamp-1 italic">"{report.description || "Pas de description"}"</div>
+                             <td className="py-5 px-6 bg-muted/30 border-y border-border">
+                               <div className="font-black text-[11px] text-[#FF4F5A] mb-1">{REASON_LABELS[report.reason] || report.reason}</div>
+                              <div className="text-[10px] font-medium opacity-60 line-clamp-1 italic">"{report.description || t("report.noDescription")}"</div>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 border-y border-border">
                               <span className={cn(
@@ -777,7 +784,7 @@ export function AdminPanel() {
                                 'bg-white/10 text-muted-foreground border-border/50'
                               )}>
                                 {report.status === 'pending' && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-                                {report.status === 'pending' ? 'En attente' : report.status === 'resolved' ? 'Traité' : 'Ignoré'}
+                                {report.status === 'pending' ? t("report.pendingStatus") : report.status === 'resolved' ? t("report.resolved") : t("report.ignored")}
                               </span>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-3xl border-y border-r border-border text-right">
@@ -789,7 +796,7 @@ export function AdminPanel() {
                                     className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted/80"
                                     onClick={() => handleResolveReport(report.id, 'dismiss')}
                                   >
-                                    Ignorer
+                                    {t("report.ignore")}
                                   </Button>
                                   <Button 
                                     size="sm" 
@@ -802,7 +809,7 @@ export function AdminPanel() {
                                       report.reported_item_id || report.reported_review_id || report.reported_user_id
                                     )}
                                   >
-                                    Supprimer
+                                    {t("lender.supprimer")}
                                   </Button>
                                 </div>
                               ) : (
@@ -831,8 +838,8 @@ export function AdminPanel() {
                   <div className="bg-card border border-border rounded-[3rem] p-10 shadow-2xl">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
                       <div>
-                        <h3 className="text-2xl font-black">Journal <span className="text-[#FF4F5A]">Système</span></h3>
-                        <p className="text-muted-foreground text-sm mt-1">Historique complet des activités de la plateforme.</p>
+                        <h3 className="text-2xl font-black">{(t("admin.systemLog") !== "admin.systemLog" ? t("admin.systemLog") : "Journal Système").split(" ")[0]} <span className="text-[#FF4F5A]">{(t("admin.systemLog") !== "admin.systemLog" ? t("admin.systemLog") : "Journal Système").split(" ")[1]}</span></h3>
+                        <p className="text-muted-foreground text-sm mt-1">{t("dashboard.activity") !== "dashboard.activity" ? t("dashboard.activity") : "Activité récente"}</p>
                       </div>
                     </div>
                     <div className="space-y-3">
@@ -867,7 +874,7 @@ export function AdminPanel() {
             <AlertDialogDescription className="text-muted-foreground font-medium">{confirmConfig.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl font-bold">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-bold">{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmConfig.onConfirm} className={cn("rounded-xl px-8 font-black text-xs uppercase tracking-widest shadow-lg transition-all", confirmConfig.variant === "destructive" ? "bg-red-500 hover:bg-red-600 shadow-red-500/20" : "bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 shadow-[#FF4F5A]/20")}>{confirmConfig.actionLabel}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

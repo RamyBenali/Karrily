@@ -14,6 +14,7 @@ import {
   WILAYAS, SORT_OPTIONS, RATING_FILTER_OPTIONS, type FilterField
 } from "./explore-constants";
 import type { Dispatch, SetStateAction } from "react";
+import { useTranslation } from "../../context/language-context";
 
 export const EXPLORE_BUDGET_MAX = 1000000;
 
@@ -57,6 +58,7 @@ export function ExploreHeader({
   openMobileFilters,
   sortBy, setSortBy
 }: ExploreHeaderProps) {
+  const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState(debouncedSearch);
 
   const handleSearchCommit = () => {
@@ -64,10 +66,10 @@ export function ExploreHeader({
   };
 
   const modalities = [
-    { id: "", label: "Tous", icon: null },
-    { id: "rent", label: "Location", icon: Home },
-    { id: "sell", label: "Vente", icon: ShoppingCart },
-    { id: "troc", label: "Troc", icon: RefreshCw },
+    { id: "", label: t("common.all"), icon: null },
+    { id: "rent", label: t("landing.rent"), icon: Home },
+    { id: "sell", label: t("landing.buy"), icon: ShoppingCart },
+    { id: "troc", label: t("landing.trade"), icon: RefreshCw },
   ];
 
   return (
@@ -86,7 +88,7 @@ export function ExploreHeader({
               </div>
               <input
                 type="text"
-                placeholder="Que recherchez-vous ?"
+                placeholder={t("common.searchPlaceholder")}
                 className="w-full bg-transparent border-none outline-none text-sm font-bold placeholder:text-muted-foreground/50"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
@@ -100,13 +102,13 @@ export function ExploreHeader({
             <div className="flex-1 flex items-center px-4 relative max-w-[220px] shrink-0">
               <MapPin className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
               <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]/60 -mb-0.5">Wilaya</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]/60 -mb-0.5">{t("common.wilaya")}</span>
                 <select
                   className="w-full bg-transparent border-none outline-none text-xs font-black appearance-none cursor-pointer truncate"
                   value={selectedWilaya}
                   onChange={(e) => setSelectedWilaya(e.target.value)}
                 >
-                  <option value="">Toute l'Algérie</option>
+                  <option value="">{t("common.allAlgeria")}</option>
                   {WILAYAS.map((w) => (
                     <option key={w.code} value={w.code}>{w.name}</option>
                   ))}
@@ -142,7 +144,7 @@ export function ExploreHeader({
               className="flex lg:hidden items-center gap-2 bg-card border border-border/60 h-12 px-5 rounded-full text-sm font-semibold hover:bg-muted/50 transition-colors relative"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filtres
+              {t("common.filters")}
               {activeFilterCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-[#FF4F5A] text-white text-[10px] flex items-center justify-center font-black ml-1">
                   {activeFilterCount}
@@ -181,7 +183,7 @@ export function ExploreHeader({
                     : "border-border bg-card/50 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                 )}
               >
-                Toutes
+                {t("explore.all")}
               </button>
             {categories.map((cat) => {
               const checked = selectedCategorySlugs.includes(cat.slug);
@@ -234,10 +236,11 @@ export function ExploreFiltersContent({
   selectedListingType,
   className
 }: ExploreFiltersContentProps) {
+  const { t } = useTranslation();
 
-  const budgetLabel = selectedListingType === "rent" ? "Budget Location / jour" 
-                    : selectedListingType === "sell" ? "Budget d'Achat"
-                    : "Budget Max";
+  const budgetLabel = selectedListingType === "rent" ? t("explore.budgetLocation") 
+                    : selectedListingType === "sell" ? t("explore.budgetPurchase")
+                    : t("explore.budgetMax");
 
   return (
     <div className={cn("space-y-8 pb-10", className)}>
@@ -246,15 +249,15 @@ export function ExploreFiltersContent({
       <div className="flex items-center justify-between pb-6 border-b border-border/20">
          <div className="space-y-1">
            <h2 className="text-xl font-black tracking-tight flex items-center gap-2 text-foreground">
-             <SlidersHorizontal className="w-5 h-5 text-[#FF4F5A]" /> Filtres
+             <SlidersHorizontal className="w-5 h-5 text-[#FF4F5A]" /> {t("common.filters")}
            </h2>
-           <p className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground/60 px-1">Personnalisez</p>
+           <p className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground/60 px-1">{t("explore.customize")}</p>
          </div>
          <button 
            onClick={resetFilters}
            className="h-8 px-4 rounded-full bg-muted/60 hover:bg-muted text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 border border-border/20"
          >
-            <RotateCcw className="w-3 h-3" /> Reset
+            <RotateCcw className="w-3 h-3" /> {t("common.reset")}
          </button>
       </div>
 
@@ -276,12 +279,12 @@ export function ExploreFiltersContent({
             />
             <div className="flex justify-between items-center gap-4">
               <div className="flex-1 bg-muted p-3 lg:p-4 rounded-xl lg:rounded-2xl border border-border/40 text-center lg:text-left">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Min</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{t("common.min")}</p>
                 <span className="text-sm font-black tabular-nums">{budgetRange[0].toLocaleString()} DA</span>
               </div>
               <div className="w-3 h-[1px] bg-border shrink-0" />
               <div className="flex-1 bg-muted p-3 lg:p-4 rounded-xl lg:rounded-2xl border border-border/40 text-center lg:text-left">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Max</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{t("common.max")}</p>
                 <span className="text-xs lg:text-sm font-black tabular-nums">
                   {budgetRange[1] >= EXPLORE_BUDGET_MAX ? `${EXPLORE_BUDGET_MAX.toLocaleString()}+` : budgetRange[1].toLocaleString()} DA
                 </span>
@@ -293,14 +296,14 @@ export function ExploreFiltersContent({
 
       <section className="space-y-4">
         <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
-          <Box className="w-3.5 h-3.5" /> État de l'objet
+          <Box className="w-3.5 h-3.5" /> {t("common.condition")}
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { v: "", l: "Tous" },
-            { v: "new", l: "Neuf" },
-            { v: "like_new", l: "Comme neuf" },
-            { v: "good", l: "Occasion" },
+            { v: "", l: t("common.all") },
+            { v: "new", l: t("conditions.new") },
+            { v: "like_new", l: t("conditions.like_new") },
+            { v: "good", l: t("conditions.good") },
           ].map((c) => (
             <button
               key={c.v}
@@ -320,7 +323,7 @@ export function ExploreFiltersContent({
 
       <section className="space-y-4">
         <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
-          <Star className="w-3.5 h-3.5" /> Note Propriétaire
+          <Star className="w-3.5 h-3.5" /> {t("common.ownerRating")}
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {RATING_FILTER_OPTIONS.map((opt) => (
@@ -344,7 +347,7 @@ export function ExploreFiltersContent({
       {activeCategoryFilters.length > 0 && (
         <section className="pt-6 border-t border-border/40">
           <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-6">
-            Spécifications Spéciales
+            {t("common.specialSpecs")}
           </h3>
           <div className="space-y-5">
             {activeCategoryFilters.map((filter) => (
@@ -358,7 +361,7 @@ export function ExploreFiltersContent({
                       value={categoryFilters[filter.key] || ""}
                       onChange={(e) => setCategoryFilters((prev) => ({ ...prev, [filter.key]: e.target.value }))}
                     >
-                      <option value="">Indifférent</option>
+                      <option value="">{t("common.indifferent")}</option>
                       {filter.options?.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
@@ -386,7 +389,7 @@ export function ExploreFiltersContent({
                     )}>
                       {categoryFilters[filter.key] === "true" && <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />}
                     </div>
-                    <span className="text-sm font-semibold">Oui, inclure</span>
+                    <span className="text-sm font-semibold">{t("common.yesInclude")}</span>
                     <input
                       type="checkbox"
                       className="hidden"
@@ -410,12 +413,13 @@ export function ExploreFiltersContent({
 // ----------------------------------------------------------------------
 
 export function ExploreFiltersMobileSheet(props: ExploreFiltersContentProps & { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+  const { t } = useTranslation();
   return (
     <Sheet open={props.isOpen} onOpenChange={props.onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-background border-l-border/30 overflow-y-auto no-scrollbar shadow-2xl lg:hidden">
         <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border/40 px-6 py-4 flex items-center justify-between">
            <SheetTitle className="sr-only">Filtres</SheetTitle> {/* Accessible */}
-           <span className="text-lg font-bold">Filtres Flexibles</span>
+           <span className="text-lg font-bold">{t("explore.flexibleFilters")}</span>
         </div>
         <div className="p-6">
             <ExploreFiltersContent {...props} />

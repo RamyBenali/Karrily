@@ -14,6 +14,7 @@ import { supabase } from "../lib/supabase";
 import { itemsService } from "../services/api.service";
 import { CATEGORY_FILTERS } from "../components/explore/explore-constants";
 import { Footer } from "../components/layout/footer";
+import { useTranslation } from "../context/language-context";
 
 const WILAYAS = [
     { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
@@ -36,21 +37,21 @@ const WILAYAS = [
 ];
 
 const LISTING_TYPES = [
-    { value: "rent", label: "Location", icon: Home, desc: "Louer votre bien temporairement" },
-    { value: "sell", label: "Vente", icon: ShoppingCart, desc: "Vendre votre bien définitivement" },
-    { value: "troc", label: "Troc", icon: RefreshCw, desc: "Échanger contre un autre objet" },
-    { value: "rent_sell", label: "Mixte", icon: HandCoins, desc: "Location et vente possibles" },
+    { value: "rent", label: "listingTypes.rent", icon: Home, desc: "listingTypes.rentDesc" },
+    { value: "sell", label: "listingTypes.sell", icon: ShoppingCart, desc: "listingTypes.sellDesc" },
+    { value: "troc", label: "listingTypes.troc", icon: RefreshCw, desc: "listingTypes.trocDesc" },
+    { value: "rent_sell", label: "listingTypes.rent_sell", icon: HandCoins, desc: "listingTypes.rent_sellDesc" },
 ];
 
 const CONDITIONS = [
-    { value: "new", label: "Neuf", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
-    { value: "like_new", label: "Comme neuf", color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
-    { value: "good", label: "Bon état", color: "bg-slate-50 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400" },
-    { value: "fair", label: "Correct", color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
-    { value: "poor", label: "Usé", color: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
+    { value: "new", label: "conditions.new", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" },
+    { value: "like_new", label: "conditions.like_new", color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    { value: "good", label: "conditions.good", color: "bg-slate-50 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400" },
+    { value: "fair", label: "conditions.fair", color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" },
+    { value: "poor", label: "conditions.poor", color: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
 ];
 
-const STEPS = ["Modalité", "Détails", "Photos", "Offre", "Récap"];
+const STEPS = ["createItem.steps.modality", "createItem.steps.details", "createItem.steps.photos", "createItem.steps.offer", "createItem.steps.recap"];
 
 interface FormData {
     listing_type: string;
@@ -86,6 +87,7 @@ export function EditItemPage() {
     const navigate = useNavigate();
     const { id: itemId } = useParams<{ id: string }>();
     const { user } = useAuthStore();
+    const { t } = useTranslation();
     const [step, setStep] = useState(0);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,7 +160,7 @@ export function EditItemPage() {
                         metadata: item.metadata || {},
                     });
                 } catch (err) {
-                    setError("Impossible de charger l'annonce.");
+                    setError(t("item.loadError"));
                 }
             }
             setIsFetchingItem(false);
@@ -173,7 +175,7 @@ export function EditItemPage() {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (form.imagePreviewUrls.length + files.length > 8) {
-            setError("Maximum 8 images autorisées.");
+            setError(t("createItem.errors.maxImages"));
             return;
         }
         const newPreviews = files.map(f => URL.createObjectURL(f));
@@ -237,7 +239,7 @@ export function EditItemPage() {
                     .from("item-images")
                     .upload(fileName, file);
 
-                if (uploadError) throw new Error("Erreur upload image: " + uploadError.message);
+                if (uploadError) throw new Error(t("createItem.errors.uploadError") + ": " + uploadError.message);
 
                 const { data: urlData } = supabase.storage.from("item-images").getPublicUrl(fileName);
                 finalImageUrls.push(urlData.publicUrl);
@@ -270,7 +272,7 @@ export function EditItemPage() {
 
             navigate(`/item/${itemId}`);
         } catch (err: any) {
-            setError(err.message || "Erreur lors de la mise à jour.");
+            setError(err.message || t("common.updateError"));
             setIsSubmitting(false);
         }
     };
@@ -279,7 +281,7 @@ export function EditItemPage() {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-[#FF4F5A] mb-4" />
-                <p className="text-muted-foreground">Chargement de votre annonce...</p>
+                <p className="text-muted-foreground">{t("common.loading")}</p>
             </div>
         );
     }
@@ -299,13 +301,13 @@ export function EditItemPage() {
                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
                         >
                             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                            <span>{step > 0 ? "Étape précédente" : "Retour"}</span>
+                            <span>{step > 0 ? t("common.back") : t("common.back")}</span>
                         </motion.button>
                         
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div>
-                                <h1 className="text-4xl font-extrabold tracking-tight mb-2">Modifier l'annonce</h1>
-                                <p className="text-muted-foreground text-lg">Mettez à jour les informations de votre bien.</p>
+                                <h1 className="text-4xl font-extrabold tracking-tight mb-2">{t("item.editListing")}</h1>
+                                <p className="text-muted-foreground text-lg">{t("item.editListingSubtitle")}</p>
                             </div>
                             <div className="flex gap-1.5">
                                 {STEPS.map((s, i) => (
@@ -354,8 +356,8 @@ export function EditItemPage() {
                                             }`}>
                                                 <type.icon className="w-7 h-7" />
                                             </div>
-                                            <h3 className="text-xl font-bold mb-2">{type.label}</h3>
-                                            <p className="text-muted-foreground text-sm leading-relaxed">{type.desc}</p>
+                                            <h3 className="text-xl font-bold mb-2">{t(type.label)}</h3>
+                                            <p className="text-muted-foreground text-sm leading-relaxed">{t(type.desc)}</p>
                                         </button>
                                     ))}
                                 </motion.div>
@@ -371,17 +373,17 @@ export function EditItemPage() {
                                 >
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Titre de l'annonce</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.title")}</label>
                                             <Input
                                                 value={form.title}
                                                 onChange={e => updateForm({ title: e.target.value })}
-                                                placeholder="Ex: Appareil Photo Sony Alpha 7 IV"
+                                                placeholder={t("createItem.placeholders.title")}
                                                 className="h-16 text-lg rounded-3xl bg-muted/30 border-none px-6 focus:ring-2 ring-[#FF4F5A]/20"
                                             />
                                         </div>
 
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Catégorie</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.category")}</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {categories.map(cat => (
                                                     <button
@@ -400,18 +402,18 @@ export function EditItemPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">Description</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.description")}</label>
                                             <textarea
                                                 value={form.description}
                                                 onChange={e => updateForm({ description: e.target.value })}
                                                 rows={6}
-                                                placeholder="Décrivez votre objet en détail..."
+                                                placeholder={t("createItem.placeholders.description")}
                                                 className="w-full px-6 py-5 bg-muted/30 border-none rounded-3xl text-lg resize-none focus:ring-2 ring-[#FF4F5A]/20 transition-all"
                                             />
                                         </div>
 
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">État de l'objet</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4">{t("createItem.form.condition")}</label>
                                             <div className="flex flex-wrap gap-3">
                                                 {CONDITIONS.map(c => (
                                                     <button
@@ -423,7 +425,7 @@ export function EditItemPage() {
                                                                 : "border-transparent bg-muted text-muted-foreground"
                                                         }`}
                                                     >
-                                                        {c.label}
+                                                        {t(c.label)}
                                                     </button>
                                                 ))}
                                             </div>
@@ -452,7 +454,7 @@ export function EditItemPage() {
                                                         <X className="w-5 h-5" />
                                                     </button>
                                                 </div>
-                                                {i === 0 && <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-black uppercase tracking-wider">Couverture</span>}
+                                                {i === 0 && <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-black uppercase tracking-wider">{t("createItem.form.cover")}</span>}
                                             </div>
                                         ))}
                                         
@@ -461,7 +463,7 @@ export function EditItemPage() {
                                                 <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                                     <Plus className="w-6 h-6 text-muted-foreground" />
                                                 </div>
-                                                <span className="text-xs font-bold text-muted-foreground">Ajouter</span>
+                                                <span className="text-xs font-bold text-muted-foreground">{t("common.add")}</span>
                                                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                                             </label>
                                         )}
@@ -481,11 +483,11 @@ export function EditItemPage() {
                                         {(form.listing_type === "rent" || form.listing_type === "rent_sell") && (
                                             <div className="space-y-6">
                                                 <h3 className="text-xl font-bold flex items-center gap-2">
-                                                    <Home className="w-5 h-5 text-[#FF4F5A]" /> Prix de Location
+                                                    <Home className="w-5 h-5 text-[#FF4F5A]" /> {t("createItem.form.rentalPrice")}
                                                 </h3>
                                                 <div className="space-y-4">
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA / Jour</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("common.da")} / {t("landing.day")}</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.price_per_day}
@@ -494,7 +496,7 @@ export function EditItemPage() {
                                                         />
                                                     </div>
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">Caution DA</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("createItem.form.deposit")} {t("common.da")}</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.deposit_amount}
@@ -509,11 +511,11 @@ export function EditItemPage() {
                                         {(form.listing_type === "sell" || form.listing_type === "rent_sell") && (
                                             <div className="space-y-6">
                                                 <h3 className="text-xl font-bold flex items-center gap-2">
-                                                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> Prix de Vente
+                                                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> {t("createItem.form.salePrice")}
                                                 </h3>
                                                 <div className="space-y-4">
                                                     <div className="relative">
-                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">DA Total</span>
+                                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{t("common.da")} {t("common.total")}</span>
                                                         <Input 
                                                             type="number" 
                                                             value={form.sale_price}
@@ -528,7 +530,7 @@ export function EditItemPage() {
                                                             onChange={e => updateForm({ is_negotiable: e.target.checked })}
                                                             className="w-5 h-5 accent-[#FF4F5A]" 
                                                         />
-                                                        <span className="text-sm font-bold">Prix négociable</span>
+                                                        <span className="text-sm font-bold">{t("createItem.form.isNegotiable")}</span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -537,14 +539,14 @@ export function EditItemPage() {
 
                                     <div className="pt-8 border-t border-border">
                                         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                            <MapPin className="w-5 h-5 text-blue-600" /> Localisation
-                                        </h3>
+                                           <MapPin className="w-5 h-5 text-blue-600" /> {t("createItem.form.location")}
+                                       </h3>
                                         <select
                                             value={form.wilaya_code}
                                             onChange={e => updateForm({ wilaya_code: e.target.value })}
                                             className="w-full h-16 px-6 bg-muted/30 border-none rounded-2xl font-bold text-lg focus:ring-2 ring-[#FF4F5A]/20"
                                         >
-                                            <option value="">Sélectionnez votre Wilaya</option>
+                                            <option value="">{t("createItem.placeholders.wilaya")}</option>
                                             {WILAYAS.map(w => (
                                                 <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
                                             ))}
@@ -567,7 +569,7 @@ export function EditItemPage() {
                                         </div>
                                         <div className="flex-1 space-y-6">
                                             <div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]">{LISTING_TYPES.find(t => t.value === form.listing_type)?.label}</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF4F5A]">{t(LISTING_TYPES.find(t => t.value === form.listing_type)?.label || "")}</span>
                                                 <h2 className="text-3xl font-bold mt-1">{form.title}</h2>
                                                 <div className="flex items-center gap-2 text-muted-foreground mt-2">
                                                     <MapPin className="w-4 h-4" />
@@ -578,14 +580,14 @@ export function EditItemPage() {
                                             <div className="p-6 bg-muted/30 rounded-3xl space-y-3">
                                                 {form.price_per_day && (
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-muted-foreground font-medium">Prix journalier</span>
-                                                        <span className="text-xl font-black">{Number(form.price_per_day).toLocaleString()} DA</span>
+                                                        <span className="text-muted-foreground font-medium">{t("createItem.form.rentalPrice")}</span>
+                                                        <span className="text-xl font-black">{Number(form.price_per_day).toLocaleString()} {t("common.da")}</span>
                                                     </div>
                                                 )}
                                                 {form.sale_price && (
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-muted-foreground font-medium">Prix de vente</span>
-                                                        <span className="text-xl font-black text-emerald-600">{Number(form.sale_price).toLocaleString()} DA</span>
+                                                        <span className="text-muted-foreground font-medium">{t("createItem.form.salePrice")}</span>
+                                                        <span className="text-xl font-black text-emerald-600">{Number(form.sale_price).toLocaleString()} {t("common.da")}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -604,7 +606,7 @@ export function EditItemPage() {
                             onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)}
                             className="rounded-2xl h-14 px-8 font-bold"
                         >
-                            {step === 0 ? "Annuler" : "Retour"}
+                            {step === 0 ? t("common.cancel") : t("common.back")}
                         </Button>
 
                         <Button
@@ -618,8 +620,8 @@ export function EditItemPage() {
                                 <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 <>
-                                    {step === 4 ? "Mettre à jour" : "Continuer"}
-                                    <ChevronRight className="w-5 h-5 ml-2" />
+                                    {step === 4 ? t("common.update") : t("common.continue")}
+                                    <ChevronRight className="w-5 h-5 ml-2 rtl-mirror" />
                                 </>
                             )}
                         </Button>

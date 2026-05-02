@@ -7,6 +7,7 @@ import { useAuthStore } from "../../store/auth.store";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
 import { Input } from "../../components/ui/input";
+import { useTranslation } from "../../context/language-context";
 
 const WILAYAS = [
     { code: 1, name: "Adrar" }, { code: 2, name: "Chlef" }, { code: 3, name: "Laghouat" },
@@ -36,6 +37,7 @@ interface TrocProposalModalProps {
 }
 
 export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }: TrocProposalModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"existing" | "new">("existing");
@@ -60,18 +62,18 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
       setIsLoadingItems(true);
       usersService.getUserItems(user.id)
         .then(res => setMyItems(res.data.filter((i: any) => i.id !== requestedItem.id)))
-        .catch(() => setError("Erreur lors du chargement de vos objets."))
+        .catch(() => setError(t("item.loadingItemsError")))
         .finally(() => setIsLoadingItems(false));
     }
   }, [isOpen, user, requestedItem.id]);
 
   const handleSubmit = async () => {
     if (activeTab === "existing" && !selectedItemId) {
-      setError("Veuillez sélectionner un objet.");
+      setError(t("item.selectItemError"));
       return;
     }
     if (activeTab === "new" && (!newItemData.title || !newItemData.wilaya_code)) {
-        setError("Veuillez remplir les champs obligatoires.");
+        setError(t("item.fillRequiredError"));
         return;
     }
 
@@ -106,7 +108,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
         setMessage("");
       }, 3500);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la proposition.");
+      setError(err.message || t("item.proposalError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -120,9 +122,9 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
             <DialogHeader>
                 <DialogTitle className="text-3xl font-black flex items-center gap-3">
                     <RefreshCw className="w-8 h-8 text-purple-400" />
-                    Proposer un échange
+                    {t("item.proposeExchange")}
                 </DialogTitle>
-                <p className="text-purple-100/60 font-medium">Contre : {requestedItem.title}</p>
+                <p className="text-purple-100/60 font-medium">{t("item.against")} {requestedItem.title}</p>
             </DialogHeader>
         </div>
 
@@ -138,9 +140,9 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                             <CheckCircle2 className="w-12 h-12" />
                         </div>
                         <div>
-                            <h3 className="text-3xl font-bold text-foreground">Proposition envoyée !</h3>
+                            <h3 className="text-3xl font-bold text-foreground">{t("item.proposalSent")}</h3>
                             <p className="text-muted-foreground mt-3 max-w-[320px] mx-auto leading-relaxed">
-                                Le propriétaire a été averti de votre offre de troc. Vous recevrez une notification bientôt.
+                                {t("item.proposalSentSubtitle")}
                             </p>
                         </div>
                     </motion.div>
@@ -160,7 +162,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     : "text-muted-foreground hover:text-foreground"
                                 }`}
                             >
-                                <Box className="w-4 h-4" /> Mes Objets
+                                <Box className="w-4 h-4" /> {t("item.myItems")}
                             </button>
                             <button 
                                 onClick={() => setActiveTab("new")}
@@ -170,7 +172,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     : "text-muted-foreground hover:text-foreground"
                                 }`}
                             >
-                                <PlusCircle className="w-4 h-4" /> Nouveau
+                                <PlusCircle className="w-4 h-4" /> {t("item.newItem")}
                             </button>
                         </div>
 
@@ -181,15 +183,15 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     {isLoadingItems ? (
                                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                                             <Loader2 className="w-10 h-10 animate-spin text-purple-200" />
-                                            <p className="text-sm font-medium text-muted-foreground">Recherche de vos objets...</p>
+                                            <p className="text-sm font-medium text-muted-foreground">{t("item.searchingItems")}</p>
                                         </div>
                                     ) : myItems.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
                                             <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center">
                                                 <Info className="w-8 h-8 text-muted-foreground/30" />
                                             </div>
-                                            <p className="text-muted-foreground font-medium">Vous n'avez pas encore listé d'objets.</p>
-                                            <Button variant="outline" onClick={() => navigate("/create")} className="rounded-xl">Créer une annonce</Button>
+                                            <p className="text-muted-foreground font-medium">{t("item.noItemsListed")}</p>
+                                            <Button variant="outline" onClick={() => navigate("/create")} className="rounded-xl">{t("landing.publishListing")}</Button>
                                         </div>
                                     ) : (
                                         myItems.map(item => (
@@ -209,7 +211,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-foreground truncate">{item.title}</p>
                                                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mt-1">
-                                                        {item.listing_type === 'rent' ? 'Location' : 'Vente'}
+                                                        {item.listing_type === 'rent' ? t("listingTypes.rent.label") : t("listingTypes.sell.label")}
                                                     </p>
                                                 </div>
                                                 {selectedItemId === item.id && (
@@ -228,18 +230,18 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     className="space-y-4"
                                 >
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">Objet proposé</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">{t("item.offeredItem")}</label>
                                         <Input 
-                                            placeholder="Ex: Vélo VTT Rockrider"
+                                            placeholder={t("item.offeredItemPlaceholder")}
                                             value={newItemData.title}
                                             onChange={e => setNewItemData({...newItemData, title: e.target.value})}
                                             className="h-14 rounded-2xl bg-muted/30 border-none px-6 font-bold" 
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">Petite description</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">{t("item.shortDescription")}</label>
                                         <textarea 
-                                            placeholder="État, caractéristiques principales..."
+                                            placeholder={t("item.shortDescriptionPlaceholder")}
                                             rows={2}
                                             value={newItemData.description}
                                             onChange={e => setNewItemData({...newItemData, description: e.target.value})}
@@ -248,7 +250,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">Valeur est. (DA)</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">{t("item.estimatedValueWithDA")}</label>
                                             <Input 
                                                 type="number"
                                                 placeholder="50000"
@@ -258,13 +260,13 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">Localisation</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">{t("landing.location")}</label>
                                             <select 
                                                 value={newItemData.wilaya_code}
                                                 onChange={e => setNewItemData({...newItemData, wilaya_code: e.target.value})}
                                                 className="w-full h-14 px-6 bg-muted/30 border-none rounded-2xl text-sm font-bold focus:ring-2 ring-purple-500/20"
                                             >
-                                                <option value="">Wilaya</option>
+                                                <option value="">{t("dashboard.selectWilaya")}</option>
                                                 {WILAYAS.map(w => (
                                                     <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
                                                 ))}
@@ -277,11 +279,11 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
 
                         {/* Additional Message */}
                         <div className="space-y-3 pt-6 border-t border-border">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">Message au propriétaire</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">{t("item.messageToOwner")}</label>
                             <textarea
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Bonjour, je vous propose cet échange car..."
+                                placeholder={t("item.trocMessagePlaceholder")}
                                 className="w-full px-6 py-4 bg-muted/30 border-none rounded-3xl text-sm resize-none focus:ring-2 ring-purple-500/20 min-h-[100px]"
                             />
                         </div>
@@ -299,7 +301,7 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                 variant="ghost"
                                 className="h-14 px-8 rounded-2xl font-bold"
                             >
-                                Annuler
+                                {t("common.cancel")}
                             </Button>
                             <Button
                                 onClick={handleSubmit}
@@ -310,8 +312,8 @@ export function TrocProposalModal({ isOpen, onClose, requestedItem, onSuccess }:
                                     <Loader2 className="w-6 h-6 animate-spin" />
                                 ) : (
                                     <>
-                                        Envoyer l'offre
-                                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        {t("item.sendOffer")}
+                                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform rtl-mirror" />
                                     </>
                                 )}
                             </Button>
