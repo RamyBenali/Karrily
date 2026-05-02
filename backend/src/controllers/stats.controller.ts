@@ -120,7 +120,7 @@ export class StatsController {
 
             // Log errors if any
             if (usersErr) console.error("Admin stats users error:", usersErr);
-            if (itemsErr) console.error("Admin stats items error:", itemsErr);
+            if (_itemsErr) console.error("Admin stats items error:", _itemsErr);
             if (bookingsErr) console.error("Admin stats bookings error:", bookingsErr);
             if (bRevErr) console.error("Admin stats booking revenue error:", bRevErr);
             if (sRevErr) console.error("Admin stats sale revenue error:", sRevErr);
@@ -131,10 +131,10 @@ export class StatsController {
 
             // Fetch Data Lists for Management Tabs
             const [
-                { data: usersList },
-                { data: itemsList },
-                { data: bookingsList },
-                { data: salesList }
+                { data: usersList, error: uListErr },
+                { data: itemsList, error: iListErr },
+                { data: bookingsList, error: bListErr },
+                { data: salesList, error: sListErr }
             ] = await Promise.all([
                 supabaseAdmin.from("profiles").select("*").order("created_at", { ascending: false }).limit(50),
                 supabaseAdmin.from("items").select(`
@@ -155,6 +155,12 @@ export class StatsController {
                     items:item_id(title)
                 `).order("created_at", { ascending: false }).limit(50)
             ]);
+
+            // Log list fetch errors
+            if (uListErr) console.error("Admin users list error:", uListErr);
+            if (iListErr) console.error("Admin items list error:", iListErr);
+            if (bListErr) console.error("Admin bookings list error:", bListErr);
+            if (sListErr) console.error("Admin sales list error:", sListErr);
 
             res.json({
                 success: true,
