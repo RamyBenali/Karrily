@@ -20,7 +20,8 @@ app.use(
 
             if (config.nodeEnv === "development") {
                 // Allow any localhost/127.0.0.1 origins in development
-                if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+                const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+                if (isLocalhost) {
                     return callback(null, true);
                 }
             }
@@ -82,7 +83,7 @@ const server = app.listen(config.port, () => {
   `);
 });
 
-server.on('error', (err: any) => {
+server.on('error', (err: Error & { code?: string }) => {
     if (err.code === 'EADDRINUSE') {
         console.error(` Port ${config.port} is already in use. Attempting to recover...`);
         // The process will likely be restarted by tsx watch anyway, 

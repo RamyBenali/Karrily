@@ -32,7 +32,7 @@ export default [
       ...securityPlugin.configs.recommended.rules,
       "security/detect-object-injection": "off",
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
       "@typescript-eslint/no-namespace": "off"
     },
   },

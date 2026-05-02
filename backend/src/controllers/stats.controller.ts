@@ -15,7 +15,7 @@ export class StatsController {
             const [
                 { data: bookings, error: bookingsError },
                 { data: sales, error: salesError },
-                { count: activeListings, error: itemsError }
+                { count: activeListings, error: _itemsError }
             ] = await Promise.all([
                 supabaseAdmin.from("bookings").select("total_price, status, created_at").eq("owner_id", userId),
                 supabaseAdmin.from("sales").select("price, status, created_at").eq("seller_id", userId),
@@ -52,7 +52,7 @@ export class StatsController {
                         const iDate = new Date(item.created_at);
                         return iDate.getMonth() === d.getMonth() && iDate.getFullYear() === d.getFullYear();
                     })
-                    .reduce((acc, item: any) => acc + (Number(item.total_price || item.price) || 0), 0);
+                    .reduce((acc, item: { total_price?: number; price?: number }) => acc + (Number(item.total_price || item.price) || 0), 0);
                 
                 chartData.push({ month: monthName, earnings: mEarnings });
             }
@@ -102,12 +102,12 @@ export class StatsController {
 
             const [
                 { count: totalUsers, error: usersErr },
-                { count: totalItems, error: itemsErr },
+                { count: totalItems, error: _itemsErr },
                 { count: totalBookings, error: bookingsErr },
                 { data: bookingRevenueData, error: bRevErr },
                 { data: saleRevenueData, error: sRevErr },
-                { count: totalMessages, error: msgErr },
-                { count: unreadNotifs, error: notifErr }
+                { count: totalMessages, error: _msgErr },
+                { count: unreadNotifs, error: _notifErr }
             ] = await Promise.all([
                 supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("items").select("*", { count: "exact", head: true }),

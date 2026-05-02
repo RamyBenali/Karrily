@@ -109,7 +109,7 @@ export class SalesController {
                 throw new ApiError(403, "Access denied");
             }
 
-            const updateData: any = { status, updated_at: new Date().toISOString() };
+            const updateData: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
             if (delivery_info) updateData.delivery_info = delivery_info;
 
             const { data, error } = await supabaseAdmin

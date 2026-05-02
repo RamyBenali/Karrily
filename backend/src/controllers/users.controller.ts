@@ -140,7 +140,7 @@ export class UsersController {
             }
 
             // 2. Update Auth Metadata (optional but recommended for consistency)
-            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id as string, {
                 user_metadata: { role }
             });
 

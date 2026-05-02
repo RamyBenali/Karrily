@@ -175,7 +175,7 @@ export class ItemsController {
             }
 
             res.status(201).json({ success: true, data });
-        } catch (error: any) {
+        } catch (error) {
             console.error("ItemsController.create catch:", error);
             next(error);
         }
