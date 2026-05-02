@@ -333,13 +333,17 @@ export function Navigation() {
                                   )}
                                   onClick={() => {
                                     markAsRead(notif.id);
-                                    const dest = notif.link
-                                      ? notif.link
-                                      : (notif.type?.startsWith('booking') ? '/lender'
-                                        : notif.type?.startsWith('troc') ? '/lender'
-                                        : notif.type === 'sale' ? '/lender'
-                                        : '/dashboard');
-                                    navigate(dest);
+                                    if (notif.type === 'message') {
+                                      navigate('/dashboard', { state: { tab: 'messages' } });
+                                    } else {
+                                      const dest = notif.link
+                                        ? notif.link
+                                        : (notif.type?.startsWith('booking') ? '/lender'
+                                          : notif.type?.startsWith('troc') ? '/lender'
+                                          : notif.type === 'sale' ? '/lender'
+                                          : '/dashboard');
+                                      navigate(dest);
+                                    }
                                     setShowNotifications(false);
                                   }}
                                 >

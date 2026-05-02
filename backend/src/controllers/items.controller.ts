@@ -19,6 +19,7 @@ export class ItemsController {
                 search,
                 sortBy = "created_at",
                 sortOrder = "desc",
+                type,
             } = req.query;
 
             const pageNum = parseInt(page as string, 10);
@@ -38,6 +39,7 @@ export class ItemsController {
             if (maxPrice) query = query.lte("price_per_day", maxPrice);
             if (location) query = query.ilike("location", `%${location}%`);
             if (condition) query = query.eq("condition", condition);
+            if (type) query = query.eq("listing_type", type);
             if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
 
             const { data, error, count } = await query;
@@ -186,14 +188,18 @@ export class ItemsController {
         try {
             const { id } = req.params;
 
-            // Verify ownership
+            // Verify ownership (unless admin)
             const { data: existing } = await supabaseAdmin
                 .from("items")
                 .select("owner_id")
                 .eq("id", id)
                 .single();
 
-            if (!existing || existing.owner_id !== req.user!.id) {
+            if (!existing) {
+                throw new ApiError(404, "Item not found");
+            }
+
+            if (existing.owner_id !== req.user!.id && req.user!.role !== 'admin') {
                 throw new ApiError(403, "You can only update your own items");
             }
 

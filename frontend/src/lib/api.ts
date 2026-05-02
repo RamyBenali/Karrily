@@ -1,5 +1,6 @@
 import axios from "axios";
 import { supabase } from "./supabase";
+import { toast } from "sonner";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
@@ -34,6 +35,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        // Show error toast for non-401 errors
+        if (error.response?.status !== 401) {
+            const message = error.response?.data?.message || error.message || "Une erreur est survenue";
+            toast.error(message);
+        }
+
         // Handle 401 — redirect to login
         if (error.response?.status === 401) {
             await supabase.auth.signOut();

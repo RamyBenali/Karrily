@@ -16,7 +16,7 @@ export class BookingsController {
 
             let query = supabaseAdmin
                 .from("bookings")
-                .select("*, item:items(*, category:categories(*)), renter:profiles!renter_id(*), owner:profiles!owner_id(*)")
+                .select("*, items:items(*, category:categories(*)), renter:profiles!renter_id(*), owner:profiles!owner_id(*)")
                 .eq(field, userId)
                 .order("created_at", { ascending: false });
 
@@ -42,7 +42,7 @@ export class BookingsController {
 
             const { data, error } = await supabaseAdmin
                 .from("bookings")
-                .select("*, item:items(*, category:categories(*)), renter:profiles!renter_id(*), owner:profiles!owner_id(*)")
+                .select("*, items:items(*, category:categories(*)), renter:profiles!renter_id(*), owner:profiles!owner_id(*)")
                 .eq("id", id)
                 .single();
 

@@ -4,7 +4,7 @@ import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, Ba
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { useAuthStore } from "../store/auth.store";
 import { usersService, bookingsService, itemsService, salesService, trocService, statsService } from "../services/api.service";
@@ -70,6 +70,23 @@ export function LenderDashboard() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
+  const topClients = useMemo(() => {
+    const clients: Record<string, { name: string, count: number, total: number }> = {};
+    
+    [...upcomingBookings, ...mySales].forEach((t: any) => {
+      const isCompleted = ["completed", "delivered", "accepted", "active"].includes(t.status);
+      if (isCompleted) {
+        const name = t.renter?.full_name || t.buyer?.full_name;
+        if (!name) return;
+        if (!clients[name]) clients[name] = { name, count: 0, total: 0 };
+        clients[name].count += 1;
+        clients[name].total += Number(t.total_price || t.price || 0);
+      }
+    });
+
+    return Object.values(clients).sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [upcomingBookings, mySales]);
+
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -110,7 +127,7 @@ export function LenderDashboard() {
     supabase
       .from("reviews")
       .select("*, item:items!inner(title, owner_id), reviewer:profiles!reviewer_id(full_name, avatar_url)")
-      .eq("items.owner_id", user.id)
+      .eq("item.owner_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         if (data) setReviews(data);
@@ -275,6 +292,28 @@ export function LenderDashboard() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
+
+                  {topClients.length > 0 && (
+                    <div className="bg-card rounded-2xl p-7 border border-border">
+                      <h3 className="text-xl font-bold mb-4">{t("lender.loyalClients") !== "lender.loyalClients" ? t("lender.loyalClients") : "Clients Fidèles"}</h3>
+                      <div className="space-y-4">
+                        {topClients.map((client, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-4 bg-muted/30 rounded-xl">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                {client.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold">{client.name}</p>
+                                <p className="text-xs text-muted-foreground">{client.count} transactions</p>
+                              </div>
+                            </div>
+                            <p className="font-bold text-emerald-500">{client.total.toLocaleString()} {t("common.da")}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -306,7 +345,12 @@ export function LenderDashboard() {
                         <p className="text-xs text-muted-foreground">{new Date(b.start_date).toLocaleDateString()} - {new Date(b.end_date).toLocaleDateString()}</p>
                       </div>
                       <div className="flex gap-2">
-                        {b.status === 'pending' && <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}>{t("dashboard.accept")}</Button>}
+                        {b.status === 'pending' && (
+                          <>
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')} variant="destructive">Refuser</Button>
+                          </>
+                        )}
                         <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{b.status}</span>
                       </div>
                     </div>
@@ -319,9 +363,14 @@ export function LenderDashboard() {
                   {mySales.map(s => (
                     <div key={s.id} className="p-6 bg-muted/50 rounded-3xl flex justify-between items-center">
                       <div><p className="font-bold">{s.buyer?.full_name}</p><p className="text-sm">{s.items?.title}</p></div>
-                      <div>
-                        {s.status === 'pending' && <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')}>{t("dashboard.accept")}</Button>}
-                        <span className="ml-2 text-xs font-bold uppercase">{s.status}</span>
+                      <div className="flex gap-2 items-center">
+                        {s.status === 'pending' && (
+                          <>
+                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'rejected')} variant="destructive">Refuser</Button>
+                          </>
+                        )}
+                        <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{s.status}</span>
                       </div>
                     </div>
                   ))}
@@ -335,7 +384,12 @@ export function LenderDashboard() {
                       <p className="font-bold">{p.proposer?.full_name} {t("lender.proposesATroc")}</p>
                       <p className="text-sm">{t("lender.for")} {p.requested_item?.title}</p>
                       <div className="mt-4 flex gap-2">
-                        {p.status === 'pending' && <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')}>{t("dashboard.accept")}</Button>}
+                        {p.status === 'pending' && (
+                          <>
+                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'rejected')} variant="destructive">Refuser</Button>
+                          </>
+                        )}
                         <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{p.status}</span>
                       </div>
                     </div>
@@ -355,6 +409,35 @@ export function LenderDashboard() {
                       <p className="text-sm italic">"{r.comment}"</p>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {activeView === "earnings" && (
+                <div className="space-y-6">
+                  <div className="bg-card rounded-2xl p-7 border border-border">
+                    <h3 className="text-xl font-bold mb-4">{t("lender.earnings") !== "lender.earnings" ? t("lender.earnings") : "Gains Détaillés"}</h3>
+                    <p className="text-4xl font-black text-emerald-500 mb-6">{stats.totalEarnings.toLocaleString()} {t("common.da")}</p>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.earningsData}>
+                          <defs>
+                            <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}`} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                            itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
+                          />
+                          <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorEarnings)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

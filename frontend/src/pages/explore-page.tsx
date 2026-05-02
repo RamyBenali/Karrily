@@ -23,6 +23,7 @@ import {
   EXPLORE_BUDGET_MAX,
   type ExploreCategoryLite
 } from "../components/explore/explore-filters";
+import { NexusRecommendations } from "../components/explore/nexus-recommendations";
 
 interface Item {
   id: string;
@@ -201,6 +202,9 @@ export function ExplorePage() {
   };
 
   const getItemPrice = (item: Item) => {
+    if (item.listing_type === 'troc') {
+        return t("listingTypes.troc.label") || "Troc";
+    }
     if (item.listing_type === 'sell' && item.sale_price) {
         return `${Number(item.sale_price).toLocaleString()} DA`;
     }
@@ -255,6 +259,7 @@ export function ExplorePage() {
         <ExploreFilterSidebar {...filterProps} />
 
         <main className="flex-1 min-w-0">
+          <NexusRecommendations />
           <div className="mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
                   {totalCount === 1 ? t("explore.listingFound", { n: totalCount }) : t("explore.listingsFound", { n: totalCount })}

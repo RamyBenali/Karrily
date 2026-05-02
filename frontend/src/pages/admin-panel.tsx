@@ -214,10 +214,10 @@ export function AdminPanel() {
         const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
         if (data) setUsersList(data);
       } else if (activeTab === "items") {
-        const { data } = await supabase.from('items').select('*, profiles(full_name, email), categories(name)').order('created_at', { ascending: false });
-        if (data) setItemsList(data);
+        const { data } = await supabase.from('items').select('*, profiles:owner_id(full_name, email), categories:category_id(name)').order('created_at', { ascending: false });
+        if (data) setItemsList(data as any);
       } else if (activeTab === "reviews") {
-        const { data } = await supabase.from('reviews').select('*, items(title), reviewer:profiles!reviewer_id(full_name)').order('created_at', { ascending: false });
+        const { data } = await supabase.from('reviews').select('*, item:items(title), reviewer:profiles!reviewer_id(full_name)').order('created_at', { ascending: false });
         if (data) setReviewsList(data);
       } else if (activeTab === "reports") {
         const res = await reportsService.getAll();
@@ -282,8 +282,9 @@ export function AdminPanel() {
     setItemsList(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     
     try {
-        const { error } = await supabase.from("items").update({ status: newStatus }).eq("id", itemId);
-        if (error) throw error;
+        const res = await itemsService.update(itemId, { status: newStatus });
+        if (!res.success) throw new Error("Failed to update status");
+        toast.success(newStatus === "active" ? t("admin.itemActivated") || "Annonce activée" : t("admin.itemDeactivated") || "Annonce désactivée");
     } catch (err) {
         toast.error(t("admin.updateError"));
         refreshCurrentTab();
@@ -629,12 +630,16 @@ export function AdminPanel() {
                               <div className="text-[10px] opacity-30">{item.profiles?.email}</div>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 border-y border-border text-center">
-                              <span className={cn(
-                                "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
-                                item.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-white/10 opacity-40'
-                              )}>
-                                {item.status}
-                              </span>
+                                <span className={cn(
+                                  "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                                  item.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                  item.status === 'paused' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                                  'bg-white/10 opacity-40'
+                                )}>
+                                  {item.status === 'active' ? t("admin.activeStatus") || "Active" : 
+                                   item.status === 'paused' ? t("admin.deactivatedStatus") || "Désactivée" : 
+                                   item.status}
+                                </span>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-2xl border-y border-r border-border text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -644,7 +649,7 @@ export function AdminPanel() {
                                   className="rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest"
                                   onClick={() => handleToggleStatusItem(item.id, item.status)}
                                 >
-                                  {item.status === 'active' ? t("admin.pause") : t("admin.activate")}
+                                  {item.status === 'active' ? (t("admin.deactivate") !== "admin.deactivate" ? t("admin.deactivate") : "Désactiver") : (t("admin.activate") !== "admin.activate" ? t("admin.activate") : "Activer")}
                                 </Button>
                                 <Button
                                   variant="ghost"

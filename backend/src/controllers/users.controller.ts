@@ -62,13 +62,28 @@ export class UsersController {
     getUserItems = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
+            let requestingUserId: string | null = null;
 
-            const { data, error } = await supabaseAdmin
+            // Check if there is a bearer token
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                const token = authHeader.split(" ")[1];
+                const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+                if (user) requestingUserId = user.id;
+            }
+
+            let query = supabaseAdmin
                 .from("items")
                 .select("*, category:categories(*)")
                 .eq("owner_id", id)
-                .eq("is_available", true)
                 .order("created_at", { ascending: false });
+
+            // If the user requesting is not the owner, only show available items
+            if (requestingUserId !== id) {
+                query = query.eq("is_available", true);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
 

@@ -21,6 +21,7 @@ import { ReviewDialog } from "../components/dashboard/ReviewDialog";
 import { ReportDialog } from "../components/dashboard/ReportDialog";
 import { reviewsService, reportsService } from "../services/api.service";
 import { cn } from "../components/ui/utils";
+import { useHistory } from "../hooks/useHistory";
 
 const WILAYAS: Record<number, string> = {
   1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Béjaïa",
@@ -80,6 +81,7 @@ export function ItemDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { t, locale } = useTranslation();
+  const { addVisit } = useHistory();
   
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,6 +176,11 @@ export function ItemDetailPage() {
 
         const itemData = data as any;
         setItem(itemData);
+        
+        // Add to local history for recommendations
+        if (itemData.category_id) {
+          addVisit(itemData.id, itemData.category_id);
+        }
 
         // Increment view count via RPC to avoid race conditions
         supabase

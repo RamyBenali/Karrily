@@ -8,13 +8,14 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
-import { bookingsService, salesService, trocService, itemsService, usersService } from "../services/api.service";
+import { bookingsService, salesService, trocService, itemsService, usersService, favoritesService } from "../services/api.service";
 import { api } from "../lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ShoppingCart, RefreshCw, ShoppingBag, MessageCircle, Settings2, AlertCircle, CalendarCheck } from "lucide-react";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { useTranslation } from "../context/language-context";
 import { WILAYAS } from "../components/explore/explore-constants";
+import { toast } from "sonner";
 
 // Profile interface
 interface Profile {
@@ -62,6 +63,8 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  message_type?: 'text' | 'image' | 'file';
+  is_read?: boolean;
 }
 
 interface Notification {
@@ -78,7 +81,7 @@ interface Notification {
 export function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   const { user, role, hasItems } = useAuthStore();
 
   const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
@@ -198,7 +201,7 @@ export function UserDashboard() {
     const fetchFavorites = async () => {
       if (!user) return;
       try {
-        const res = await supabase.from("favorites").select("*, item:items(*)").eq("user_id", user.id).order("created_at", { ascending: false });
+        const res = await favoritesService.getMyFavorites();
         setFavorites(res.data || []);
       } catch (err) { console.error(err); }
     };
@@ -296,6 +299,21 @@ export function UserDashboard() {
       }
     };
     fetchConversations();
+
+    const convChannel = supabase
+      .channel(`conversations_list:${user?.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations" },
+        (payload) => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(convChannel);
+    };
   }, [user?.id, activeTab]);
 
   useEffect(() => {
@@ -321,7 +339,10 @@ export function UserDashboard() {
           { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeConversationId}` },
           (payload) => {
             const newMsg = payload.new as Message;
-            setMessages((prev) => [...prev, newMsg]);
+            setMessages((prev) => {
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
 
             setConversations(prev => {
               const convs = [...prev];
@@ -351,15 +372,37 @@ export function UserDashboard() {
     if (!user || !activeConversationId || !newMessage.trim()) return;
 
     const content = newMessage.trim();
+    const tempId = crypto.randomUUID();
+    const optimisticMsg: Message = {
+      id: tempId,
+      conversation_id: activeConversationId,
+      sender_id: user.id,
+      content: content,
+      created_at: new Date().toISOString(),
+      message_type: 'text',
+      is_read: false
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
     setNewMessage("");
 
-    await supabase
+    const { data, error } = await supabase
       .from("messages")
       .insert({
         conversation_id: activeConversationId,
         sender_id: user.id,
         content: content,
-      });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Erreur lors de l'envoi du message");
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+    } else if (data) {
+      // Replace optimistic message with real one
+      setMessages(prev => prev.map(m => m.id === tempId ? data as Message : m));
+    }
 
     await supabase
       .from("conversations")
@@ -1324,11 +1367,9 @@ export function UserDashboard() {
                         {['fr', 'en', 'ar'].map(lang => (
                           <Button 
                             key={lang}
-                            variant="outline" 
+                            variant={locale === lang ? "default" : "outline"} 
                             className="rounded-xl px-6"
-                            onClick={() => {
-                              window.location.reload(); 
-                            }}
+                            onClick={() => setLocale(lang as any)}
                           >
                             {lang.toUpperCase()}
                           </Button>

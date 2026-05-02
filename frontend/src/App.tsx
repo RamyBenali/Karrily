@@ -16,6 +16,7 @@ const queryClient = new QueryClient({
 
 import { ThemeProvider } from "./context/theme-context";
 import { LanguageProvider } from "./context/language-context";
+import { Toaster } from "sonner";
 
 export default function App() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -27,6 +28,7 @@ export default function App() {
     <LanguageProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <Toaster position="top-center" richColors />
         <RouterProvider router={router} />
       </QueryClientProvider>
     </ThemeProvider>

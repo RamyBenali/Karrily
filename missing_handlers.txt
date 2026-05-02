@@ -1,0 +1,32 @@
+frontend\src\components\dashboard\ReviewDialog.tsx: <Button
+                  key={star}
+                  type="button"
+                  onMouseEnter={() =>
+frontend\src\components\layout\footer.tsx: <Button
+                  key={social}
+                  className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+                  aria-label={social}
+                >
+frontend\src\components\ui\floating-cta.tsx: <Button className="flex items-center gap-3 bg-white hover:bg-gray-50 rounded-full px-4 py-3 shadow-lg hover:shadow-xl transition-all group">
+frontend\src\components\ui\floating-cta.tsx: <Button className="flex items-center gap-3 bg-white hover:bg-gray-50 rounded-full px-4 py-3 shadow-lg hover:shadow-xl transition-all group">
+frontend\src\pages\item-detail-page.tsx: <Button className="w-10 h-10 border border-border rounded-full flex items-center justify-center transition-all hover:bg-muted">
+frontend\src\pages\item-detail-page.tsx: <Button
+                              key={star}
+                              type="button"
+                              onMouseEnter={() =>
+frontend\src\pages\landing-page.tsx: <Button
+                    key={social}
+                    className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                  >
+frontend\src\pages\landing-page.tsx: <Button className="text-white/70 hover:text-white transition-colors text-sm">
+frontend\src\pages\landing-page.tsx: <Button className="text-white/50 hover:text-white text-sm transition-colors">
+frontend\src\pages\landing-page.tsx: <Button className="text-white/50 hover:text-white text-sm transition-colors">
+frontend\src\pages\login-page.tsx: <Button
+                                type="button"
+                                className="text-sm text-[#FF4F5A] hover:text-[#FF4F5A]/80 font-medium transition-colors"
+                            >
+frontend\src\pages\login-page.tsx: <Button
+                        type="button"
+                        className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border font-medium text-foreground transition-all hover:bg-muted/80"
+                    >
+frontend\src\pages\user-dashboard.tsx: <Button variant="outline" className="mt-4 rounded-xl opacity-50 cursor-not-allowed">

@@ -174,6 +174,25 @@ export function LoginPage() {
                         <div className="flex justify-end">
                             <button
                                 type="button"
+                                onClick={async () => {
+                                    if (!email) {
+                                        setError(t("common.error") + " : " + t("auth.emailPlaceholder"));
+                                        return;
+                                    }
+                                    try {
+                                        setIsLoading(true);
+                                        const { supabase } = await import("../lib/supabase");
+                                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                                          redirectTo: window.location.origin + '/dashboard',
+                                        });
+                                        if (error) throw error;
+                                        alert("Email de réinitialisation envoyé à " + email);
+                                    } catch(err: any) {
+                                        setError(err.message);
+                                    } finally {
+                                        setIsLoading(false);
+                                    }
+                                }}
                                 className="text-sm text-[#FF4F5A] hover:text-[#FF4F5A]/80 font-medium transition-colors"
                             >
                                 {t("auth.forgotPassword")}
@@ -207,6 +226,17 @@ export function LoginPage() {
                     {/* Social login */}
                     <button
                         type="button"
+                        onClick={async () => {
+                            try {
+                                const { supabase } = await import("../lib/supabase");
+                                await supabase.auth.signInWithOAuth({
+                                    provider: 'google',
+                                    options: { redirectTo: window.location.origin + '/dashboard' }
+                                });
+                            } catch (err: any) {
+                                setError(err.message);
+                            }
+                        }}
                         className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border font-medium text-foreground transition-all hover:bg-muted/80"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -1,5 +1,14 @@
 import { supabase } from "../lib/supabase";
 import { api } from "../lib/api";
+import { toast } from "sonner";
+
+const handleSupabaseError = (error: any, defaultMsg: string) => {
+    if (error) {
+        console.error(error);
+        toast.error(error.message || defaultMsg);
+        throw error;
+    }
+};
 
 // ─── Items Service ───────────────────────────────────
 
@@ -18,6 +27,7 @@ export const itemsService = {
         if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
         if (params?.page) queryParams.append("page", String(params.page));
         if (params?.limit) queryParams.append("limit", String(params.limit));
+        if (params?.type) queryParams.append("type", params.type);
 
         const response = await api.get(`/items?${queryParams.toString()}`);
         return { 
@@ -243,7 +253,7 @@ export const favoritesService = {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
             
-        if (error) throw error;
+        handleSupabaseError(error, "Erreur lors de la récupération des favoris.");
         return { data, success: true };
     }
 };
@@ -256,7 +266,7 @@ export const reviewsService = {
             .from("reviews")
             .select("*, item:items(title), reviewer:profiles!reviewer_id(full_name, avatar_url)")
             .order("created_at", { ascending: false });
-        if (error) throw error;
+        handleSupabaseError(error, "Erreur lors de la récupération des avis.");
         return { data, success: true };
     },
 
@@ -266,7 +276,7 @@ export const reviewsService = {
             .select("*, reviewer:profiles!reviewer_id(full_name, avatar_url)")
             .eq("item_id", itemId)
             .order("created_at", { ascending: false });
-        if (error) throw error;
+        handleSupabaseError(error, "Erreur lors de la récupération des avis de l'article.");
         return { data, success: true };
     },
 
@@ -277,9 +287,7 @@ export const reviewsService = {
             .eq("reviewed_user_id", lenderId)
             .order("created_at", { ascending: false });
         
-        // Supabase might need a different join or filter for nested relations depending on setup
-        // If the above fails, we might need a stored procedure or multiple calls
-        if (error) throw error;
+        handleSupabaseError(error, "Erreur lors de la récupération des avis du vendeur.");
         return { data, success: true };
     },
 
@@ -300,7 +308,7 @@ export const reviewsService = {
             .select()
             .single();
             
-        if (error) throw error;
+        handleSupabaseError(error, "Erreur lors de la création de l'avis.");
         return { data: review, success: true };
     },
 
