@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import fs from "fs";
+import path from "path";
 
 /**
  * Custom API error class with HTTP status code
@@ -41,6 +43,14 @@ export function errorHandler(
             message,
             stack: err.stack,
         });
+        
+        // Also log to a file for easier access
+        try {
+            const logMessage = `[${new Date().toISOString()}] ${statusCode} - ${message}\n${err.stack}\n\n`;
+            fs.appendFileSync(path.join(process.cwd(), "error_logs.txt"), logMessage);
+        } catch (e) {
+            console.error("Failed to write to error_logs.txt", e);
+        }
     }
 
     res.status(statusCode).json({

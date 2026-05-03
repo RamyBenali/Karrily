@@ -112,8 +112,8 @@ export class StatsController {
                 supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("items").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("bookings").select("*", { count: "exact", head: true }),
-                supabaseAdmin.from("bookings").select("total_price").in("status", ["completed", "confirmed", "delivered"]),
-                supabaseAdmin.from("sales").select("price").in("status", ["completed", "accepted", "delivered", "shipped"]),
+                supabaseAdmin.from("bookings").select("total_price, created_at").in("status", ["completed", "confirmed", "delivered"]),
+                supabaseAdmin.from("sales").select("price, created_at").in("status", ["completed", "accepted", "delivered", "shipped"]),
                 supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
                 supabaseAdmin.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
             ]);
@@ -128,6 +128,25 @@ export class StatsController {
             const bookingRevenue = bookingRevenueData ? bookingRevenueData.reduce((acc, curr) => acc + (Number(curr.total_price) || 0), 0) : 0;
             const saleRevenue = saleRevenueData ? saleRevenueData.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0) : 0;
             const totalRevenue = bookingRevenue + saleRevenue;
+
+            // Earnings by month for platform
+            const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+            const revenueData = [];
+            
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthName = months[d.getMonth()];
+                
+                const mEarnings = [...(bookingRevenueData || []), ...(saleRevenueData || [])]
+                    .filter(item => {
+                        const iDate = new Date(item.created_at);
+                        return iDate.getMonth() === d.getMonth() && iDate.getFullYear() === d.getFullYear();
+                    })
+                    .reduce((acc, item: any) => acc + (Number(item.total_price || item.price) || 0), 0);
+                
+                revenueData.push({ month: monthName, earnings: mEarnings });
+            }
 
             // Fetch Data Lists for Management Tabs
             const [
@@ -171,6 +190,7 @@ export class StatsController {
                         totalBookings: (totalBookings || 0) + (saleRevenueData?.length || 0),
                         totalRevenue
                     },
+                    revenueData,
                     lists: {
                         users: usersList || [],
                         items: itemsList || [],

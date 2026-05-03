@@ -313,12 +313,13 @@ export const reviewsService = {
     },
 
     delete: async (id: string) => {
-        const { error } = await supabase
-            .from("reviews")
-            .delete()
-            .eq("id", id);
-        if (error) throw error;
-        return { success: true };
+        const response = await api.delete(`/reviews/${id}`);
+        return { success: true, data: response.data };
+    },
+
+    dismissReport: async (id: string) => {
+        const response = await api.patch(`/reviews/${id}/dismiss-report`);
+        return { success: true, data: response.data };
     }
 };
 

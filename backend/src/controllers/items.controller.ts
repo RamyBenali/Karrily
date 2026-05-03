@@ -225,26 +225,34 @@ export class ItemsController {
         try {
             const { id } = req.params;
 
-            // Verify ownership
-            const { data: existing } = await supabaseAdmin
+            // Verify existence and ownership
+            const { data: existing, error: fetchError } = await supabaseAdmin
                 .from("items")
                 .select("owner_id")
                 .eq("id", id)
                 .single();
 
-            if (!existing || existing.owner_id !== req.user!.id) {
-                throw new ApiError(403, "You can only delete your own items");
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    throw new ApiError(404, "Cet article n'existe pas ou a déjà été supprimé.");
+                }
+                throw fetchError;
             }
 
-            const { error } = await supabaseAdmin
+            if (existing.owner_id !== req.user!.id && req.user!.role !== 'admin') {
+                throw new ApiError(403, "Vous n'avez pas l'autorisation de supprimer cet article.");
+            }
+
+            const { error: deleteError } = await supabaseAdmin
                 .from("items")
                 .delete()
                 .eq("id", id);
 
-            if (error) throw error;
+            if (deleteError) throw deleteError;
 
-            res.json({ success: true, data: { message: "Item deleted successfully" } });
+            res.json({ success: true, data: { message: "Article supprimé avec succès." } });
         } catch (error) {
+            console.error("ItemsController.delete error:", error);
             next(error);
         }
     };

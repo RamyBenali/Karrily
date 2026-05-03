@@ -466,7 +466,11 @@
     "elementDeleted": "تم حذف العنصر",
     "processingError": "خطأ أثناء المعالجة",
     "reportLogDeleted": "تم حذف البلاغ من السجل",
-    "roleUpdated": "تم تحديث الدور"
+    "roleUpdated": "تم تحديث الدور",
+    "revenueEvolution": "تطور",
+    "revenues": "الإيرادات",
+    "sixMonths": "الأداء المالي لآخر 6 أشهر",
+    "revenue": "الإيرادات"
   },
   "item": {
     "perDay": "/يوم",

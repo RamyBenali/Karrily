@@ -37,7 +37,7 @@ api.interceptors.response.use(
     async (error) => {
         // Show error toast for non-401 errors
         if (error.response?.status !== 401) {
-            const message = error.response?.data?.message || error.message || "Une erreur est survenue";
+            const message = error.response?.data?.error?.message || error.response?.data?.message || error.message || "Une erreur est survenue";
             toast.error(message);
         }
 

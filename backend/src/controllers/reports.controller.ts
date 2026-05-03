@@ -88,10 +88,16 @@ export class ReportsController {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    throw new ApiError(404, "Ce signalement n'existe plus (il a peut-être été supprimé suite à la suppression de l'objet signalé).");
+                }
+                throw error;
+            }
 
             res.json({ success: true, data });
         } catch (error) {
+            console.error("ReportsController.updateStatus error:", error);
             next(error);
         }
     };

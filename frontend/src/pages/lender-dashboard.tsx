@@ -189,6 +189,11 @@ export function LenderDashboard() {
         try {
           await itemsService.delete(id);
           setMyListings(prev => prev.filter(i => i.id !== id));
+        } catch (err: any) {
+          console.error("Error deleting item:", err);
+          if (err.response?.status === 404) {
+            setMyListings(prev => prev.filter(i => i.id !== id));
+          }
         } finally {
           setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         }
@@ -200,7 +205,12 @@ export function LenderDashboard() {
     try {
       await trocService.updateStatus(id, status);
       setTrocProposals(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-    } catch(err) { console.error(err); }
+    } catch(err: any) { 
+      console.error("Error updating troc status:", err);
+      if (err.response?.status === 404) {
+        setTrocProposals(prev => prev.filter(p => p.id !== id));
+      }
+    }
   };
 
   const handleUpdateSaleStatus = async (id: string, status: string) => {
@@ -219,13 +229,27 @@ export function LenderDashboard() {
       });
       return;
     }
-    await salesService.updateStatus(id, status);
-    setMySales(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+    try {
+      await salesService.updateStatus(id, status);
+      setMySales(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+    } catch (err: any) {
+      console.error("Error updating sale status:", err);
+      if (err.response?.status === 404) {
+        setMySales(prev => prev.filter(s => s.id !== id));
+      }
+    }
   };
 
   const handleUpdateBookingStatus = async (id: string, status: string) => {
-    await bookingsService.updateStatus(id, status);
-    setUpcomingBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    try {
+      await bookingsService.updateStatus(id, status);
+      setUpcomingBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    } catch (err: any) {
+      console.error("Error updating booking status:", err);
+      if (err.response?.status === 404) {
+        setUpcomingBookings(prev => prev.filter(b => b.id !== id));
+      }
+    }
   };
 
   return (

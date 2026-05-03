@@ -8,6 +8,7 @@ import { usersRoutes } from "./users.routes.js";
 import { categoriesRoutes } from "./categories.routes.js";
 import { statsRoutes } from "./stats.routes.js";
 import { reportsRoutes } from "./reports.routes.js";
+import { reviewsRoutes } from "./reviews.routes.js";
 
 export const apiRouter = Router();
 
@@ -21,3 +22,4 @@ apiRouter.use("/users", usersRoutes);
 apiRouter.use("/categories", categoriesRoutes);
 apiRouter.use("/stats", statsRoutes);
 apiRouter.use("/reports", reportsRoutes);
+apiRouter.use("/reviews", reviewsRoutes);

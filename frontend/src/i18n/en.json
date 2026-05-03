@@ -466,7 +466,11 @@
     "elementDeleted": "Element deleted",
     "processingError": "Error during processing",
     "reportLogDeleted": "Report deleted from log",
-    "roleUpdated": "Role updated"
+    "roleUpdated": "Role updated",
+    "revenueEvolution": "Revenue",
+    "revenues": "Evolution",
+    "sixMonths": "Financial performance over the last 6 months",
+    "revenue": "Revenue"
   },
   "item": {
     "perDay": "/day",

@@ -95,18 +95,21 @@ export class SalesController {
             }
 
             // Verify the user is the owner or buyer
-            const { data: sale } = await supabaseAdmin
+            const { data: sale, error: fetchError } = await supabaseAdmin
                 .from("sales")
                 .select("seller_id, buyer_id, item_id")
                 .eq("id", id)
                 .single();
 
-            if (!sale) {
-                throw new ApiError(404, "Sale request not found");
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    throw new ApiError(404, "Cette demande d'achat n'existe pas.");
+                }
+                throw fetchError;
             }
 
-            if (sale.seller_id !== userId && sale.buyer_id !== userId) {
-                throw new ApiError(403, "Access denied");
+            if (sale.seller_id !== userId && sale.buyer_id !== userId && req.user!.role !== 'admin') {
+                throw new ApiError(403, "Accès refusé");
             }
 
             const updateData: Record<string, unknown> = { status, updated_at: new Date().toISOString() };

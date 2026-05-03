@@ -90,22 +90,24 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
               exit={{ opacity: 0, scale: 1.1 }}
               className="py-16 px-8 flex flex-col items-center justify-center text-center space-y-6"
             >
-              <div className="w-24 h-24 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center relative">
-                <motion.div 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                >
-                  <CheckCircle2 className="w-12 h-12" />
-                </motion.div>
-                <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black mb-2">{t("report.thankYouVigilance")}</h3>
-                <p className="text-muted-foreground font-medium max-w-[280px] mx-auto">
-                  <span dangerouslySetInnerHTML={{ __html: t("report.reportSentSubtitle", { title: targetTitle }) }} />
-                </p>
-              </div>
+              <DialogHeader className="flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-24 h-24 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center relative mb-2">
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  >
+                    <CheckCircle2 className="w-12 h-12" />
+                  </motion.div>
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-black mb-2">{t("report.thankYouVigilance")}</DialogTitle>
+                  <DialogDescription className="text-muted-foreground font-medium max-w-[280px] mx-auto">
+                    <span dangerouslySetInnerHTML={{ __html: t("report.reportSentSubtitle", { title: targetTitle }) }} />
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
             </motion.div>
           ) : (
             <motion.div 
@@ -116,18 +118,18 @@ export function ReportDialog({ isOpen, onClose, targetId, targetType, targetTitl
             >
               {/* Header with Background Accent */}
               <div className="relative pt-8 pb-4 px-6 bg-gradient-to-b from-[#FF4F5A]/5 to-transparent flex-shrink-0">
-                <div className="flex items-center gap-3 mb-2">
+                <DialogHeader className="flex flex-row items-center gap-3 mb-2 space-y-0">
                   <div className="w-10 h-10 bg-[#FF4F5A] rounded-xl flex items-center justify-center shadow-lg shadow-[#FF4F5A]/20">
                     <ShieldAlert className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black tracking-tight">{t("report.reportTitle")}</h3>
+                    <DialogTitle className="text-xl font-black tracking-tight">{t("report.reportTitle")}</DialogTitle>
                     <p className="text-[9px] font-black uppercase tracking-widest text-[#FF4F5A] opacity-80">{t("report.platformSecurity")}</p>
                   </div>
-                </div>
-                <p className="text-muted-foreground text-xs font-medium leading-relaxed">
+                </DialogHeader>
+                <DialogDescription className="text-muted-foreground text-xs font-medium leading-relaxed mt-4">
                   {t("report.reportInstruction")}
-                </p>
+                </DialogDescription>
               </div>
 
               {/* Main Content - Scrollable */}

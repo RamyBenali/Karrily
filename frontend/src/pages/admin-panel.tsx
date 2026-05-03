@@ -16,7 +16,9 @@ import {
   Loader2,
   ClipboardList,
   Flag,
+  ShieldCheck,
 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from "../components/ui/button";
 import {
   AlertDialog,
@@ -118,7 +120,8 @@ export function AdminPanel() {
         dbConnections: 0,
         apiLatency: "0ms",
         transactions: 0
-    }
+    },
+    revenueData: [] as { month: string; earnings: number }[]
   });
 
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
@@ -127,6 +130,7 @@ export function AdminPanel() {
   const [salesList, setSalesList] = useState<Sale[]>([]);
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [isDeletingReview, setIsDeletingReview] = useState<string | null>(null);
+  const [isIgnoringReview, setIsIgnoringReview] = useState<string | null>(null);
   const [reportsList, setReportsList] = useState<any[]>([]);
   const [isResolvingReport, setIsResolvingReport] = useState<string | null>(null);
   const [allLogs, setAllLogs] = useState<any[]>([]);
@@ -196,7 +200,8 @@ export function AdminPanel() {
         if (res.data) {
           setStats({
             ...res.data.kpis,
-            system: res.data.system
+            system: res.data.system,
+            revenueData: res.data.revenueData || []
           });
           if (res.data.lists?.bookings) {
             const logs = res.data.lists.bookings.map((b: any) => ({
@@ -341,6 +346,25 @@ export function AdminPanel() {
     });
   };
 
+  const handleIgnoreReview = async (id: string) => {
+    setIsIgnoringReview(id);
+    
+    // Immediate local update
+    setReviewsList(prev => prev.map(r => r.id === id ? { ...r, is_reported: false } : r));
+    
+    try {
+      await reviewsService.dismissReport(id);
+      toast.success(t("admin.reportDismissed") || "Signalement ignoré");
+      refreshCurrentTab(); // Refresh in background
+    } catch (error) {
+      console.error("Error dismissing report:", error);
+      toast.error(t("admin.updateError"));
+      refreshCurrentTab();
+    } finally {
+      setIsIgnoringReview(null);
+    }
+  };
+
   const handleResolveReport = async (id: string, action: 'dismiss' | 'delete_element', targetType?: string, targetId?: string) => {
     setConfirmConfig({
       isOpen: true,
@@ -353,10 +377,14 @@ export function AdminPanel() {
       onConfirm: async () => {
         setIsResolvingReport(id);
         
-        const finalStatus = action === 'dismiss' ? 'dismissed' : 'resolved';
-        setReportsList(prev => prev.map(r => r.id === id ? { ...r, status: finalStatus } : r));
+        const finalStatus = 'resolved';
+        const finalNotes = action === 'dismiss' ? "Validé via modération" : "Traité par l'admin (supprimé)";
+        
+        setReportsList(prev => prev.map(r => r.id === id ? { ...r, status: finalStatus, admin_notes: finalNotes } : r));
 
         try {
+          await reportsService.updateStatus(id, finalStatus, finalNotes);
+
           if (action === 'delete_element') {
             if (targetType === 'item') {
               await itemsService.delete(targetId!);
@@ -368,7 +396,6 @@ export function AdminPanel() {
             }
           }
 
-          await reportsService.updateStatus(id, finalStatus, "Traité par l'admin");
           toast.success(action === 'dismiss' ? t("admin.reportIgnored") : t("admin.elementDeleted"));
         } catch (error) {
           console.error("Error resolving report:", error);
@@ -479,43 +506,64 @@ export function AdminPanel() {
                       <div className="flex items-center justify-between mb-7">
                         <div>
                           <h2 className="text-lg font-black">
-                            {(t("admin.systemHealth") !== "admin.systemHealth" ? t("admin.systemHealth") : "Santé du Système").split(" ").slice(0, 2).join(" ")} 
-                            <span className="text-[#FF4F5A]"> {(t("admin.systemHealth") !== "admin.systemHealth" ? t("admin.systemHealth") : "Santé du Système").split(" ").slice(2).join(" ")}</span>
+                            {t("admin.revenueEvolution") || "Évolution des"} <span className="text-emerald-500">{t("admin.revenues") || "Revenus"}</span>
                           </h2>
-                          <p className="text-xs text-muted-foreground mt-0.5">{t("admin.monitoring") !== "admin.monitoring" ? t("admin.monitoring") : "Monitoring des activités en temps réel"}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t("admin.sixMonths") || "Performances financières des 6 derniers mois"}</p>
                         </div>
                         <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-bold flex items-center gap-2 border border-emerald-500/20">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          {t("admin.online") !== "admin.online" ? t("admin.online") : "En ligne"}
+                          <TrendingUp className="w-3 h-3" />
+                          Croissance
                         </div>
                       </div>
-                      <div className="grid md:grid-cols-2 gap-5 mb-7">
-                        <div className="bg-muted/30 rounded-xl p-5 border border-border">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">{t("admin.messages") !== "admin.messages" ? t("admin.messages") : "Messages"}</h4>
-                          <div className="h-1.5 w-full bg-muted rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min((stats.system?.totalMessages || 0) / 10, 100)}%` }} className="h-full bg-blue-500 rounded-full" />
-                          </div>
-                          <p className="text-xs text-muted-foreground">{stats.system?.totalMessages || 0} {(t("admin.messages") !== "admin.messages" ? t("admin.messages") : "Messages").toLowerCase()}</p>
-                        </div>
-                        <div className="bg-muted/30 rounded-xl p-5 border border-border">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">{t("admin.alerts") !== "admin.alerts" ? t("admin.alerts") : "Alertes"}</h4>
-                          <div className="h-1.5 w-full bg-muted rounded-full mb-2 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min((stats.system?.unreadNotifications || 0) * 10, 100)}%` }} className="h-full bg-[#FF4F5A] rounded-full" />
-                          </div>
-                          <p className="text-xs text-muted-foreground">{stats.system?.unreadNotifications || 0} {(t("admin.pending") !== "admin.pending" ? t("admin.pending") : "en attente").toLowerCase()}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-5 mt-auto">
-                        {[
-                          { label: t("admin.apiLatency") !== "admin.apiLatency" ? t("admin.apiLatency") : "Latence API", value: stats.system?.apiLatency || "24ms" },
-                          { label: t("admin.dbConnections") !== "admin.dbConnections" ? t("admin.dbConnections") : "Connexions DB", value: stats.system?.dbConnections || 12 },
-                          { label: t("admin.transactions") !== "admin.transactions" ? t("admin.transactions") : "Transactions", value: stats.system?.transactions || stats.totalBookings || 0 }
-                        ].map((m) => (
-                          <div key={m.label} className="flex-1 text-center p-4 bg-muted/30 rounded-xl border border-border">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{m.label}</p>
-                            <p className="text-xl font-black font-mono">{m.value}</p>
-                          </div>
-                        ))}
+                      
+                      <div className="flex-1 w-full mt-2 h-full min-h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={stats.revenueData || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <XAxis 
+                              dataKey="month" 
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fontWeight: 700, fill: "currentColor", opacity: 0.5 }}
+                              dy={10}
+                            />
+                            <YAxis 
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fontWeight: 700, fill: "currentColor", opacity: 0.5 }}
+                              tickFormatter={(value) => `${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
+                              dx={-10}
+                            />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.05} />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: "hsl(var(--card))", 
+                                borderColor: "hsl(var(--border))",
+                                borderRadius: "1rem",
+                                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                padding: "12px 16px",
+                                fontWeight: "bold"
+                              }}
+                              itemStyle={{ color: "#10b981", fontWeight: 900 }}
+                              labelStyle={{ color: "currentColor", opacity: 0.5, marginBottom: "4px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}
+                              formatter={(value: number) => [`${value} DA`, t("admin.revenue") || "Revenu"]}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="earnings" 
+                              stroke="#10b981" 
+                              strokeWidth={4}
+                              fillOpacity={1} 
+                              fill="url(#colorRevenue)" 
+                              activeDot={{ r: 6, fill: "#10b981", strokeWidth: 0 }}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </div>
                     </motion.div>
 
@@ -711,15 +759,36 @@ export function AdminPanel() {
                               <div className="text-[10px] font-black uppercase opacity-30">{new Date(review.created_at).toLocaleDateString()}</div>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-2xl border-y border-r border-border text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteReview(review.id)}
-                                disabled={isDeletingReview === review.id}
-                                className="opacity-20 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                              >
-                                {isDeletingReview === review.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                              </Button>
+                              <div className="flex items-center justify-end gap-2">
+                                {review.is_reported && (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">
+                                    <AlertCircle className="w-3 h-3" /> Signalé
+                                  </span>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleIgnoreReview(review.id)}
+                                  disabled={isIgnoringReview === review.id}
+                                  className={cn(
+                                    "w-9 h-9 rounded-xl transition-all",
+                                    review.is_reported ? "text-emerald-500 hover:bg-emerald-500/10" : "text-emerald-500/50 hover:text-emerald-500 hover:bg-emerald-500/10"
+                                  )}
+                                  title="Marquer comme validé / Ignorer"
+                                >
+                                  {isIgnoringReview === review.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  disabled={isDeletingReview === review.id}
+                                  className="w-9 h-9 text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                  title="Supprimer l'avis"
+                                >
+                                  {isDeletingReview === review.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -773,7 +842,19 @@ export function AdminPanel() {
                                   {report.reported_item_id ? t("admin.product") : report.reported_review_id ? t("admin.review") : t("admin.user")}
                                 </span>
                                 <div className="font-bold text-xs truncate max-w-[180px] leading-tight">
-                                  {report.item?.title || report.review?.comment || report.reported_user?.full_name}
+                                  {report.reported_item_id && !report.item ? (
+                                    <span className="text-muted-foreground italic">[Article supprimé]</span>
+                                  ) : report.item ? (
+                                    report.item.title
+                                  ) : report.reported_user_id && !report.reported_user ? (
+                                    <span className="text-muted-foreground italic">[Utilisateur supprimé]</span>
+                                  ) : report.reported_user ? (
+                                    report.reported_user.full_name
+                                  ) : report.reported_review_id && !report.review ? (
+                                    <span className="text-muted-foreground italic">[Avis supprimé]</span>
+                                  ) : report.review ? (
+                                    report.review.comment
+                                  ) : 'N/A'}
                                 </div>
                               </div>
                             </td>
@@ -785,11 +866,11 @@ export function AdminPanel() {
                               <span className={cn(
                                 "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center justify-center gap-1.5 w-fit",
                                 report.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                                report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                                report.status === 'resolved' && report.admin_notes?.includes('Validé') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
                                 'bg-white/10 text-muted-foreground border-border/50'
                               )}>
                                 {report.status === 'pending' && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-                                {report.status === 'pending' ? t("report.pendingStatus") : report.status === 'resolved' ? t("report.resolved") : t("report.ignored")}
+                                {report.status === 'pending' ? t("report.pendingStatus") : report.status === 'resolved' && report.admin_notes?.includes('Validé') ? t("report.ignored") : t("report.resolved")}
                               </span>
                             </td>
                             <td className="py-5 px-6 bg-muted/30 rounded-r-3xl border-y border-r border-border text-right">

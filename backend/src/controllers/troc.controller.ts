@@ -97,18 +97,21 @@ export class TrocController {
                 throw new ApiError(400, `Invalid status.`);
             }
 
-            const { data: proposal } = await supabaseAdmin
+            const { data: proposal, error: fetchError } = await supabaseAdmin
                 .from("troc_proposals")
                 .select("requested_owner_id, proposer_id, requested_item_id, offered_item_id")
                 .eq("id", id)
                 .single();
 
-            if (!proposal) {
-                throw new ApiError(404, "Proposal not found");
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    throw new ApiError(404, "Cette proposition de troc n'existe pas.");
+                }
+                throw fetchError;
             }
 
-            if (proposal.requested_owner_id !== userId && proposal.proposer_id !== userId) {
-                throw new ApiError(403, "Access denied");
+            if (proposal.requested_owner_id !== userId && proposal.proposer_id !== userId && req.user!.role !== 'admin') {
+                throw new ApiError(403, "Accès refusé");
             }
 
             const { data, error } = await supabaseAdmin

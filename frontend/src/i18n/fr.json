@@ -468,7 +468,11 @@
     "elementDeleted": "Élément supprimé",
     "processingError": "Erreur lors du traitement",
     "reportLogDeleted": "Signalement supprimé du journal",
-    "roleUpdated": "Rôle mis à jour"
+    "roleUpdated": "Rôle mis à jour",
+    "revenueEvolution": "Évolution des",
+    "revenues": "Revenus",
+    "sixMonths": "Performances financières des 6 derniers mois",
+    "revenue": "Revenu"
   },
   "item": {
     "perDay": "/jour",

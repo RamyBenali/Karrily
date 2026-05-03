@@ -50,8 +50,8 @@ export class BookingsController {
                 throw new ApiError(404, "Booking not found");
             }
 
-            // Only the renter or owner can view
-            if (data.renter_id !== userId && data.owner_id !== userId) {
+            // Only the renter or owner can view (unless admin)
+            if (data.renter_id !== userId && data.owner_id !== userId && req.user!.role !== 'admin') {
                 throw new ApiError(403, "Access denied");
             }
 
@@ -158,18 +158,21 @@ export class BookingsController {
             }
 
             // Verify the user is the owner of the item
-            const { data: booking } = await supabaseAdmin
+            const { data: booking, error: fetchError } = await supabaseAdmin
                 .from("bookings")
                 .select("owner_id, renter_id")
                 .eq("id", id)
                 .single();
 
-            if (!booking) {
-                throw new ApiError(404, "Booking not found");
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    throw new ApiError(404, "Cette réservation n'existe pas.");
+                }
+                throw fetchError;
             }
 
-            if (booking.owner_id !== userId && booking.renter_id !== userId) {
-                throw new ApiError(403, "Access denied");
+            if (booking.owner_id !== userId && booking.renter_id !== userId && req.user!.role !== 'admin') {
+                throw new ApiError(403, "Accès refusé");
             }
 
             const { data, error } = await supabaseAdmin
@@ -218,18 +221,21 @@ export class BookingsController {
             const { id } = req.params;
             const userId = req.user!.id;
 
-            const { data: booking } = await supabaseAdmin
+            const { data: booking, error: fetchError } = await supabaseAdmin
                 .from("bookings")
                 .select("renter_id, status")
                 .eq("id", id)
                 .single();
 
-            if (!booking) {
-                throw new ApiError(404, "Booking not found");
+            if (fetchError) {
+                if (fetchError.code === 'PGRST116') {
+                    throw new ApiError(404, "Cette réservation n'existe pas.");
+                }
+                throw fetchError;
             }
 
-            if (booking.renter_id !== userId) {
-                throw new ApiError(403, "Only the renter can cancel a booking");
+            if (booking.renter_id !== userId && req.user!.role !== 'admin') {
+                throw new ApiError(403, "Seul le locataire ou un admin peut annuler une réservation");
             }
 
             if (booking.status === "active" || booking.status === "completed") {
