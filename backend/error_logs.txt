@@ -13,3 +13,8 @@ Error: Unauthorized: Invalid or expired token
     at authMiddleware (C:\Users\CToff\Documents\Karrily\Karrily\backend\src\middleware\auth.middleware.ts:48:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
 
+[2026-05-04T21:13:47.156Z] 401 - Unauthorized: Invalid or expired token
+Error: Unauthorized: Invalid or expired token
+    at authMiddleware (C:\Users\VMI\Desktop\karily\Karrily-main\backend\src\middleware\auth.middleware.ts:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+

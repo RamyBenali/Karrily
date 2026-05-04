@@ -1,8 +1,8 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin, Star, Loader2 } from "lucide-react";
+import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin, Star, Loader2, MessageCircle, MessageSquare, ChevronRight } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
@@ -14,6 +14,7 @@ import { ShoppingCart, RefreshCw } from "lucide-react";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { cn } from "../components/ui/utils";
 import { useTranslation } from "../context/language-context";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,12 +27,43 @@ import {
 } from "../components/ui/alert-dialog";
 import { Input } from "../components/ui/input";
 
-const getSidebarItems = (t: any) => [
+// --- Messaging Interfaces ---
+interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  message_type: 'text' | 'image' | 'system';
+  is_read: boolean;
+}
+
+interface Conversation {
+  id: string;
+  item_id: string | null;
+  participant_1: string;
+  participant_2: string;
+  last_message_preview: string;
+  last_message_at: string;
+  created_at: string;
+  items?: {
+    title: string;
+    thumbnail_url: string;
+  };
+  other_user?: {
+    id: string;
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
+const getSidebarItems = (t: any, unreadCount: number = 0) => [
   { id: 'overview', icon: BarChart3, label: t("lender.overview") },
   { id: 'listings', icon: Package, label: t("lender.myListings") },
   { id: 'bookings', icon: Calendar, label: t("lender.rentals") },
   { id: 'sales', icon: ShoppingCart, label: t("dashboard.sales") },
   { id: 'troc', icon: RefreshCw, label: t("dashboard.trades") },
+  { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", badge: unreadCount },
   { id: 'earnings', icon: DollarSign, label: t("lender.earnings") },
   { id: 'reviews', icon: Star, label: t("dashboard.reviews") },
 ];
@@ -51,10 +83,29 @@ const WILAYAS: Record<number, string> = {
 export function LenderDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
-  const sidebarItems = getSidebarItems(t);
-  const [activeView, setActiveView] = useState<"overview" | "listings" | "bookings" | "sales" | "troc" | "earnings" | "reviews">("overview");
+  const [activeView, setActiveView] = useState<"overview" | "listings" | "bookings" | "sales" | "troc" | "earnings" | "reviews" | "messages">("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // --- Messaging State ---
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(location.state?.convId || null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  const sidebarItems = getSidebarItems(t, unreadMessagesCount);
+
+  useEffect(() => {
+    if (location.state?.tab === "messages") {
+      setActiveView("messages");
+    }
+    if (location.state?.convId) {
+      setActiveConversationId(location.state.convId);
+    }
+  }, [location.state]);
 
   const [myListings, setMyListings] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
@@ -177,6 +228,134 @@ export function LenderDashboard() {
       supabase.removeChannel(trocChannel);
     };
   }, [user]);
+
+  // --- Messaging Logic ---
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("conversations")
+        .select("*, items(title, thumbnail_url), p1:profiles!participant_1(id, full_name, avatar_url), p2:profiles!participant_2(id, full_name, avatar_url)")
+        .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
+        .order("last_message_at", { ascending: false });
+
+      if (data) {
+        const formatted = data.map(conv => {
+          const isUserP1 = conv.participant_1 === user.id;
+          return {
+            ...conv,
+            other_user: isUserP1 ? (conv as any).p2 : (conv as any).p1,
+          };
+        });
+        setConversations(formatted as Conversation[]);
+      }
+    };
+    fetchConversations();
+
+    const convChannel = supabase
+      .channel(`seller_convs:${user?.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversations" }, () => fetchConversations())
+      .subscribe();
+
+    const fetchUnreadCount = async () => {
+      if (!user) return;
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: 'exact', head: true })
+        .eq("is_read", false)
+        .neq("sender_id", user.id);
+      setUnreadMessagesCount(count || 0);
+    };
+    fetchUnreadCount();
+
+    return () => {
+      supabase.removeChannel(convChannel);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let channel: RealtimeChannel;
+    const fetchMessages = async () => {
+      if (!activeConversationId || !user) return;
+      setIsLoadingMsgs(true);
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", activeConversationId)
+        .order("created_at", { ascending: true });
+
+      if (data) setMessages(data as Message[]);
+      setIsLoadingMsgs(false);
+
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", activeConversationId)
+        .neq("sender_id", user.id);
+
+      channel = supabase
+        .channel(`chat:${activeConversationId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeConversationId}` },
+          (payload) => {
+            const newMsg = payload.new as Message;
+            setMessages((prev) => {
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
+        )
+        .subscribe();
+    };
+
+    fetchMessages();
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [activeConversationId, user?.id]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !activeConversationId || !newMessage.trim()) return;
+
+    const content = newMessage.trim();
+    const tempId = crypto.randomUUID();
+    const optimisticMsg: Message = {
+      id: tempId,
+      conversation_id: activeConversationId,
+      sender_id: user.id,
+      content: content,
+      created_at: new Date().toISOString(),
+      message_type: 'text',
+      is_read: false
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+    setNewMessage("");
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: activeConversationId,
+        sender_id: user.id,
+        content: content,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Erreur lors de l'envoi du message");
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+    } else if (data) {
+      setMessages(prev => prev.map(m => m.id === tempId ? data as Message : m));
+    }
+
+    await supabase
+      .from("conversations")
+      .update({ last_message_preview: content, last_message_at: new Date().toISOString() })
+      .eq("id", activeConversationId);
+  };
 
   const handleDeleteItem = (id: string) => {
     setConfirmConfig({
@@ -463,6 +642,147 @@ export function LenderDashboard() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {activeView === "messages" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex"
+                  style={{ height: '620px' }}
+                >
+                  {/* Left Column: Conversations List */}
+                  <div className="w-[280px] flex-shrink-0 border-r border-border flex flex-col bg-muted/20">
+                    <div className="px-5 py-4 border-b border-border">
+                      <h2 className="text-base font-bold text-foreground">{t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages"}</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{conversations.length} {conversations.length === 1 ? (t("dashboard.conversation") !== "dashboard.conversation" ? t("dashboard.conversation") : "conversation") : (t("dashboard.conversations") !== "dashboard.conversations" ? t("dashboard.conversations") : "conversations")}</p>
+                    </div>
+                    <div className="flex-1 overflow-y-auto no-scrollbar">
+                      {conversations.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                          <p className="text-sm font-medium">{t("dashboard.noConversations")}</p>
+                          <p className="text-xs mt-1 opacity-60">{t("dashboard.contactSellers")}</p>
+                        </div>
+                      ) : (
+                        conversations.map((conv) => (
+                          <div
+                            key={conv.id}
+                            onClick={() => setActiveConversationId(conv.id)}
+                            className={`p-4 cursor-pointer transition-all border-b border-border/40 ${activeConversationId === conv.id
+                              ? "bg-[#FF4F5A]/5 border-l-2 border-l-[#FF4F5A]"
+                              : "hover:bg-muted/40"
+                              }`}
+                          >
+                            <div className="flex gap-3 items-start">
+                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-border">
+                                {conv.other_user?.avatar_url ? (
+                                  <img src={conv.other_user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] text-white flex items-center justify-center font-bold text-sm">
+                                    {conv.other_user?.full_name?.charAt(0) || "U"}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-semibold text-foreground text-sm truncate">{conv.other_user?.full_name}</p>
+                                  <span className="text-[10px] text-muted-foreground/60 ml-1 flex-shrink-0">
+                                    {new Date(conv.last_message_at).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit' })}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] font-medium text-[#FF4F5A] truncate mt-0.5">{conv.items?.title || "Annonce"}</p>
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">{conv.last_message_preview || "Nouvelle conversation"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Active Chat */}
+                  <div className="flex-1 flex flex-col bg-background/50">
+                    {!activeConversationId ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50 gap-3">
+                        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                          <MessageSquare className="w-8 h-8 opacity-30" />
+                        </div>
+                        <p className="text-sm font-medium">{t("dashboard.selectConversation") !== "dashboard.selectConversation" ? t("dashboard.selectConversation") : "Sélectionnez une conversation"}</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Chat Header */}
+                        {(() => {
+                          const conv = conversations.find(c => c.id === activeConversationId);
+                          return conv ? (
+                            <div className="px-5 py-3.5 border-b border-border flex items-center gap-3 bg-card shadow-sm">
+                              <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-border flex-shrink-0">
+                                {conv.other_user?.avatar_url ? (
+                                  <img src={conv.other_user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-[#0F2A2E] to-[#1A4851] text-white flex items-center justify-center font-bold text-xs">
+                                    {conv.other_user?.full_name?.charAt(0) || "U"}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground text-sm">{conv.other_user?.full_name}</p>
+                                <p className="text-[11px] text-muted-foreground cursor-pointer hover:text-[#FF4F5A] transition-colors" onClick={() => conv.item_id && navigate(`/item/${conv.item_id}`)}>
+                                  {conv.items?.title || "Annonce"}
+                                </p>
+                              </div>
+                            </div>
+                          ) : null;
+                        })()}
+
+                        {/* Chat Messages */}
+                        <div className="flex-1 overflow-y-auto p-5 space-y-3 no-scrollbar">
+                          {isLoadingMsgs ? (
+                            <div className="flex justify-center my-auto"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground/40" /></div>
+                          ) : (
+                            messages.map(msg => {
+                              const isMe = msg.sender_id === user?.id;
+                              return (
+                                <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                                  <div className={`relative max-w-[72%] px-4 py-2.5 ${isMe
+                                    ? "bg-[#FF4F5A] text-white rounded-2xl rounded-br-md shadow-sm"
+                                    : "bg-card border border-border text-foreground rounded-2xl rounded-bl-md shadow-sm"
+                                    }`}>
+                                    <p className="text-sm leading-relaxed" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
+                                    <p className={`text-[10px] mt-1.5 ${isMe ? "text-white/60 text-right" : "text-muted-foreground/60"
+                                      }`}>
+                                      {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Chat Input */}
+                        <div className="p-4 border-t border-border bg-card">
+                          <form onSubmit={handleSendMessage} className="flex gap-2">
+                            <Input
+                              value={newMessage}
+                              onChange={e => setNewMessage(e.target.value)}
+                              placeholder={t("dashboard.writeMessage")}
+                              className="flex-1 rounded-xl h-10 bg-muted/50 border-border/60 focus-visible:ring-[#FF4F5A]/30 text-sm"
+                            />
+                            <Button
+                              type="submit"
+                              disabled={!newMessage.trim()}
+                              className="w-10 h-10 rounded-xl bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white p-0 flex items-center justify-center shadow-sm"
+                            >
+                              <ChevronRight className="w-5 h-5" />
+                            </Button>
+                          </form>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
               )}
             </div>
           </div>
