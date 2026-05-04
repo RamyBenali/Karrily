@@ -1,6 +1,6 @@
 import { Navigation } from "../components/layout/navigation";
 import { motion } from "motion/react";
-import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin, Star, Loader2, MessageCircle, MessageSquare, ChevronRight } from "lucide-react";
+import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, BarChart3, CheckCircle, XCircle, MapPin, Star, Loader2, MessageCircle, MessageSquare, ChevronRight, User as UserIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useNavigate, useLocation } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -541,62 +541,169 @@ export function LenderDashboard() {
               {activeView === "bookings" && (
                 <div className="space-y-4">
                   {upcomingBookings.map(b => (
-                    <div key={b.id} className="p-6 bg-muted/50 rounded-3xl flex justify-between items-center">
-                      <div>
-                        <p className="font-bold">{b.renter?.full_name}</p>
-                        <p className="text-sm">{b.items?.title}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(b.start_date).toLocaleDateString()} - {new Date(b.end_date).toLocaleDateString()}</p>
+                    <div key={b.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                      <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${b.item_id}`)}>
+                        <ImageWithFallback src={b.items?.thumbnail_url} alt={b.items?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="text-lg font-bold text-foreground truncate cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${b.item_id}`)}>{b.items?.title}</h3>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                              <UserIcon className="w-3.5 h-3.5 text-[#FF4F5A]" />
+                              <span className="font-medium">{b.renter?.full_name || "Client"}</span>
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            b.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                            b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                            b.status === 'completed' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            'bg-red-100 text-red-700 border border-red-200'
+                          }`}>
+                            {b.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>{new Date(b.start_date).toLocaleDateString()} - {new Date(b.end_date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="font-black text-[#FF4F5A] text-sm">
+                            {Number(b.total_price).toLocaleString()} {t("common.da")}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-full md:w-auto">
                         {b.status === 'pending' && (
                           <>
-                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
-                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')} variant="destructive">Refuser</Button>
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex-1 md:flex-none">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')} variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 rounded-xl flex-1 md:flex-none">Refuser</Button>
                           </>
                         )}
-                        <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{b.status}</span>
+                        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => navigate(`/item/${b.item_id}`)}><Eye className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   ))}
+                  {upcomingBookings.length === 0 && (
+                    <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+                      <Calendar className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">{t("dashboard.noBookingsYet")}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeView === "sales" && (
                 <div className="space-y-4">
                   {mySales.map(s => (
-                    <div key={s.id} className="p-6 bg-muted/50 rounded-3xl flex justify-between items-center">
-                      <div><p className="font-bold">{s.buyer?.full_name}</p><p className="text-sm">{s.items?.title}</p></div>
-                      <div className="flex gap-2 items-center">
+                    <div key={s.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                      <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${s.item_id}`)}>
+                        <ImageWithFallback src={s.item?.thumbnail_url} alt={s.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="text-lg font-bold text-foreground truncate cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${s.item_id}`)}>{s.item?.title}</h3>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                              <UserIcon className="w-3.5 h-3.5 text-[#FF4F5A]" />
+                              <span className="font-medium">{s.buyer?.full_name || "Acheteur"}</span>
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            s.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                            s.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                            s.status === 'completed' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            'bg-red-100 text-red-700 border border-red-200'
+                          }`}>
+                            {s.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span>Vente directe</span>
+                          </div>
+                          <div className="font-black text-[#FF4F5A] text-sm">
+                            {Number(s.price).toLocaleString()} {t("common.da")}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-full md:w-auto">
                         {s.status === 'pending' && (
                           <>
-                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
-                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'rejected')} variant="destructive">Refuser</Button>
+                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex-1 md:flex-none">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateSaleStatus(s.id, 'rejected')} variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 rounded-xl flex-1 md:flex-none">Refuser</Button>
                           </>
                         )}
-                        <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{s.status}</span>
+                        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => navigate(`/item/${s.item_id}`)}><Eye className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   ))}
+                  {mySales.length === 0 && (
+                    <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+                      <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">Aucune vente pour le moment</p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeView === "troc" && (
                 <div className="space-y-4">
                   {trocProposals.map(p => (
-                    <div key={p.id} className="p-6 bg-muted/50 rounded-3xl">
-                      <p className="font-bold">{p.proposer?.full_name} {t("lender.proposesATroc")}</p>
-                      <p className="text-sm">{t("lender.for")} {p.requested_item?.title}</p>
-                      <div className="mt-4 flex gap-2">
+                    <div key={p.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                      <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${p.requested_item_id}`)}>
+                        <ImageWithFallback src={p.requested_item?.thumbnail_url} alt={p.requested_item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="text-lg font-bold text-foreground truncate cursor-pointer hover:text-[#FF4F5A]" onClick={() => navigate(`/item/${p.requested_item_id}`)}>{p.requested_item?.title}</h3>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                              <UserIcon className="w-3.5 h-3.5 text-[#FF4F5A]" />
+                              <span className="font-medium">{p.proposer?.full_name || "Client"}</span>
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            p.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                            p.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                            p.status === 'completed' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            'bg-red-100 text-red-700 border border-red-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-xl border border-border/50 max-w-fit">
+                            <RefreshCw className="w-3.5 h-3.5 text-[#FF4F5A] rotate-45" />
+                            <p className="text-[11px] font-bold text-foreground">
+                              {t("dashboard.offeredItem")}: <span className="text-muted-foreground font-medium">{p.offered_item?.title || p.offered_item_data?.title || "Objet personnel"}</span>
+                            </p>
+                          </div>
+                          {p.cash_complement > 0 && (
+                            <p className="text-[11px] font-bold text-emerald-600">
+                              + {Number(p.cash_complement).toLocaleString()} {t("common.da")} ({p.complement_payer === 'proposer' ? 'Complément client' : 'Complément vendeur'})
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-full md:w-auto">
                         {p.status === 'pending' && (
                           <>
-                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700">{t("dashboard.accept")}</Button>
-                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'rejected')} variant="destructive">Refuser</Button>
+                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'accepted')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex-1 md:flex-none">{t("dashboard.accept")}</Button>
+                            <Button size="sm" onClick={() => handleUpdateTrocStatus(p.id, 'rejected')} variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 rounded-xl flex-1 md:flex-none">Refuser</Button>
                           </>
                         )}
-                        <span className="text-xs font-bold uppercase p-2 bg-card rounded-lg">{p.status}</span>
+                        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => navigate(`/item/${p.requested_item_id}`)}><Eye className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   ))}
+                  {trocProposals.length === 0 && (
+                    <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+                      <RefreshCw className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">Aucune proposition de troc pour le moment</p>
+                    </div>
+                  )}
                 </div>
               )}
 

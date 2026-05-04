@@ -184,7 +184,7 @@ export function ChatBot() {
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               whileHover={{ scale: 1.02 }}
-                              whileActive={{ scale: 0.98 }}
+                              whileTap={{ scale: 0.98 }}
                               onClick={() => executeSearch(action)}
                               className="flex items-center gap-3 px-8 py-5 bg-emerald-500 text-white rounded-full text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
                             >
@@ -245,7 +245,7 @@ export function ChatBot() {
       {/* Bubble Button - Perfectly Round & Premium */}
       <motion.button
         whileHover={{ scale: 1.1, rotate: 5 }}
-        whileActive={{ scale: 0.9 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => {
           setIsOpen(true);
           setIsMinimized(false);

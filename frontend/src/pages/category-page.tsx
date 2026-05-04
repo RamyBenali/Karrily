@@ -5,13 +5,12 @@ import { Car, ArrowRight, Star, MapPin, Heart } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Footer } from "../components/layout/footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { useTranslation } from "../context/language-context";
 import { favoritesService } from "../services/api.service";
 import { supabase } from "../lib/supabase";
-import { toast } from "react-hot-toast";
-import { useEffect } from "react";
+import { toast } from "sonner";
 
 const categoryData: Record<string, {
   title: string;
@@ -248,7 +247,7 @@ export function CategoryPage() {
                 >
                   <Heart 
                     className={`w-5 h-5 transition-all ${
-                      likedItems.includes(item.id)
+                      likedItems.includes(String(item.id))
                         ? "fill-[#FF4F5A] text-[#FF4F5A]"
                         : "text-foreground/80"
                     }`}

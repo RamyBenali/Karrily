@@ -16,6 +16,7 @@ import { useAuthStore } from "../store/auth.store";
 import { useTranslation } from "../context/language-context";
 import { bookingsService, trocService, favoritesService } from "../services/api.service";
 import { PurchaseRequestModal } from "../components/item/PurchaseRequestModal";
+import { toast } from "sonner";
 import { TrocProposalModal } from "../components/item/TrocProposalModal";
 import { ReviewDialog } from "../components/dashboard/ReviewDialog";
 import { ReportDialog } from "../components/dashboard/ReportDialog";
