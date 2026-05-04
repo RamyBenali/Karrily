@@ -227,18 +227,22 @@ export const favoritesService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Vous devez être connecté pour ajouter aux favoris.");
 
-        const { data: existing } = await supabase
+        const { data: existing, error: checkError } = await supabase
             .from("favorites")
             .select("id")
             .eq("user_id", user.id)
             .eq("item_id", item_id)
-            .single();
+            .maybeSingle();
+
+        if (checkError) handleSupabaseError(checkError, "Erreur lors de la vérification du favori.");
 
         if (existing) {
-            await supabase.from("favorites").delete().eq("id", existing.id);
+            const { error: deleteError } = await supabase.from("favorites").delete().eq("id", existing.id);
+            handleSupabaseError(deleteError, "Erreur lors du retrait du favori.");
             return { isFavorite: false, success: true };
         } else {
-            await supabase.from("favorites").insert({ user_id: user.id, item_id });
+            const { error: insertError } = await supabase.from("favorites").insert({ user_id: user.id, item_id });
+            handleSupabaseError(insertError, "Erreur lors de l'ajout au favori.");
             return { isFavorite: true, success: true };
         }
     },

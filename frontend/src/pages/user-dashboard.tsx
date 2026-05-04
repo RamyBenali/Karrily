@@ -140,6 +140,7 @@ export function UserDashboard() {
   const [bookingTab, setBookingTab] = useState<"renter" | "owner">("renter");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const sidebarItems = [
     { id: 'overview', icon: BarChart3, label: t("dashboard.overview") !== "dashboard.overview" ? t("dashboard.overview") : "Aperçu" },
@@ -147,120 +148,131 @@ export function UserDashboard() {
     { id: 'purchases', icon: ShoppingBag, label: t("dashboard.myPurchases") !== "dashboard.myPurchases" ? t("dashboard.myPurchases") : "Mes Achats" },
     { id: 'trades', icon: RefreshCw, label: t("dashboard.myTrades") !== "dashboard.myTrades" ? t("dashboard.myTrades") : "Mes Trocs" },
     { id: 'favorites', icon: Heart, label: t("dashboard.favorites") !== "dashboard.favorites" ? t("dashboard.favorites") : "Favoris", badge: favorites.length },
-    { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", badge: unreadCount },
+    { id: 'messages', icon: MessageCircle, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", badge: unreadMessagesCount },
     { id: 'history', icon: Clock, label: t("dashboard.history") !== "dashboard.history" ? t("dashboard.history") : "Historique" },
     { id: 'profile', icon: UserIcon, label: t("dashboard.myProfile") !== "dashboard.myProfile" ? t("dashboard.myProfile") : "Mon Profil" },
     { id: 'settings', icon: Settings2, label: t("dashboard.settings") !== "dashboard.settings" ? t("dashboard.settings") : "Paramètres" },
   ];
 
-  useEffect(() => {
-    let channel: RealtimeChannel;
-
-    const fetchBookings = async () => {
-      if (!user) return;
-      setIsLoadingBookings(true);
-
-      try {
-        const { data } = await bookingsService.getMyBookings({ role: bookingTab });
-        setBookings(data || []);
-
-        channel = supabase
-          .channel(`bookings:${user.id}`)
-          .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "bookings", filter: `${bookingTab === 'renter' ? 'renter_id' : 'owner_id'}=eq.${user.id}` },
-            (payload) => {
-              if (payload.eventType === 'INSERT') {
-                fetchBookings();
-              } else if (payload.eventType === 'UPDATE') {
-                setBookings(prev => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b));
-              } else if (payload.eventType === 'DELETE') {
-                setBookings(prev => prev.filter(b => b.id !== payload.old.id));
-              }
-            }
-          )
-          .subscribe();
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-      } finally {
-        setIsLoadingBookings(false);
-      }
-    };
-    fetchBookings();
-
-    const fetchSales = async () => {
-      const res = await salesService.getMySales({ role: 'buyer' });
-      setMySales(res.data || []);
-    };
-
-    const fetchTroc = async () => {
-      const res = await trocService.getMyProposals({ role: 'proposer' });
-      setMyTroc(res.data || []);
-    };
-
-    const fetchFavorites = async () => {
-      if (!user) return;
-      try {
-        const res = await favoritesService.getMyFavorites();
-        setFavorites(res.data || []);
-      } catch (err) { console.error(err); }
-    };
-
-    const fetchHistory = async () => {
-      try {
-        const res = await api.get('/bookings');
-        setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
-      } catch (err) { console.error(err); }
+  const fetchBookings = async () => {
+    if (!user) return;
+    setIsLoadingBookings(true);
+    try {
+      const { data } = await bookingsService.getMyBookings({ role: bookingTab });
+      setBookings(data || []);
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+    } finally {
+      setIsLoadingBookings(false);
     }
+  };
 
-    const fetchNotifications = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      setNotifications(data || []);
+  const fetchSales = async () => {
+    if (!user) return;
+    const res = await salesService.getMySales({ role: 'buyer' });
+    setMySales(res.data || []);
+  };
 
-      const { count } = await supabase
-        .from("notifications")
-        .select("*", { count: 'exact', head: true })
-        .eq("user_id", user.id)
-        .eq("is_read", false);
-      setUnreadCount(count || 0);
-    };
+  const fetchTroc = async () => {
+    if (!user) return;
+    const res = await trocService.getMyProposals({ role: 'proposer' });
+    setMyTroc(res.data || []);
+  };
 
+  const fetchFavorites = async () => {
+    if (!user) return;
+    try {
+      const res = await favoritesService.getMyFavorites();
+      setFavorites(res.data || []);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchHistory = async () => {
+    if (!user) return;
+    try {
+      const res = await api.get('/bookings');
+      setHistoryBookings((res.data.data || []).filter((b: any) => ["completed", "cancelled", "rejected"].includes(b.status)));
+    } catch (err) { console.error(err); }
+  }
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setNotifications(data || []);
+
+    const { count } = await supabase
+      .from("notifications")
+      .select("*", { count: 'exact', head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false);
+    setUnreadCount(count || 0);
+
+    const { count: msgCount } = await supabase
+      .from("messages")
+      .select("*", { count: 'exact', head: true })
+      .eq("is_read", false)
+      .neq("sender_id", user.id);
+    setUnreadMessagesCount(msgCount || 0);
+  };
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetchBookings();
     fetchSales();
     fetchTroc();
     fetchFavorites();
     fetchHistory();
     fetchNotifications();
 
-    if (user) {
-      const notifChannel = supabase
-        .channel(`user_notifs:${user.id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
-        .subscribe();
+    const channel = supabase
+      .channel(`bookings:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `${bookingTab === 'renter' ? 'renter_id' : 'owner_id'}=eq.${user.id}` },
+        () => fetchBookings()
+      )
+      .subscribe();
 
-      const salesChannel = supabase
-        .channel(`user_sales:${user.id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
-        .subscribe();
+    const notifChannel = supabase
+      .channel(`user_notifs:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
+      .subscribe();
 
-      const trocChannel = supabase
-        .channel(`user_troc:${user.id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
-        .subscribe();
+    const salesChannel = supabase
+      .channel(`user_sales:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "sales", filter: `buyer_id=eq.${user.id}` }, () => fetchSales())
+      .subscribe();
 
-      return () => {
-        if (channel) supabase.removeChannel(channel);
-        supabase.removeChannel(salesChannel);
-        supabase.removeChannel(trocChannel);
-        supabase.removeChannel(notifChannel);
-      };
-    }
+    const trocChannel = supabase
+      .channel(`user_troc:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "troc_proposals", filter: `proposer_id=eq.${user.id}` }, () => fetchTroc())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(salesChannel);
+      supabase.removeChannel(trocChannel);
+      supabase.removeChannel(notifChannel);
+    };
   }, [user?.id, bookingTab]);
+
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      fetchNotifications();
+      fetchFavorites();
+      fetchBookings();
+    } else if (activeTab === 'favorites') {
+      fetchFavorites();
+    } else if (activeTab === 'bookings') {
+      fetchBookings();
+    }
+  }, [activeTab]);
 
   const handleBookingAction = async (bookingId: string, newStatus: string) => {
     try {
@@ -500,6 +512,18 @@ export function UserDashboard() {
     ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
 
+  const handleRemoveFavorite = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      await favoritesService.toggleFavorite(itemId);
+      setFavorites(prev => prev.filter(f => f.item_id !== itemId));
+      toast.success(t("common.success"));
+    } catch (err) {
+      toast.error(t("common.error"));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="py-8 lg:py-12">
@@ -549,7 +573,7 @@ export function UserDashboard() {
                   <div className="grid md:grid-cols-3 gap-5">
                     {[
                       { icon: Package, label: t("dashboard.activeBookingsCount") !== "dashboard.activeBookingsCount" ? t("dashboard.activeBookingsCount") : "Locations Actives", value: bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length, sub: t("dashboard.inProgress") !== "dashboard.inProgress" ? t("dashboard.inProgress") : "En cours", color: "text-[#FF4F5A]", bg: "bg-[#FF4F5A]/10", tab: 'bookings' },
-                      { icon: MessageSquare, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", value: unreadCount, sub: t("dashboard.unread") !== "dashboard.unread" ? t("dashboard.unread") : "non lus", color: "text-blue-500", bg: "bg-blue-500/10", tab: 'messages' },
+                      { icon: MessageSquare, label: t("dashboard.messages") !== "dashboard.messages" ? t("dashboard.messages") : "Messages", value: unreadMessagesCount, sub: t("dashboard.unread") !== "dashboard.unread" ? t("dashboard.unread") : "non lus", color: "text-blue-500", bg: "bg-blue-500/10", tab: 'messages' },
                       { icon: Heart, label: t("dashboard.favorites") !== "dashboard.favorites" ? t("dashboard.favorites") : "Favoris", value: favorites.length, sub: t("dashboard.pinned") !== "dashboard.pinned" ? t("dashboard.pinned") : "épinglés", color: "text-rose-400", bg: "bg-rose-400/10", tab: 'favorites' },
                     ].map((s, i) => (
                       <motion.div
@@ -976,32 +1000,43 @@ export function UserDashboard() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {favorites.map((fav) => (
-                        <div key={fav.id} className="flex gap-5 p-4 rounded-[1.5rem] border border-border/50 bg-card hover:bg-muted/30 shadow-sm hover:shadow-[0_10px_30px_-10px_rgba(255,79,90,0.15)] group hover:border-[#FF4F5A]/30 transition-all duration-300">
-                          <div className="w-28 h-28 rounded-2xl flex-shrink-0 overflow-hidden cursor-pointer relative shadow-inner" onClick={() => navigate(`/item/${fav.item_id}`)}>
-                            <ImageWithFallback src={fav.item?.thumbnail_url} alt={fav.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
-                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
-                          </div>
-                          <div className="flex flex-col justify-between py-1.5 flex-1 min-w-0">
-                            <div>
-                              <div className="flex justify-between items-start mb-1">
-                                <h3 className="font-bold text-foreground hover:text-[#FF4F5A] cursor-pointer line-clamp-2 transition-colors text-base pr-2" onClick={() => navigate(`/item/${fav.item_id}`)}>
-                                  {fav.item?.title}
-                                </h3>
+                        {favorites.map((fav) => {
+                          const itemData = fav.item || fav.items;
+                          return (
+                            <div key={fav.id} className="flex gap-5 p-4 rounded-[1.5rem] border border-border/50 bg-card hover:bg-muted/30 shadow-sm hover:shadow-[0_10px_30px_-10px_rgba(255,79,90,0.15)] group hover:border-[#FF4F5A]/30 transition-all duration-300">
+                              <div className="w-28 h-28 rounded-2xl flex-shrink-0 overflow-hidden cursor-pointer relative shadow-inner" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                                <ImageWithFallback src={itemData?.thumbnail_url} alt={itemData?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
                               </div>
-                              <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
-                                <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" />
-                                <span className="truncate max-w-[120px]">{fav.item?.location || t("common.notSpecified")}</span>
-                              </p>
+                              <div className="flex flex-col justify-between py-1.5 flex-1 min-w-0">
+                                <div>
+                                  <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-foreground hover:text-[#FF4F5A] cursor-pointer line-clamp-2 transition-colors text-base pr-2" onClick={() => navigate(`/item/${fav.item_id}`)}>
+                                      {itemData?.title}
+                                    </h3>
+                                  </div>
+                                  <p className="text-xs font-semibold text-muted-foreground mt-1 flex items-center gap-1.5 bg-muted/60 w-fit px-2 py-0.5 rounded-md">
+                                    <MapPin className="w-3.5 h-3.5 text-[#FF4F5A]/70" />
+                                    <span className="truncate max-w-[120px]">{itemData?.location || t("common.notSpecified")}</span>
+                                  </p>
+                                </div>
+                                <div className="flex items-end justify-between mt-3">
+                                  <p className="font-black text-lg text-foreground tracking-tight">
+                                    {itemData?.price_per_day || itemData?.sale_price} {t("common.da")} <span className="text-xs font-bold text-muted-foreground tracking-normal">/ {itemData?.listing_type === 'sell' ? t("landing.purchase") : t("landing.day")}</span>
+                                  </p>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => handleRemoveFavorite(e, fav.item_id)}
+                                    className="w-8 h-8 p-0 rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-50"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-end justify-between mt-3">
-                              <p className="font-black text-lg text-foreground tracking-tight">
-                                {fav.item?.price_per_day} {t("common.da")} <span className="text-xs font-bold text-muted-foreground tracking-normal">/ {t("landing.day")}</span>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        })}
                     </div>
                   )}
                 </motion.div>

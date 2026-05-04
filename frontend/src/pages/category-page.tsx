@@ -8,6 +8,10 @@ import { Footer } from "../components/layout/footer";
 import { useState } from "react";
 
 import { useTranslation } from "../context/language-context";
+import { favoritesService } from "../services/api.service";
+import { supabase } from "../lib/supabase";
+import { toast } from "react-hot-toast";
+import { useEffect } from "react";
 
 const categoryData: Record<string, {
   title: string;
@@ -131,14 +135,38 @@ export function CategoryPage() {
   const { t, locale } = useTranslation();
   const { categoryName } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
-  const [likedItems, setLikedItems] = useState<number[]>([]);
+  const [likedItems, setLikedItems] = useState<string[]>([]);
   
   const category = categoryData[categoryName || "vehicules"] || categoryData.vehicules;
 
-  const toggleLike = (id: number) => {
-    setLikedItems(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+  useEffect(() => {
+    const fetchLikedItems = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      try {
+        const res = await favoritesService.getMyFavorites();
+        if (res.data) {
+          setLikedItems(res.data.map((f: any) => String(f.item_id)));
+        }
+      } catch (e) {
+        console.error("Failed to load favorites", e);
+      }
+    };
+    fetchLikedItems();
+  }, []);
+
+  const toggleLike = async (id: string | number) => {
+    try {
+      const res = await favoritesService.toggleFavorite(String(id));
+      setLikedItems((prev) =>
+        res.isFavorite ? [...prev, String(id)] : prev.filter((i) => i !== String(id))
+      );
+      if (res.isFavorite) {
+        toast.success(t("common.success"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || t("common.error"));
+    }
   };
 
   return (

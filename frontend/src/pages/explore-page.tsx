@@ -13,8 +13,9 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Footer } from "../components/layout/footer";
 import { supabase } from "../lib/supabase";
-import { itemsService, categoriesService } from "../services/api.service";
+import { itemsService, categoriesService, favoritesService } from "../services/api.service";
 import { useTranslation } from "../context/language-context";
+import { toast } from "react-hot-toast";
 import { CATEGORY_FILTERS, LISTING_TYPE_LABELS } from "../components/explore/explore-constants";
 import {
   ExploreHeader,
@@ -105,6 +106,20 @@ export function ExplorePage() {
       }
     };
     fetchCategories();
+
+    const fetchLikedItems = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      try {
+        const res = await favoritesService.getMyFavorites();
+        if (res.data) {
+          setLikedItems(res.data.map((f: any) => f.item_id));
+        }
+      } catch (e) {
+        console.error("Failed to load favorites", e);
+      }
+    };
+    fetchLikedItems();
   }, []);
 
   useEffect(() => {
@@ -195,10 +210,18 @@ export function ExplorePage() {
     setMinRating("");
   };
 
-  const toggleLike = (id: string) => {
-    setLikedItems((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+  const toggleLike = async (id: string) => {
+    try {
+      const res = await favoritesService.toggleFavorite(id);
+      setLikedItems((prev) =>
+        res.isFavorite ? [...prev, id] : prev.filter((i) => i !== id)
+      );
+      if (res.isFavorite) {
+        toast.success(t("common.success"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || t("common.error"));
+    }
   };
 
   const getItemPrice = (item: Item) => {

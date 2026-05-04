@@ -208,8 +208,8 @@ export function ItemDetailPage() {
     
     const checkFavoriteStatus = async () => {
         if (!user || !itemId) return;
-        const { isFavorite } = await favoritesService.checkFavorite(itemId);
-        setIsLiked(isFavorite);
+        const isFavorite = await favoritesService.checkFavorite(itemId);
+        setIsLiked(!!isFavorite);
     };
 
     const fetchReviews = async () => {
@@ -271,10 +271,13 @@ export function ItemDetailPage() {
     if (!item) return;
     setIsTogglingFavorite(true);
     try {
-        const { isFavorite } = await favoritesService.toggleFavorite(item.id);
-        setIsLiked(isFavorite);
+        const res = await favoritesService.toggleFavorite(item.id);
+        setIsLiked(res.isFavorite);
+        if (res.isFavorite) {
+          toast.success(t("common.success"));
+        }
     } catch (err: any) {
-        alert(err.message);
+        toast.error(err.message || t("common.error"));
     } finally {
         setIsTogglingFavorite(false);
     }
