@@ -10,6 +10,7 @@ import { statsRoutes } from "./stats.routes.js";
 import { reportsRoutes } from "./reports.routes.js";
 import { reviewsRoutes } from "./reviews.routes.js";
 import { aiRoutes } from "./ai.routes.js";
+import { paymentRoutes } from "./payment.routes.js";
 
 export const apiRouter = Router();
 
@@ -25,3 +26,4 @@ apiRouter.use("/stats", statsRoutes);
 apiRouter.use("/reports", reportsRoutes);
 apiRouter.use("/reviews", reviewsRoutes);
 apiRouter.use("/ai", aiRoutes);
+apiRouter.use("/payments", paymentRoutes);

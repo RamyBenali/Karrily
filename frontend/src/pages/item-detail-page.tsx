@@ -23,6 +23,7 @@ import { ReportDialog } from "../components/dashboard/ReportDialog";
 import { reviewsService, reportsService } from "../services/api.service";
 import { cn } from "../components/ui/utils";
 import { useHistory } from "../hooks/useHistory";
+import { PaymentModal } from "../components/payment/PaymentModal";
 
 const WILAYAS: Record<number, string> = {
   1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Béjaïa",
@@ -114,6 +115,8 @@ export function ItemDetailPage() {
 
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [isTrocModalOpen, setIsTrocModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentContext, setPaymentContext] = useState<{ type: "booking" | "purchase"; amount: number } | null>(null);
   
   const [reportConfig, setReportConfig] = useState<{
     isOpen: boolean;
@@ -761,7 +764,12 @@ export function ItemDetailPage() {
                     <>
                       {(item.listing_type === "rent" || item.listing_type === "rent_sell") && (
                         <Button
-                          onClick={() => user ? handleBooking() : navigate("/login")}
+                          onClick={() => {
+                            if (!user) { navigate("/login"); return; }
+                            if (!bookingCalc) return;
+                            setPaymentContext({ type: "booking", amount: bookingCalc.total + bookingCalc.deposit });
+                            setIsPaymentModalOpen(true);
+                          }}
                           disabled={!bookingCalc || isBooking}
                           className="w-full h-16 bg-[#FF4F5A] hover:bg-[#FF4F5A]/90 text-white rounded-[1.25rem] text-lg font-bold shadow-2xl shadow-[#FF4F5A]/25 transition-transform active:scale-[0.98]"
                         >
@@ -772,7 +780,11 @@ export function ItemDetailPage() {
                       <div className="grid grid-cols-2 gap-3">
                         {(item.listing_type === "sell" || item.listing_type === "rent_sell") && (
                           <Button 
-                            onClick={() => user ? setIsPurchaseModalOpen(true) : navigate("/login")}
+                            onClick={() => {
+                              if (!user) { navigate("/login"); return; }
+                              setPaymentContext({ type: "purchase", amount: Number(item.sale_price) });
+                              setIsPaymentModalOpen(true);
+                            }}
                             className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold"
                           >
                             <ShoppingCart className="w-4 h-4 mr-2" /> {t("item.buyNow")}
@@ -1024,6 +1036,22 @@ export function ItemDetailPage() {
             onClose={() => setIsTrocModalOpen(false)}
             requestedItem={item}
             onSuccess={() => {}}
+          />
+
+          <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            amount={paymentContext?.amount || 0}
+            itemTitle={item.title}
+            paymentType={paymentContext?.type || "booking"}
+            onSuccess={async (transactionId) => {
+              setIsPaymentModalOpen(false);
+              if (paymentContext?.type === "booking" && bookingCalc) {
+                await handleBooking();
+              } else if (paymentContext?.type === "purchase") {
+                setIsPurchaseModalOpen(true);
+              }
+            }}
           />
         </>
       )}

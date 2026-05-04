@@ -18,4 +18,7 @@ export const config = {
     gemini: {
         apiKey: process.env.GEMINI_API_KEY || "",
     },
+    deepseek: {
+        apiKey: process.env.DEEPSEEK_API_KEY || "",
+    },
 } as const;

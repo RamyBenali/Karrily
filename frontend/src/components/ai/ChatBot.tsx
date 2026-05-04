@@ -44,9 +44,7 @@ export function ChatBot() {
 
     try {
       const response = await aiService.chat(userMessage, messages);
-      if (response.error) {
-          throw new Error(response.error);
-      }
+      if (response.error) throw new Error(response.error);
       setMessages(prev => [...prev, { role: "model", content: response.message }]);
     } catch (error) {
       console.error("Chat Error:", error);
@@ -59,14 +57,12 @@ export function ChatBot() {
   const parseSearchAction = (text: string): { cleanText: string, action?: SearchAction } => {
     const marker = "[SEARCH_ACTION]";
     if (!text.includes(marker)) return { cleanText: text };
-
     const parts = text.split(marker);
     const cleanText = parts[0].trim();
     try {
-      const actionJson = parts[1].trim();
-      const action = JSON.parse(actionJson) as SearchAction;
+      const action = JSON.parse(parts[1].trim()) as SearchAction;
       return { cleanText, action };
-    } catch (e) {
+    } catch {
       return { cleanText };
     }
   };
@@ -76,76 +72,73 @@ export function ChatBot() {
     if (action.type) params.set("type", action.type);
     if (action.search) params.set("search", action.search);
     if (action.wilaya) params.set("wilaya", action.wilaya);
-    
     navigate(`/explore?${params.toString()}`);
     setIsOpen(false);
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
+    <div className="fixed bottom-5 right-5 z-[100] flex flex-col items-end gap-3">
       {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9, transformOrigin: "bottom right" }}
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
             animate={{ 
               opacity: 1, 
               y: 0, 
               scale: 1,
-              height: isMinimized ? "80px" : "600px"
+              height: isMinimized ? "64px" : "480px"
             }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className={cn(
-              "w-[90vw] sm:w-[400px] bg-background/95 backdrop-blur-3xl border border-border/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden transition-all duration-500",
-              isMinimized && "rounded-[2rem]"
-            )}
+            exit={{ opacity: 0, y: 16, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            className="w-[88vw] sm:w-[360px] bg-background/96 backdrop-blur-2xl border border-border/40 rounded-3xl shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-6 flex items-center justify-between bg-gradient-to-r from-[#FF4F5A]/5 to-purple-500/5 border-b border-border/10 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF4F5A] to-purple-600 flex items-center justify-center text-white shadow-lg shadow-[#FF4F5A]/20">
-                  <Bot className="w-7 h-7" />
+            <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-[#FF4F5A]/5 to-purple-500/5 border-b border-border/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF4F5A] to-purple-600 flex items-center justify-center text-white shadow-md shadow-[#FF4F5A]/20">
+                  <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight">Assistant Karrily</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-70">IA Active</span>
+                  <h3 className="text-sm font-black tracking-tight leading-none">Assistant Karrily</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">IA Active</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button 
                   onClick={() => setIsMinimized(!isMinimized)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-full transition-colors"
+                  className="w-8 h-8 flex items-center justify-center hover:bg-muted rounded-full transition-colors"
                 >
-                  {isMinimized ? <ChevronDown className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
+                  {isMinimized ? <ChevronDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
+                  className="w-8 h-8 flex items-center justify-center hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {!isMinimized && (
               <>
-                {/* Messages Container */}
+                {/* Messages */}
                 <div 
                   ref={scrollRef}
-                  className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
+                  className="flex-1 overflow-y-auto px-4 py-4 space-y-3 custom-scrollbar"
                 >
                   {messages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center space-y-6 px-4">
-                      <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-[#FF4F5A]/10 to-purple-600/10 flex items-center justify-center">
-                        <Sparkles className="w-10 h-10 text-[#FF4F5A]" />
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-2">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF4F5A]/10 to-purple-600/10 flex items-center justify-center">
+                        <Sparkles className="w-7 h-7 text-[#FF4F5A]" />
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-lg font-black tracking-tight">Salam !</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Je suis ton assistant personnel. Pose-moi n'importe quelle question sur la plateforme ou cherche un objet.
+                      <div className="space-y-1">
+                        <p className="text-sm font-black tracking-tight">Salam !</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Pose-moi une question sur Karrily ou cherche un objet.
                         </p>
                       </div>
                     </div>
@@ -156,25 +149,28 @@ export function ChatBot() {
                     return (
                       <motion.div
                         key={idx}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={cn(
-                          "flex gap-3",
+                          "flex gap-2",
                           msg.role === "user" ? "flex-row-reverse" : "flex-row"
                         )}
                       >
+                        {/* Avatar */}
                         <div className={cn(
-                          "w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-xs font-bold shadow-sm",
+                          "w-7 h-7 rounded-full shrink-0 flex items-center justify-center shadow-sm mt-0.5",
                           msg.role === "user" ? "bg-muted text-muted-foreground" : "bg-[#FF4F5A] text-white"
                         )}>
-                          {msg.role === "user" ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                          {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                         </div>
-                        <div className="space-y-3 max-w-[80%]">
+
+                        {/* Bubble + Action */}
+                        <div className={cn("space-y-2 max-w-[78%]", msg.role === "user" && "items-end flex flex-col")}>
                           <div className={cn(
-                            "p-5 rounded-[2rem] text-sm leading-relaxed shadow-sm",
+                            "px-3 py-2 rounded-2xl text-xs leading-relaxed",
                             msg.role === "user" 
-                              ? "bg-foreground text-background rounded-tr-none shadow-sm" 
-                              : "bg-muted/50 border border-border/20 rounded-tl-none"
+                              ? "bg-foreground text-background rounded-tr-sm" 
+                              : "bg-muted/60 border border-border/20 rounded-tl-sm"
                           )}>
                             {cleanText}
                           </div>
@@ -184,13 +180,13 @@ export function ChatBot() {
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileTap={{ scale: 0.97 }}
                               onClick={() => executeSearch(action)}
-                              className="flex items-center gap-3 px-8 py-5 bg-emerald-500 text-white rounded-full text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
+                              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-full text-[11px] font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
                             >
-                              <Search className="w-4 h-4" />
+                              <Search className="w-3 h-3" />
                               Voir les résultats
-                              <ArrowRight className="w-4 h-4" />
+                              <ArrowRight className="w-3 h-3" />
                             </motion.button>
                           )}
                         </div>
@@ -199,20 +195,20 @@ export function ChatBot() {
                   })}
 
                   {isLoading && (
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#FF4F5A] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#FF4F5A]/20">
-                        <Bot className="w-5 h-5" />
+                    <div className="flex gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#FF4F5A] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#FF4F5A]/20">
+                        <Bot className="w-3.5 h-3.5" />
                       </div>
-                      <div className="bg-muted/50 p-4 rounded-[1.5rem] rounded-tl-none border border-border/30 flex items-center gap-3">
-                        <Loader2 className="w-4 h-4 animate-spin text-[#FF4F5A]" />
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Réflexion...</span>
+                      <div className="bg-muted/60 px-3 py-2 rounded-2xl rounded-tl-sm border border-border/20 flex items-center gap-2">
+                        <Loader2 className="w-3 h-3 animate-spin text-[#FF4F5A]" />
+                        <span className="text-[10px] font-bold text-muted-foreground">Réflexion...</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Input Area */}
-                <div className="p-6 bg-background border-t border-border/10">
+                {/* Input */}
+                <div className="px-3 py-3 bg-background border-t border-border/10">
                   <div className="relative">
                     <input 
                       type="text"
@@ -220,19 +216,19 @@ export function ChatBot() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                      className="w-full bg-muted/30 border border-border/50 rounded-2xl py-5 pl-6 pr-16 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 focus:border-[#FF4F5A] transition-all"
+                      className="w-full bg-muted/30 border border-border/40 rounded-2xl py-3 pl-4 pr-12 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20 focus:border-[#FF4F5A] transition-all"
                     />
                     <button 
                       onClick={handleSend}
                       disabled={!input.trim() || isLoading}
                       className={cn(
-                        "absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center transition-all",
+                        "absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl flex items-center justify-center transition-all",
                         input.trim() && !isLoading 
-                          ? "bg-[#FF4F5A] text-white shadow-lg shadow-[#FF4F5A]/30 scale-100" 
-                          : "bg-muted text-muted-foreground scale-90 opacity-40"
+                          ? "bg-[#FF4F5A] text-white shadow-md shadow-[#FF4F5A]/30" 
+                          : "bg-muted text-muted-foreground opacity-40"
                       )}
                     >
-                      <Send className="w-5 h-5" />
+                      <Send className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -242,7 +238,7 @@ export function ChatBot() {
         )}
       </AnimatePresence>
 
-      {/* Bubble Button - Perfectly Round & Premium */}
+      {/* Floating Bubble */}
       <motion.button
         whileHover={{ scale: 1.1, rotate: 5 }}
         whileTap={{ scale: 0.9 }}
@@ -252,15 +248,14 @@ export function ChatBot() {
           setShowBadge(false);
         }}
         className={cn(
-          "relative w-16 h-16 rounded-full bg-gradient-to-br from-[#FF4F5A] to-purple-600 text-white flex items-center justify-center shadow-[0_10px_40px_rgba(255,79,90,0.4)] group overflow-hidden transition-all duration-500",
-          isOpen && "scale-0 rotate-90"
+          "relative w-14 h-14 rounded-full bg-gradient-to-br from-[#FF4F5A] to-purple-600 text-white flex items-center justify-center shadow-[0_8px_32px_rgba(255,79,90,0.4)] group overflow-hidden transition-all duration-300",
+          isOpen && "scale-0 rotate-90 pointer-events-none"
         )}
       >
-        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        <MessageSquare className="w-8 h-8 relative z-10" />
-        
+        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+        <MessageSquare className="w-6 h-6 relative z-10" />
         {showBadge && (
-          <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+          <span className="absolute top-1.5 right-1.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
         )}
       </motion.button>
     </div>
