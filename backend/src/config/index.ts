@@ -15,4 +15,7 @@ export const config = {
     jwt: {
         secret: process.env.JWT_SECRET || "fallback-secret-change-me",
     },
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY || "",
+    },
 } as const;

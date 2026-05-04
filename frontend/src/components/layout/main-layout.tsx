@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocation } from "react-router";
 import { cn } from "../ui/utils";
+import { ChatBot } from "../ai/ChatBot";
 
 export function MainLayout() {
   const location = useLocation();
@@ -31,6 +32,9 @@ export function MainLayout() {
 
       {/* Mobile Bottom Navigation - Restored for consistent experience */}
       <BottomNav />
+      
+      {/* AI Assistant - Floating fixed */}
+      <ChatBot />
     </div>
   );
 }

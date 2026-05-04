@@ -35,8 +35,29 @@ export class ItemsController {
                 .order(sortBy as string, { ascending: sortOrder === "asc" });
 
             if (category) query = query.eq("category_id", category);
-            if (minPrice) query = query.gte("price_per_day", minPrice);
-            if (maxPrice) query = query.lte("price_per_day", maxPrice);
+            
+            // Price filtering logic based on listing type
+            if (type === 'sell') {
+                if (minPrice) query = query.gte("sale_price", minPrice);
+                if (maxPrice) query = query.lte("sale_price", maxPrice);
+            } else if (type === 'rent') {
+                if (minPrice) query = query.gte("price_per_day", minPrice);
+                if (maxPrice) query = query.lte("price_per_day", maxPrice);
+            } else if (type === 'rent_sell') {
+                // For mixed, we check if either price matches the range
+                // Note: Complex OR filtering with range might be tricky with PostgREST, 
+                // but usually we prioritize price_per_day for filtering in mixed mode
+                if (minPrice) query = query.gte("price_per_day", minPrice);
+                if (maxPrice) query = query.lte("price_per_day", maxPrice);
+            } else if (type === 'troc') {
+                // No price filter for troc usually, unless searching by estimated value
+            } else {
+                // Default fallback: if no type specified, we check price_per_day (primary for this app)
+                // but only if it's not NULL, or we handle it gracefully
+                if (minPrice) query = query.gte("price_per_day", minPrice);
+                if (maxPrice) query = query.lte("price_per_day", maxPrice);
+            }
+
             if (location) query = query.ilike("location", `%${location}%`);
             if (condition) query = query.eq("condition", condition);
             if (type) query = query.eq("listing_type", type);

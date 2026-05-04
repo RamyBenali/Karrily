@@ -134,8 +134,9 @@ export function ExplorePage() {
               minPrice: budgetRange[0],
               maxPrice: budgetRange[1],
               condition: selectedCondition,
-              sortBy: sortBy === 'price_asc' || sortBy === 'price_desc' ? 'price_per_day' : 
-                      sortBy === 'rating' ? 'rating' : 'created_at',
+              sortBy: (sortBy === 'price_asc' || sortBy === 'price_desc') 
+                      ? (selectedListingType === 'sell' ? 'sale_price' : 'price_per_day')
+                      : (sortBy === 'rating' ? 'rating' : 'created_at'),
               sortOrder: sortBy === 'price_asc' ? 'asc' : 'desc'
           };
 

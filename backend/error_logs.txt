@@ -1,0 +1,15 @@
+[2026-05-04T19:35:57.493Z] 400 - You cannot propose a troc for your own item
+Error: You cannot propose a troc for your own item
+    at create (C:\Users\CToff\Documents\Karrily\Karrily\backend\src\controllers\troc.controller.ts:51:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+[2026-05-04T19:36:06.210Z] 400 - You cannot propose a troc for your own item
+Error: You cannot propose a troc for your own item
+    at create (C:\Users\CToff\Documents\Karrily\Karrily\backend\src\controllers\troc.controller.ts:51:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+[2026-05-04T19:37:54.812Z] 401 - Unauthorized: Invalid or expired token
+Error: Unauthorized: Invalid or expired token
+    at authMiddleware (C:\Users\CToff\Documents\Karrily\Karrily\backend\src\middleware\auth.middleware.ts:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
