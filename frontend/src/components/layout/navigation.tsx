@@ -114,8 +114,6 @@ export function Navigation() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-20">
-          
-          {/* Logo & Main Nav */}
           <div className="flex items-center gap-12">
             <Link to="/" className="flex items-center gap-3 active:scale-95 transition-transform">
               <KarillyLogo className="h-8" variant={isDark ? "white" : "default"} />
@@ -183,10 +181,7 @@ export function Navigation() {
               </button>
             </div>
           </div>
-
-          {/* Right Side */}
           <div className="flex items-center gap-3">
-            {/* Language Selector */}
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setShowLangMenu(!showLangMenu)}
@@ -437,8 +432,6 @@ export function Navigation() {
                         {(role === 'lender' || role === 'vendeur' || hasItems) && (
                           <button onClick={() => { navigate('/create'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all text-[#FF4F5A]"><PlusCircle className="w-4 h-4" /> {t("nav.publish")}</button>
                         )}
-                        
-                        {/* Mobile view roles */}
                         <div className="lg:hidden mt-1 mb-1 space-y-1">
                           {role !== 'admin' && hasItems && (
                             <button onClick={() => { navigate('/lender'); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-sm font-bold transition-all"><Package className="w-4 h-4" /> {t("nav.owner")}</button>
@@ -472,8 +465,6 @@ export function Navigation() {
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu */}
       <AnimatePresence>
         {showMobileMenu && (
           <motion.div

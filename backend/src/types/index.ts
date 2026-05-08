@@ -1,6 +1,3 @@
-// ─── Shared Types for Karrily Platform ───────────────
-
-// ─── User ────────────────────────────────────────────
 export interface User {
     id: string;
     email: string;
@@ -16,7 +13,6 @@ export interface User {
     updated_at: string;
 }
 
-// ─── Category ────────────────────────────────────────
 export interface Category {
     id: string;
     name: string;
@@ -28,7 +24,6 @@ export interface Category {
     created_at: string;
 }
 
-// ─── Item (Listing) ─────────────────────────────────
 export interface Item {
     id: string;
     title: string;
@@ -55,7 +50,6 @@ export interface Item {
     updated_at: string;
 }
 
-// ─── Booking ─────────────────────────────────────────
 export interface Booking {
     id: string;
     item_id: string;
@@ -74,7 +68,6 @@ export interface Booking {
     updated_at: string;
 }
 
-// ─── Review ──────────────────────────────────────────
 export interface Review {
     id: string;
     item_id: string;
@@ -85,7 +78,6 @@ export interface Review {
     created_at: string;
 }
 
-// ─── API Response ────────────────────────────────────
 export interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
@@ -101,7 +93,6 @@ export interface ApiResponse<T = unknown> {
     };
 }
 
-// ─── Query Params ────────────────────────────────────
 export interface PaginationParams {
     page?: number;
     limit?: number;

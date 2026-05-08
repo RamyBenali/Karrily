@@ -68,8 +68,6 @@ export class BookingsController {
         try {
             const { item_id, start_date, end_date, message } = req.body;
             const renterId = req.user!.id;
-
-            // Get item details
             const { data: item, error: itemError } = await supabaseAdmin
                 .from("items")
                 .select("*")
@@ -83,8 +81,6 @@ export class BookingsController {
             if (item.owner_id === renterId) {
                 throw new ApiError(400, "You cannot book your own item");
             }
-
-            // Calculate total price
             const start = new Date(start_date);
             const end = new Date(end_date);
             const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -107,7 +103,6 @@ export class BookingsController {
                 throw new ApiError(409, "These dates are already booked for this item");
             }
 
-
             const total_price = days * item.price_per_day;
 
             const { data, error } = await supabaseAdmin
@@ -128,8 +123,6 @@ export class BookingsController {
                 .single();
 
             if (error) throw error;
-
-            // Notify owner
             await createNotification(
                 item.owner_id,
                 "Nouvelle demande de location",
@@ -157,8 +150,6 @@ export class BookingsController {
             if (!validStatuses.includes(status)) {
                 throw new ApiError(400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
             }
-
-            // Verify the user is the owner of the item
             const { data: booking, error: fetchError } = await supabaseAdmin
                 .from("bookings")
                 .select("owner_id, renter_id")
@@ -184,8 +175,6 @@ export class BookingsController {
                 .single();
 
             if (error) throw error;
-
-            // Notify renter of status change
             if (status !== "pending") {
                 const statusLabels: Record<string, string> = {
                     confirmed: "confirmée",

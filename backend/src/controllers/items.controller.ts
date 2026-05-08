@@ -35,8 +35,6 @@ export class ItemsController {
                 .order(sortBy as string, { ascending: sortOrder === "asc" });
 
             if (category) query = query.eq("category_id", category);
-            
-            // Price filtering logic based on listing type
             if (type === 'sell') {
                 if (minPrice) query = query.gte("sale_price", minPrice);
                 if (maxPrice) query = query.lte("sale_price", maxPrice);
@@ -208,8 +206,6 @@ export class ItemsController {
     update = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
-
-            // Verify ownership (unless admin)
             const { data: existing } = await supabaseAdmin
                 .from("items")
                 .select("owner_id")
@@ -245,8 +241,6 @@ export class ItemsController {
     delete = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
-
-            // Verify existence and ownership
             const { data: existing, error: fetchError } = await supabaseAdmin
                 .from("items")
                 .select("owner_id")

@@ -1,6 +1,5 @@
-import { Navigation } from "../components/layout/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   Search,
   MapPin,
@@ -411,7 +410,7 @@ export function ExplorePage() {
           ) : null}
         </main>
       </div>
-      <Footer />
+      <div className="hidden lg:block"><Footer /></div>
     </div>
   );
 }

@@ -13,8 +13,6 @@ import { aiRoutes } from "./ai.routes.js";
 import { paymentRoutes } from "./payment.routes.js";
 
 export const apiRouter = Router();
-
-// ─── Mount route modules ────────────────────────────
 apiRouter.use("/auth", authRoutes);
 apiRouter.use("/items", itemsRoutes);
 apiRouter.use("/bookings", bookingsRoutes);

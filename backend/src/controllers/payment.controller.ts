@@ -10,8 +10,6 @@ export const processPayment = async (req: Request, res: Response) => {
             amount, 
             paymentType // "booking" | "purchase"
         } = req.body;
-
-        // ── Validations ──────────────────────────────────────────────────
         if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
             return res.status(400).json({ 
                 success: false, 
@@ -36,8 +34,6 @@ export const processPayment = async (req: Request, res: Response) => {
                 message: "Date d'expiration invalide. Format MM/AA." 
             });
         }
-
-        // Check if card is expired
         const [month, year] = expiryDate.split("/").map(Number);
         const now = new Date();
         const expiry = new Date(2000 + year, month - 1);
@@ -64,10 +60,7 @@ export const processPayment = async (req: Request, res: Response) => {
                 message: "Nom du titulaire invalide." 
             });
         }
-
-        // ── Simulation de refus (CVV = 000) ─────────────────────────────
         if (cvv === "000") {
-            // Simulate processing delay
             await new Promise(resolve => setTimeout(resolve, 1500));
             return res.status(402).json({ 
                 success: false, 
@@ -75,8 +68,6 @@ export const processPayment = async (req: Request, res: Response) => {
                 message: "Paiement refusé par votre banque. Veuillez vérifier vos informations ou utiliser une autre carte." 
             });
         }
-
-        // ── Paiement accepté ────────────────────────────────────────────
         await new Promise(resolve => setTimeout(resolve, 1800)); // Simulate processing
 
         const transactionId = `KRL-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;

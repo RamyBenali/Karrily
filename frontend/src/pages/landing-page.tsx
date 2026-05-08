@@ -127,11 +127,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section */}
       <div className="relative min-h-screen bg-gradient-to-br from-[#0F2A2E] via-[#1A4851] to-[#0F2A2E] overflow-hidden">
-
-
-        {/* Floating Background Shapes */}
         <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
           <motion.div
             className="absolute top-20 right-[10%] w-32 h-32 rounded-3xl bg-white/20 backdrop-blur-sm shadow-[0_0_60px_rgba(255,255,255,0.3)]"
@@ -154,17 +150,12 @@ export function LandingPage() {
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
-
-        {/* Grid overlay */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
           backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
           backgroundSize: "50px 50px"
         }} />
-
-        {/* Hero Content */}
-        <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12 pt-40 pb-32">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left Text */}
+        <div className="relative max-w-[1400px] mx-auto px-6 lg:px-12 pt-10 pb-16 lg:pt-40 lg:pb-32">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -181,7 +172,7 @@ export function LandingPage() {
                 <Sparkles className="w-4 h-4 text-[#FF4F5A]" />
               </motion.div>
 
-              <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 leading-[0.95]">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 leading-[0.95]">
                 {t("landing.heroTitle1")}<br />
                 {t("landing.heroTitle2")}<br />
                 <span className="text-[#FF4F5A] relative inline-block">
@@ -215,8 +206,6 @@ export function LandingPage() {
                 </button>
               </div>
             </motion.div>
-
-            {/* Right Search Card */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -235,8 +224,6 @@ export function LandingPage() {
                     <Sparkles className="w-5 h-5 text-[#FF4F5A]" />
                   </motion.div>
                 </h3>
-
-                {/* Listing type toggle */}
                 <div className="flex gap-1.5 mb-5 p-1.5 bg-muted/60 rounded-2xl">
                   {LISTING_TYPES.map((type) => (
                     <button
@@ -257,7 +244,6 @@ export function LandingPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Query */}
                   <div className="relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors" />
                     <input
@@ -271,7 +257,6 @@ export function LandingPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Location */}
                     <div className="relative group">
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors" />
                       <input
@@ -283,8 +268,6 @@ export function LandingPage() {
                         className="h-14 w-full rounded-2xl border-2 border-border bg-background pl-12 pr-4 text-[15px] text-foreground placeholder:text-muted-foreground transition-all focus:border-[#FF4F5A] focus:outline-none focus:ring-2 focus:ring-[#FF4F5A]/20"
                       />
                     </div>
-
-                    {/* Date picker */}
                     <div className="relative group">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-[#FF4F5A] transition-colors pointer-events-none" />
                       <input
@@ -297,8 +280,6 @@ export function LandingPage() {
                       />
                     </div>
                   </div>
-
-                  {/* Search button */}
                   <button
                     onClick={handleSearch}
                     className="w-full h-14 inline-flex items-center justify-center gap-2 bg-[#0F2A2E] hover:bg-[#1A4851] text-white rounded-2xl text-base font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -307,8 +288,6 @@ export function LandingPage() {
                     {t("landing.search")}
                   </button>
                 </div>
-
-                {/* Popular tags */}
                 <div className="mt-6 border-t border-border pt-5">
                   <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     <Tag className="w-3 h-3" />
@@ -332,9 +311,7 @@ export function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Popular Categories */}
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-24">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 lg:py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
             <motion.div
@@ -389,9 +366,7 @@ export function LandingPage() {
           ))}
         </div>
       </div>
-
-      {/* Trending Rentals */}
-      <div className="bg-card py-24">
+      <div className="bg-card py-10 lg:py-24">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -502,9 +477,7 @@ export function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* How Karrily Works */}
-      <div className="bg-[#1A4851] py-24 relative overflow-hidden" id="how-it-works">
+      <div className="bg-[#1A4851] py-10 lg:py-24 relative overflow-hidden" id="how-it-works">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#1A4851] rounded-full blur-[120px] opacity-20 -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FF4F5A] rounded-full blur-[120px] opacity-10 -ml-48 -mb-48" />
 
@@ -545,9 +518,7 @@ export function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Why Trust Karrily */}
-      <div className="bg-background py-24">
+      <div className="bg-background py-10 lg:py-24">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -581,9 +552,7 @@ export function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Lender CTA */}
-      <div className="py-24 bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74]">
+      <div className="py-10 lg:py-24 bg-gradient-to-br from-[#FF4F5A] to-[#FF6B74]">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -650,8 +619,8 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-[#0F2A2E] text-white py-16">
+      {/* Footer — desktop only, replaced by bottom nav on mobile */}
+      <footer className="hidden lg:block bg-[#0F2A2E] text-white py-16">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
             <div className="lg:col-span-2">
@@ -703,7 +672,7 @@ export function LandingPage() {
         </div>
       </footer>
 
-      <FloatingCTA />
+      <div className="hidden lg:block"><FloatingCTA /></div>
     </div>
   );
 }

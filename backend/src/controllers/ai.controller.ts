@@ -32,8 +32,6 @@ N'invente JAMAIS de produits ou de prix. Invite l'utilisateur à cliquer pour vo
 
 export const chat = async (req: Request, res: Response) => {
     const { message, history } = req.body;
-
-    // Build messages array for DeepSeek
     const messages = [
         { role: "system", content: SYSTEM_PROMPT },
         ...(history || []).map((msg: any) => ({
@@ -42,8 +40,6 @@ export const chat = async (req: Request, res: Response) => {
         })),
         { role: "user", content: message },
     ];
-
-    // ── Try DeepSeek API ─────────────────────────────────────────────────
     if (config.deepseek.apiKey) {
         try {
             const response = await fetch("https://api.deepseek.com/chat/completions", {
@@ -76,8 +72,6 @@ export const chat = async (req: Request, res: Response) => {
             // Fall through to demo mode
         }
     }
-
-    // ── Demo Mode Fallback ───────────────────────────────────────────────
     const msg = message?.toLowerCase() || "";
     let demoResponse = "";
 

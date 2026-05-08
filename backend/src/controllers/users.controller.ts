@@ -123,10 +123,6 @@ export class UsersController {
             }
             const { id } = req.params;
             const { role } = req.body;
-
-            console.log(`Admin ${req.user.id} updating role for user ${id} to ${role}`);
-
-            // 1. Update Profile table
             const { data: profile, error: profileError } = await supabaseAdmin
                 .from("profiles")
                 .update({ role })
@@ -138,8 +134,6 @@ export class UsersController {
                 console.error("Error updating profile role:", profileError);
                 throw profileError;
             }
-
-            // 2. Update Auth Metadata (optional but recommended for consistency)
             const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id as string, {
                 user_metadata: { role }
             });
@@ -163,8 +157,6 @@ export class UsersController {
                 throw new ApiError(403, "Access denied");
             }
             const { id } = req.params;
-
-            // Delete from Auth (this cascades to profiles if setup correctly, but doing both is safe)
             const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id as string);
             if (authError) console.error("Error deleting auth user:", authError);
 

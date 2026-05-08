@@ -29,9 +29,6 @@ function toggleSlug(list: string[], slug: string): string[] {
   return list.includes(slug) ? list.filter((s) => s !== slug) : [...list, slug];
 }
 
-// ----------------------------------------------------------------------
-// 1. EXPLORE HEADER (Barre de recherche haute, Modalités, Catégories)
-// ----------------------------------------------------------------------
 type ExploreHeaderProps = {
   debouncedSearch: string;
   setDebouncedSearch: (v: string) => void;
@@ -178,9 +175,6 @@ export function ExploreHeader({
   );
 }
 
-// ----------------------------------------------------------------------
-// 2. EXPLORE FILTERS CONTENU (Le contenu du filtre, réutilisable Desktop & Mobile)
-// ----------------------------------------------------------------------
 type ExploreFiltersContentProps = {
   budgetRange: [number, number];
   setBudgetRange: Dispatch<SetStateAction<[number, number]>>;
@@ -402,10 +396,6 @@ export function ExploreFiltersContent({
     </div>
   );
 }
-
-// ----------------------------------------------------------------------
-// 3. EXPLORE FILTERS MOBILE (Le Sheet) ET DESKTOP SIDEBAR
-// ----------------------------------------------------------------------
 
 export function ExploreFiltersMobileSheet(props: ExploreFiltersContentProps & { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
   const { t } = useTranslation();

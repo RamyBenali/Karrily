@@ -7,12 +7,16 @@ node_modules/
 dist/
 build/
 .next/
+out.css
 
-# Environment variables
+# Environment variables — never commit secrets
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 
 # IDE
@@ -26,14 +30,40 @@ build/
 .DS_Store
 Thumbs.db
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# TypeScript
+# TypeScript build info
 *.tsbuildinfo
 
 # Cache
 .cache/
 .temp/
+
+# Logs & debug output
+*.log
+error_logs.txt
+lint_results.txt
+search_results.txt
+toast_logs.txt
+missing_handlers.txt
+
+# Temporary / scratch scripts
+scratch/
+*.scratch.ts
+*.scratch.js
+
+# Android build artifacts
+android/.gradle/
+android/build/
+android/local.properties
+android/app/build/
+android/capacitor-cordova-android-plugins/
+
+# Android IDE
+android/.idea/
+
+# Internal dev docs (not relevant for deployment)
+CI_CD.md
+ROADMAP.md
+context.md
+etapes_suivantes_publication.md
+guidelines/
+prompt_chatgpt_rapport.md

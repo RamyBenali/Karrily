@@ -1,3 +1,0 @@
-frontend\src\pages\signup-page.tsx:253: <a href="#" className="text-[#FF4F5A] hover:underline">
-frontend\src\pages\signup-page.tsx:257: <a href="#" className="text-[#FF4F5A] hover:underline">
-frontend\src\pages\user-dashboard.tsx:1342: {t("common.comingSoon") !== "common.comingSoon" ? t("common.comingSoon") : "Bientôt disponible"}

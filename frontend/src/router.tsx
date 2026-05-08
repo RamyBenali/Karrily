@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet, Navigate } from "react-router";
+import { createHashRouter, Outlet, Navigate } from "react-router";
 import { LandingPage } from "./pages/landing-page";
 import { ExplorePage } from "./pages/explore-page";
 import { CategoryPage } from "./pages/category-page";
@@ -14,7 +14,7 @@ import { CGUPage, PrivacyPolicyPage, LegalNoticePage } from "./pages/legal-pages
 import { ProtectedRoute, GuestRoute, AdminRoute, LenderRoute, ClientRoute } from "./components/shared/protected-route";
 import { MainLayout } from "./components/layout/main-layout";
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     Component: MainLayout,
     children: [

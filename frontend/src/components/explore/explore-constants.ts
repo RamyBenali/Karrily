@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════
 // FILTRES SPÉCIFIQUES PAR CATÉGORIE
-// ═══════════════════════════════════════════════════════
 export interface FilterField {
   key: string;
   label: string;

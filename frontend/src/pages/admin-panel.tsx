@@ -258,8 +258,6 @@ export function AdminPanel() {
     const isVendeur = currentRole.toLowerCase() === "vendeur";
     const newRole = isVendeur ? "user" : "vendeur";
     
-    console.log(`Toggling role for ${userId} from ${currentRole} to ${newRole}`);
-
     // Optimistic update
     setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     
