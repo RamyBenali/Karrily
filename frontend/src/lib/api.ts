@@ -2,7 +2,7 @@ import axios from "axios";
 import { supabase } from "./supabase";
 import { toast } from "sonner";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://karrily-backend.onrender.com/api";
 
 /**
  * Axios instance configured for the Karrily API
