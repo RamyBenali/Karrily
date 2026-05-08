@@ -106,7 +106,17 @@ export function ExplorePage() {
       }
     };
     fetchCategories();
+  }, []);
 
+  // Sync debounced search with query state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(debouncedSearch);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     const fetchLikedItems = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -247,7 +257,10 @@ export function ExplorePage() {
     selectedCondition, setSelectedCondition,
     activeCategoryFilters, categoryFilters, setCategoryFilters,
     resetFilters,
-    selectedListingType
+    selectedListingType,
+    categories,
+    selectedCategorySlugs,
+    setSelectedCategorySlugs
   };
 
   return (

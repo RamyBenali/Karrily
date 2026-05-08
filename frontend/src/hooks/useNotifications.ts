@@ -9,6 +9,8 @@ export interface Notification {
   body: string;
   type: 'booking' | 'booking_request' | 'booking_confirmed' | 'booking_cancelled' | 'sale' | 'troc' | 'troc_proposal' | 'troc_accepted' | 'troc_rejected' | 'message' | 'system';
   link?: string;
+  related_id?: string;
+  metadata?: any;
   is_read: boolean;
   created_at: string;
 }

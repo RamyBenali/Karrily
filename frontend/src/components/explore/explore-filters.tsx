@@ -154,7 +154,7 @@ export function ExploreHeader({
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center gap-6">
+        <div className="flex items-center gap-6">
           <div className="flex p-1 bg-muted/40 rounded-full border border-border/20 shrink-0 overflow-x-auto max-w-full custom-scrollbar pb-1">
             {modalities.map((m) => (
               <button
@@ -171,37 +171,6 @@ export function ExploreHeader({
                 {m.label}
               </button>
             ))}
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-3 pt-1 flex-1 mask-linear-fade">
-             <button
-                onClick={() => setSelectedCategorySlugs([])}
-                className={cn(
-                  "flex items-center px-4 h-10 rounded-full border text-sm font-semibold transition-colors shrink-0",
-                  selectedCategorySlugs.length === 0
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-card/50 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                )}
-              >
-                {t("explore.all")}
-              </button>
-            {categories.map((cat) => {
-              const checked = selectedCategorySlugs.includes(cat.slug);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategorySlugs((prev) => toggleSlug(prev, cat.slug))}
-                  className={cn(
-                    "flex items-center px-4 h-10 rounded-full border text-sm font-semibold transition-colors shrink-0",
-                    checked
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-card/50 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                  )}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
@@ -224,6 +193,9 @@ type ExploreFiltersContentProps = {
   setCategoryFilters: Dispatch<SetStateAction<Record<string, string>>>;
   resetFilters: () => void;
   selectedListingType: string;
+  categories: ExploreCategoryLite[];
+  selectedCategorySlugs: string[];
+  setSelectedCategorySlugs: Dispatch<SetStateAction<string[]>>;
   className?: string;
 };
 
@@ -234,6 +206,9 @@ export function ExploreFiltersContent({
   activeCategoryFilters, categoryFilters, setCategoryFilters,
   resetFilters,
   selectedListingType,
+  categories,
+  selectedCategorySlugs,
+  setSelectedCategorySlugs,
   className
 }: ExploreFiltersContentProps) {
   const { t } = useTranslation();
@@ -260,6 +235,26 @@ export function ExploreFiltersContent({
             <RotateCcw className="w-3 h-3" /> {t("common.reset")}
          </button>
       </div>
+
+      {/* Catégories */}
+      <section className="space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#FF4F5A] flex items-center gap-2">
+          <Menu className="w-3.5 h-3.5" /> {t("nav.categories")}
+        </h3>
+        <div className="relative group">
+          <select
+            className="w-full h-12 px-5 rounded-2xl bg-card border border-border text-sm font-bold appearance-none focus:border-[#FF4F5A] focus:ring-1 focus:ring-[#FF4F5A] transition-all outline-none cursor-pointer"
+            value={selectedCategorySlugs[0] || ""}
+            onChange={(e) => setSelectedCategorySlugs(e.target.value ? [e.target.value] : [])}
+          >
+            <option value="">{t("explore.all")}</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.slug}>{cat.name}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        </div>
+      </section>
 
       {selectedListingType !== "troc" && (
         <section className="space-y-5">
