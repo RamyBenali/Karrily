@@ -4,7 +4,7 @@ import { Plus, Package, Calendar, TrendingUp, DollarSign, Edit2, Trash2, Eye, Ba
 import { Button } from "../components/ui/button";
 import { useNavigate, useLocation } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { useAuthStore } from "../store/auth.store";
 import { usersService, bookingsService, itemsService, salesService, trocService, statsService } from "../services/api.service";
@@ -96,17 +96,6 @@ export function LenderDashboard() {
   const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
-  const sidebarItems = getSidebarItems(t, unreadMessagesCount);
-
-  useEffect(() => {
-    if (location.state?.tab === "messages") {
-      setActiveView("messages");
-    }
-    if (location.state?.convId) {
-      setActiveConversationId(location.state.convId);
-    }
-  }, [location.state]);
-
   const [myListings, setMyListings] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [mySales, setMySales] = useState<any[]>([]);
@@ -120,6 +109,46 @@ export function LenderDashboard() {
   });
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+
+  // ID of a specific entity to highlight (from notification click)
+  const [highlightId, setHighlightId] = useState<string | null>(location.state?.highlightId || null);
+
+  // Auto-scroll to highlighted element and clear after delay
+  useEffect(() => {
+    if (!highlightId) return;
+    
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`highlight-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 600); 
+
+    const clearTimer = setTimeout(() => {
+      setHighlightId(null);
+      window.history.replaceState({}, document.title);
+    }, 10000); 
+    
+    return () => { clearTimeout(timer); clearTimeout(clearTimer); };
+  }, [highlightId, activeView, upcomingBookings, mySales, trocProposals]);
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      const tab = location.state.tab.toLowerCase();
+      const validTabs = ["overview", "listings", "bookings", "sales", "troc", "earnings", "reviews", "messages"];
+      if (validTabs.includes(tab)) {
+        setActiveView(tab as any);
+      }
+    }
+    if (location.state?.highlightId) {
+      setHighlightId(location.state.highlightId);
+    }
+    if (location.state?.convId) {
+      setActiveConversationId(location.state.convId);
+    }
+  }, [location.state]);
+
+  const sidebarItems = getSidebarItems(t, unreadMessagesCount);
 
   const topClients = useMemo(() => {
     const clients: Record<string, { name: string, count: number, total: number }> = {};
@@ -455,6 +484,7 @@ export function LenderDashboard() {
               activeTab={activeView}
               setActiveTab={(id) => {
                 setActiveView(id);
+                setHighlightId(null);
                 setIsMobileMenuOpen(false);
               }}
               userInitials={user?.user_metadata?.full_name?.charAt(0) || "U"}
@@ -541,7 +571,17 @@ export function LenderDashboard() {
               {activeView === "bookings" && (
                 <div className="space-y-4">
                   {upcomingBookings.map(b => (
-                    <div key={b.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                    <div
+                      key={b.id}
+                      id={`highlight-${b.id}`}
+                      className={cn(
+                        "p-5 bg-card border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group relative",
+                        String(highlightId) === String(b.id) 
+                          ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                          : "border-border"
+                      )}
+                    >
+                      {String(highlightId) === String(b.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                       <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${b.item_id}`)}>
                         <ImageWithFallback src={b.items?.thumbnail_url} alt={b.items?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>
@@ -596,7 +636,17 @@ export function LenderDashboard() {
               {activeView === "sales" && (
                 <div className="space-y-4">
                   {mySales.map(s => (
-                    <div key={s.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                    <div
+                      key={s.id}
+                      id={`highlight-${s.id}`}
+                      className={cn(
+                        "p-5 bg-card border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group relative",
+                        String(highlightId) === String(s.id) 
+                          ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                          : "border-border"
+                      )}
+                    >
+                      {String(highlightId) === String(s.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                       <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${s.item_id}`)}>
                         <ImageWithFallback src={s.item?.thumbnail_url} alt={s.item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>
@@ -651,7 +701,17 @@ export function LenderDashboard() {
               {activeView === "troc" && (
                 <div className="space-y-4">
                   {trocProposals.map(p => (
-                    <div key={p.id} className="p-5 bg-card border border-border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group">
+                    <div
+                      key={p.id}
+                      id={`highlight-${p.id}`}
+                      className={cn(
+                        "p-5 bg-card border rounded-3xl flex flex-col md:flex-row gap-6 items-center hover:shadow-lg transition-all group relative",
+                        String(highlightId) === String(p.id) 
+                          ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                          : "border-border"
+                      )}
+                    >
+                      {String(highlightId) === String(p.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                       <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/item/${p.requested_item_id}`)}>
                         <ImageWithFallback src={p.requested_item?.thumbnail_url} alt={p.requested_item?.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>

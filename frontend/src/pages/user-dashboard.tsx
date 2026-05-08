@@ -16,6 +16,7 @@ import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
 import { useTranslation } from "../context/language-context";
 import { WILAYAS } from "../components/explore/explore-constants";
 import { toast } from "sonner";
+import { cn } from "../components/ui/utils";
 
 // Profile interface
 interface Profile {
@@ -97,25 +98,31 @@ export function UserDashboard() {
 
   const [activeTab, setActiveTab] = useState(() => {
     const tab = location.state?.tab?.toLowerCase();
-    if (tab === 'messages') return 'messages';
-    if (tab === 'bookings') return 'bookings';
-    if (tab === 'favorites') return 'favorites';
+    const validTabs = ['overview', 'bookings', 'purchases', 'trades', 'favorites', 'messages', 'history', 'profile', 'settings'];
+    if (tab && validTabs.includes(tab)) return tab;
     return tab || 'overview';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   useEffect(() => {
     if (location.state?.tab) {
       const tab = location.state.tab.toLowerCase();
-      if (tab === t("dashboard.overview").toLowerCase() || tab === 'overview') setActiveTab('overview');
-      else if (tab === t("dashboard.messages").toLowerCase() || tab === 'messages') setActiveTab('messages');
-      else if (tab === t("dashboard.activeBookings").toLowerCase() || tab === 'bookings') setActiveTab('bookings');
-      else setActiveTab(tab);
+      const validTabs = ['overview', 'bookings', 'purchases', 'trades', 'favorites', 'messages', 'history', 'profile', 'settings'];
+      if (validTabs.includes(tab)) {
+        setActiveTab(tab);
+      } else if (tab === t("dashboard.overview").toLowerCase()) {
+        setActiveTab('overview');
+      } else if (tab === t("dashboard.messages").toLowerCase()) {
+        setActiveTab('messages');
+      } else if (tab === t("dashboard.activeBookings").toLowerCase()) {
+        setActiveTab('bookings');
+      } else {
+        setActiveTab(tab);
+      }
     }
     if (location.state?.convId && (location.state?.tab?.toLowerCase() === "messages")) {
       setActiveConversationId(location.state.convId);
     }
-  }, [location.state]);
+  }, [location.state, activeTab]);
 
   const [profile, setProfile] = useState<Profile>({
     full_name: "",
@@ -141,6 +148,44 @@ export function UserDashboard() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // ID of a specific entity to highlight (from notification click)
+  const [highlightId, setHighlightId] = useState<string | null>(location.state?.highlightId || null);
+
+  // Auto-scroll to highlighted element and clear after delay
+  useEffect(() => {
+    if (!highlightId) return;
+    
+    // Check if we need to switch bookingTab
+    if (activeTab === 'bookings') {
+      const isInCurrent = bookings.some(b => String(b.id) === String(highlightId));
+      if (!isInCurrent && bookings.length > 0) {
+         // If not in current sub-tab but we have data, we don't automatically know 
+         // which one it belongs to without searching all.
+         // Let's try to switch and see if it appears (the useEffect will re-run)
+      }
+    }
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`highlight-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 600); // Slightly more delay
+    
+    const clearTimer = setTimeout(() => {
+      setHighlightId(null);
+      window.history.replaceState({}, document.title);
+    }, 10000); // 10 seconds visibility
+    
+    return () => { clearTimeout(timer); clearTimeout(clearTimer); };
+  }, [highlightId, activeTab, bookings, mySales, myTroc]);
+
+  useEffect(() => {
+    if (location.state?.highlightId) {
+      setHighlightId(location.state.highlightId);
+    }
+  }, [location.state]);
 
   const sidebarItems = [
     { id: 'overview', icon: BarChart3, label: t("dashboard.overview") !== "dashboard.overview" ? t("dashboard.overview") : "Aperçu" },
@@ -271,6 +316,12 @@ export function UserDashboard() {
       fetchFavorites();
     } else if (activeTab === 'bookings') {
       fetchBookings();
+    } else if (activeTab === 'purchases') {
+      fetchSales();
+    } else if (activeTab === 'trades') {
+      fetchTroc();
+    } else if (activeTab === 'history') {
+      fetchHistory();
     }
   }, [activeTab]);
 
@@ -549,7 +600,7 @@ export function UserDashboard() {
             <DashboardSidebar
               items={sidebarItems}
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={(id) => { setActiveTab(id); setHighlightId(null); }}
               userInitials={userInitials}
               userFullName={profile.full_name}
               userEmail={profile.email}
@@ -650,10 +701,32 @@ export function UserDashboard() {
                                 variant="ghost"
                                 className="opacity-0 group-hover:opacity-100 transition-opacity rounded-xl h-8 px-3 text-xs font-semibold text-[#FF4F5A]"
                                 onClick={() => {
-                                  const dest = notif.link
-                                    ? notif.link
-                                    : (notif.type?.startsWith('booking') || notif.type?.startsWith('troc') || notif.type === 'sale' ? '/lender' : '/dashboard');
-                                  navigate(dest);
+                                  if (notif.link) {
+                                    const url = new URL(notif.link, window.location.origin);
+                                    const tab = url.searchParams.get('tab');
+                                    const entityId = url.searchParams.get('id');
+                                    if (tab) {
+                                      // If the link points to the current page (/dashboard), just switch tabs
+                                      if (url.pathname === '/dashboard') {
+                                        setActiveTab(tab);
+                                        setHighlightId(entityId);
+                                      } else {
+                                        navigate(url.pathname, { state: { tab, highlightId: entityId } });
+                                      }
+                                    } else {
+                                      navigate(notif.link);
+                                    }
+                                  } else if (notif.type === 'message') {
+                                    setActiveTab('messages');
+                                  } else if (notif.type?.startsWith('booking')) {
+                                    setActiveTab('bookings');
+                                  } else if (notif.type === 'sale') {
+                                    setActiveTab('purchases');
+                                  } else if (notif.type?.startsWith('troc')) {
+                                    setActiveTab('trades');
+                                  } else {
+                                    setActiveTab('overview');
+                                  }
                                 }}
                               >
                                 {t("dashboard.view")} →
@@ -734,8 +807,15 @@ export function UserDashboard() {
                           {bookings.map((booking) => (
                             <div
                               key={booking.id}
-                              className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl hover:shadow-lg transition-all group"
+                              id={`highlight-${booking.id}`}
+                              className={cn(
+                                "flex flex-col md:flex-row gap-6 p-6 rounded-3xl hover:shadow-lg transition-all group relative",
+                                String(highlightId) === String(booking.id) 
+                                  ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                                  : "bg-muted/50"
+                              )}
                             >
+                              {String(highlightId) === String(booking.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                               <div
                                 className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer"
                                 onClick={() => navigate(`/item/${booking.item_id}`)}
@@ -869,7 +949,17 @@ export function UserDashboard() {
 
                     <div className="space-y-4">
                       {mySales.map((sale) => (
-                        <div key={sale.id} className="flex flex-col md:flex-row gap-6 p-6 bg-muted/50 rounded-3xl group">
+                        <div
+                          key={sale.id}
+                          id={`highlight-${sale.id}`}
+                          className={cn(
+                            "flex flex-col md:flex-row gap-6 p-6 rounded-3xl group relative",
+                            String(highlightId) === String(sale.id) 
+                              ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                              : "bg-muted/50"
+                          )}
+                        >
+                          {String(highlightId) === String(sale.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                           <div className="w-full md:w-32 h-24 rounded-2xl overflow-hidden flex-shrink-0">
                             <ImageWithFallback
                               src={sale.item?.thumbnail_url}
@@ -935,7 +1025,17 @@ export function UserDashboard() {
 
                     <div className="space-y-4">
                       {myTroc.map((proposal) => (
-                        <div key={proposal.id} className="p-6 bg-muted/50 rounded-3xl border border-border">
+                        <div
+                          key={proposal.id}
+                          id={`highlight-${proposal.id}`}
+                          className={cn(
+                            "p-6 rounded-3xl border relative",
+                            String(highlightId) === String(proposal.id) 
+                              ? "z-10 border-l-4 border-l-[#FF4F5A] bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" 
+                              : "bg-muted/50 border-border"
+                          )}
+                        >
+                          {String(highlightId) === String(proposal.id) && <div className="absolute -top-3 right-5 bg-[#FF4F5A] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <p className="text-xs font-bold text-muted-foreground/70 uppercase mb-1">{t("dashboard.requestedItem")}</p>

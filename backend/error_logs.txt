@@ -18,3 +18,11 @@ Error: Unauthorized: Invalid or expired token
     at authMiddleware (C:\Users\VMI\Desktop\karily\Karrily-main\backend\src\middleware\auth.middleware.ts:48:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
 
+[2026-05-08T08:46:41.522Z] 500 - TypeError: fetch failed
+undefined
+
+[2026-05-08T10:47:39.412Z] 401 - Unauthorized: Invalid or expired token
+Error: Unauthorized: Invalid or expired token
+    at authMiddleware (C:\Users\VMI\Desktop\karily\Karrily-main\backend\src\middleware\auth.middleware.ts:48:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+

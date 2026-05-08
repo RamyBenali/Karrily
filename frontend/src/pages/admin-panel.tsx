@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuthStore } from "../store/auth.store";
 import { supabase } from "../lib/supabase";
 import { DashboardSidebar } from "../components/dashboard/dashboard-sidebar";
@@ -108,6 +108,24 @@ export function AdminPanel() {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "items" | "reviews" | "reports" | "logs">("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const [highlightId, setHighlightId] = useState<string | null>(location.state?.highlightId || null);
+
+  // Auto-scroll to highlighted element and clear after delay
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`highlight-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 600);
+    const clearTimer = setTimeout(() => {
+      setHighlightId(null);
+      window.history.replaceState({}, document.title);
+    }, 10000);
+    return () => { clearTimeout(timer); clearTimeout(clearTimer); };
+  }, [highlightId, activeTab]);
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -458,7 +476,8 @@ export function AdminPanel() {
               items={sidebarItems}
               activeTab={activeTab}
               setActiveTab={(id) => {
-                setActiveTab(id);
+                setActiveTab(id as any);
+                setHighlightId(null);
                 setIsMobileMenuOpen(false);
               }}
               userInitials="AD"
@@ -618,7 +637,15 @@ export function AdminPanel() {
                       </thead>
                       <tbody>
                         {usersList.filter(u => u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
-                          <tr key={u.id} className="group transition-all">
+                          <tr
+                            key={u.id}
+                            id={`highlight-${u.id}`}
+                            className={cn(
+                              "group transition-all relative",
+                              String(highlightId) === String(u.id) ? "z-10 bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" : ""
+                            )}
+                          >
+                            {String(highlightId) === String(u.id) && <div className="absolute top-2 right-10 bg-[#FF4F5A] text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                             <td className="py-5 px-6 bg-muted/30 rounded-l-2xl border-y border-l border-border">
                               <div className="font-bold text-base">{u.full_name || t("admin.noName")}</div>
                               <div className="text-[10px] font-black uppercase opacity-30 mt-1">{u.email}</div>
@@ -665,7 +692,15 @@ export function AdminPanel() {
                       </thead>
                       <tbody>
                         {itemsList.map((item) => (
-                          <tr key={item.id} className="group transition-all">
+                          <tr
+                            key={item.id}
+                            id={`highlight-${item.id}`}
+                            className={cn(
+                              "group transition-all relative",
+                              String(highlightId) === String(item.id) ? "z-10 bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" : ""
+                            )}
+                          >
+                            {String(highlightId) === String(item.id) && <div className="absolute top-2 right-10 bg-[#FF4F5A] text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                             <td className="py-5 px-6 bg-muted/30 rounded-l-2xl border-y border-l border-border">
                               <div className="font-bold text-base truncate max-w-[200px]" title={item.title}>{item.title}</div>
                               <div className="text-[10px] font-black uppercase opacity-30 mt-1">{item.categories?.name || t("common.general")}</div>
@@ -739,7 +774,15 @@ export function AdminPanel() {
                       </thead>
                       <tbody>
                         {reviewsList.map((review) => (
-                          <tr key={review.id} className="group transition-all">
+                          <tr
+                            key={review.id}
+                            id={`highlight-${review.id}`}
+                            className={cn(
+                              "group transition-all relative",
+                              String(highlightId) === String(review.id) ? "z-10 bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" : ""
+                            )}
+                          >
+                            {String(highlightId) === String(review.id) && <div className="absolute top-2 right-10 bg-[#FF4F5A] text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                             <td className="py-5 px-6 bg-muted/30 rounded-l-2xl border-y border-l border-border">
                               <div className="font-bold text-sm">{review.reviewer?.full_name}</div>
                             </td>
@@ -819,7 +862,15 @@ export function AdminPanel() {
                       </thead>
                       <tbody>
                         {reportsList.map((report) => (
-                          <tr key={report.id} className="group transition-all">
+                          <tr
+                            key={report.id}
+                            id={`highlight-${report.id}`}
+                            className={cn(
+                              "group transition-all relative",
+                              String(highlightId) === String(report.id) ? "z-10 bg-gradient-to-r from-[#FF4F5A]/10 to-transparent shadow-[0_10px_30px_-5px_rgba(255,79,90,0.15)] animate-[highlightPulse_2s_ease-in-out_3]" : ""
+                            )}
+                          >
+                            {String(highlightId) === String(report.id) && <div className="absolute top-2 right-10 bg-[#FF4F5A] text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg z-20 animate-bounce">{t("dashboard.new") || "NOUVEAU"}</div>}
                             <td className="py-5 px-6 bg-muted/30 rounded-l-3xl border-y border-l border-border">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-[#FF4F5A]/10 flex items-center justify-center text-[#FF4F5A] font-black text-[10px]">

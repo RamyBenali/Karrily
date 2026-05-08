@@ -333,18 +333,54 @@ export function Navigation() {
                                   )}
                                   onClick={() => {
                                     markAsRead(notif.id);
-                                    if (notif.type === 'message') {
-                                      navigate('/dashboard', { state: { tab: 'messages' } });
-                                    } else {
-                                      const dest = notif.link
-                                        ? notif.link
-                                        : (notif.type?.startsWith('booking') ? '/lender'
-                                          : notif.type?.startsWith('troc') ? '/lender'
-                                          : notif.type === 'sale' ? '/lender'
-                                          : '/dashboard');
-                                      navigate(dest);
-                                    }
                                     setShowNotifications(false);
+                                    
+                                    if (notif.link) {
+                                      // Parse the link to extract path and query params
+                                      const url = new URL(notif.link, window.location.origin);
+                                      const tab = url.searchParams.get('tab');
+                                      const highlightId = url.searchParams.get('id') || notif.metadata?.id || notif.related_id;
+                                      if (tab) {
+                                        navigate(url.pathname, { state: { tab, highlightId } });
+                                      } else {
+                                        navigate(notif.link, { state: { highlightId } });
+                                      }
+                                    } else if (notif.type === 'message') {
+                                      // Messages go to the current dashboard's messages tab
+                                      const dashPath = getDashboardPath();
+                                      navigate(dashPath, { state: { tab: 'messages', convId: notif.related_id } });
+                                    } else {
+                                      // Fallback for older notifications without link field
+                                      const highlightId = notif.related_id || notif.metadata?.id;
+                                      // Use role-aware routing
+                                      if (notif.type?.startsWith('booking')) {
+                                        if (role === 'admin') {
+                                          navigate('/admin', { state: { tab: 'overview', highlightId } });
+                                        } else if (role === 'lender' || role === 'vendeur' || hasItems) {
+                                          navigate('/lender', { state: { tab: 'bookings', highlightId } });
+                                        } else {
+                                          navigate('/dashboard', { state: { tab: 'bookings', highlightId } });
+                                        }
+                                      } else if (notif.type === 'sale') {
+                                        if (role === 'admin') {
+                                          navigate('/admin', { state: { tab: 'overview', highlightId } });
+                                        } else if (role === 'lender' || role === 'vendeur' || hasItems) {
+                                          navigate('/lender', { state: { tab: 'sales', highlightId } });
+                                        } else {
+                                          navigate('/dashboard', { state: { tab: 'purchases', highlightId } });
+                                        }
+                                      } else if (notif.type?.startsWith('troc')) {
+                                        if (role === 'admin') {
+                                          navigate('/admin', { state: { tab: 'overview', highlightId } });
+                                        } else if (role === 'lender' || role === 'vendeur' || hasItems) {
+                                          navigate('/lender', { state: { tab: 'troc', highlightId } });
+                                        } else {
+                                          navigate('/dashboard', { state: { tab: 'trades', highlightId } });
+                                        }
+                                      } else {
+                                        navigate(getDashboardPath(), { state: { highlightId } });
+                                      }
+                                    }
                                   }}
                                 >
                                   {!notif.is_read && (

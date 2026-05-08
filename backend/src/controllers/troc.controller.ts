@@ -74,7 +74,8 @@ export class TrocController {
                 requestedItem.owner_id,
                 "Nouvelle proposition de troc",
                 `L'utilisateur ${req.user!.full_name} vous propose un échange pour "${requestedItem.title}".`,
-                "troc_proposal"
+                "troc_proposal",
+                `/lender?tab=troc&id=${data.id}`
             );
 
             res.status(201).json({ success: true, data });
@@ -143,7 +144,8 @@ export class TrocController {
                 proposal.proposer_id,
                 `Proposition de troc ${statusLabels[status] || status}`,
                 `Votre offre d'échange pour l'objet a été mise à jour : ${statusLabels[status] || status}.`,
-                notificationType
+                notificationType,
+                `/dashboard?tab=trades&id=${id}`
             );
 
             // If completed, mark items as traded

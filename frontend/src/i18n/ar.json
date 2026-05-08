@@ -277,6 +277,7 @@
     }
   },
   "dashboard": {
+    "new": "جديد",
     "dashboard": "لوحة التحكم",
     "overview": "نظرة عامة",
     "activeBookings": "عمليات الإيجار النشطة",

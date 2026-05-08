@@ -2,7 +2,7 @@ import { supabaseAdmin } from "../config/supabase.js";
 
 export type NotificationType = 'booking_request' | 'booking_confirmed' | 'booking_cancelled' | 'sale' | 'troc_proposal' | 'troc_accepted' | 'troc_rejected' | 'message' | 'system';
 
-export async function createNotification(userId: string, title: string, body: string, type: NotificationType) {
+export async function createNotification(userId: string, title: string, body: string, type: NotificationType, link?: string) {
   try {
     const { error } = await supabaseAdmin
       .from("notifications")
@@ -11,7 +11,8 @@ export async function createNotification(userId: string, title: string, body: st
         title,
         body,
         type,
-        is_read: false
+        is_read: false,
+        link: link || null
       });
 
     if (error) {

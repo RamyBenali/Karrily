@@ -134,7 +134,8 @@ export class BookingsController {
                 item.owner_id,
                 "Nouvelle demande de location",
                 `Vous avez reçu une demande pour "${item.title}" par ${req.user!.full_name}.`,
-                "booking_request"
+                "booking_request",
+                `/lender?tab=bookings&id=${data.id}`
             );
 
             res.status(201).json({ success: true, data });
@@ -203,7 +204,8 @@ export class BookingsController {
                     booking.renter_id,
                     `Réservation ${statusLabels[status] || status}`,
                     `Le statut de votre réservation a été mis à jour : ${statusLabels[status] || status}.`,
-                    notificationType
+                    notificationType,
+                    `/dashboard?tab=bookings&id=${id}`
                 );
             }
 

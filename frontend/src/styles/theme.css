@@ -332,6 +332,38 @@ html.dark .explore-filter-sidebar .explore-budget-slider [data-slot="slider-thum
 .animate-slide-in-right { animation: slide-in-right 0.4s ease-out; }
 .animate-fade-up { animation: fade-up 0.4s ease-out; }
 
+/* Notification highlight pulse */
+@keyframes highlightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 79, 90, 0.4), 0 4px 15px rgba(255, 79, 90, 0.1); transform: scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 79, 90, 0), 0 8px 30px rgba(255, 79, 90, 0.2); transform: scale(1.01); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 79, 90, 0), 0 4px 15px rgba(255, 79, 90, 0.1); transform: scale(1); }
+}
+
+.highlight-premium {
+  position: relative;
+  z-index: 10;
+  border-left: 4px solid #FF4F5A !important;
+  background: linear-gradient(90deg, rgba(255, 79, 90, 0.08) 0%, transparent 100%) !important;
+  animation: highlightPulse 2s ease-in-out 3;
+  box-shadow: 0 10px 30px -5px rgba(255, 79, 90, 0.15) !important;
+}
+
+.highlight-badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: #FF4F5A;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 12px rgba(255, 79, 90, 0.3);
+  z-index: 20;
+}
+
 /* Dashboard Sidebar Active State */
 .sidebar-active-indicator {
   position: absolute;
