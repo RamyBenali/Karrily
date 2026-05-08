@@ -5,7 +5,6 @@ import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { KarillyLogo } from "../components/brand/karilly-logo";
-import { FloatingCTA } from "../components/ui/floating-cta";
 import { useState } from "react";
 import { cn } from "../components/ui/utils";
 import { useTranslation } from "../context/language-context";
@@ -672,7 +671,6 @@ export function LandingPage() {
         </div>
       </footer>
 
-      <div className="hidden lg:block"><FloatingCTA /></div>
     </div>
   );
 }
